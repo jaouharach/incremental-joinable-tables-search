@@ -1,2 +1,2 @@
-# IQA
-Incremental Query Answering
+# Incremental Query Answering Demo
+
