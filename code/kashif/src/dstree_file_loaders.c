@@ -1116,6 +1116,7 @@ enum response dstree_index_multiple_binary_files(const char * bin_files_director
 	    COUNT_PARTIAL_TIME_START
     }
   }
+  closedir(dir);
   free(v.values);
   if(opened_files == 0)
   {

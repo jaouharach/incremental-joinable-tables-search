@@ -122,6 +122,7 @@ unsigned int get_total_data_vectors(char *bindir, unsigned int total_data_files)
       total_datasize += datasize;
     }
   }
+  closedir(dir);
   return total_datasize;
 }
 
@@ -161,5 +162,6 @@ unsigned int get_dlsize(char *dl_dir, unsigned int l) {
       fclose(fp);
     }
   }
+  closedir(dir);
   return (unsigned int)round(total_dlsize / 1073741824);
 }
