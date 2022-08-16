@@ -133,8 +133,6 @@ struct dstree_node * dstree_leaf_node_init(struct dstree_index_settings * settin
     return node;
 }
 
-
-
 enum response node_init_segments(struct dstree_node * node, short * split_points, int segment_size)
 {     
 
@@ -1023,4 +1021,68 @@ int queue_bounded_sorted_insert(struct  query_result *q, struct query_result d, 
    return 0;
 }
 
+/* start kashif changes */
+//new function append vector and track table_id, set_id
+enum response append_vector_to_node(struct dstree_index * index,struct dstree_node * node, ts_type * vector, unsigned int table_id, unsigned int set_id)
+{
+  if (!get_file_buffer(index, node))
+  {
+    fprintf(stderr, "Error in dstree_index.c:  Could not get the \
+                     file buffer for this node.\n");
+    return FAILURE;              
+  }
 
+  if (node->file_buffer == NULL)
+  {
+    fprintf(stderr, "Error in dstree_index.c:  Null file buffer for \
+                     this node after creating it.\n");
+    return FAILURE;              
+  }
+
+  int idx = node->file_buffer->buffered_list_size;  
+  int vector_length = index->settings->timeseries_size;
+  int max_leaf_size = index->settings->max_leaf_size;
+
+  if (idx == 0)
+  {
+      node->file_buffer->buffered_list = NULL;
+      node->file_buffer->buffered_list = malloc(sizeof(struct ts_type *) * max_leaf_size);
+      
+      if (node->file_buffer->buffered_list == NULL)
+      {
+        fprintf(stderr, "Error in dstree_index.c:  Could not \
+                         allocate memory for the buffered list. \n");
+        return FAILURE;                  
+      }
+  }
+
+  node->file_buffer->buffered_list[idx] = (ts_type *) index->buffer_manager->current_record;
+  index->buffer_manager->current_record += sizeof(ts_type) * vector_length;
+  index->buffer_manager->current_record_index++;
+    
+  if (node->file_buffer->buffered_list[idx] == NULL)
+  {
+        fprintf(stderr, "Error in dstree_index.c:  Could not \
+                         allocate memory for the vector in\
+                         the buffer.\n");
+        return FAILURE;                  
+  }
+  
+  for(int i=0; i<vector_length; ++i)
+  {
+        node->file_buffer->buffered_list[idx][i] = vector[i];
+  }
+    
+
+  if (index->settings->track_vector)
+  {
+    node->vid[node->node_size-1].table_id = table_id;
+    node->vid[node->node_size-1].set_id = set_id;
+  }
+
+  ++node->file_buffer->buffered_list_size;
+  index->buffer_manager->current_count += vector_length; 
+  
+  return SUCCESS;
+}
+/* end kashif changes */

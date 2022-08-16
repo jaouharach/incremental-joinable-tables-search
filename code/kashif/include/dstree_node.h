@@ -20,6 +20,13 @@
 #include "pqueue.h"
 #include "dstree_query_engine.h"
 
+
+/* start kashif changes */
+struct vid { // vector id
+  unsigned int table_id;
+  unsigned int set_id;
+};
+/* end kashif changes */
 struct dstree_node {
 
   struct node_segment_split_policy * node_segment_split_policies;
@@ -57,7 +64,11 @@ struct dstree_node {
   label_type *gt;
   unsigned int fp_pos;
   unsigned int  *fp;
-  
+
+  /* start kashif changes */
+  unsigned int vid_pos;
+  struct vid * vid;
+  /* end kashif changes */
 };
 struct dstree_node * dstree_root_node_init(struct dstree_index_settings * settings) ;
 struct dstree_node * dstree_leaf_node_init(struct dstree_index_settings * settings) ;
@@ -103,6 +114,9 @@ enum response append_ts_gt_to_node(struct dstree_index * index,
 				   label_type gt,
 				   unsigned int fp);
 
+/* start kashif changes */
+enum response append_vector_to_node(struct dstree_index * index,struct dstree_node * node, ts_type * vector, unsigned int table_id, unsigned int set_id);
+/* end kashif changes */
 /*
   enum response append_ts_gt_to_node(struct dstree_index * index,
 				   struct dstree_node * node,

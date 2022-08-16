@@ -35,4 +35,7 @@ enum response dstree_index_ascii_file(const char *ifilename, file_position_type 
 enum response reorder_query(ts_type * query_ts, ts_type * query_ts_reordered, int * query_order, int ts_length);
 enum response dstree_tlb_binary_file(const char *ifilename, int q_num, struct dstree_index *index,float minimum_distance);
 
+/* start kashif changes */
+enum response dstree_index_multiple_binary_files(const char * bin_files_directory, unsigned int l, struct dstree_index * index);
+/* end kashif changes */
 #endif

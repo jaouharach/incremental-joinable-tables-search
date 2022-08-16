@@ -13,12 +13,16 @@
 #include "../globals.h"
 #include <stdio.h>
 #include "../include/dstree_file_loaders.h"
+#include "../include/kashif_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <float.h>
 #include "../include/dstree_query_engine.h"
+#include <sys/types.h>
+#include <unistd.h>
+#include <unistd.h>
 
 //CORRECT STATS FOR ASCII
 enum response dstree_query_ascii_file(const char *ifilename, int q_num, 
@@ -648,8 +652,6 @@ enum response dstree_index_ascii_file(const char *ifilename, file_position_type 
       return SUCCESS;
 }
 
-
-
 enum response dstree_index_binary_file(const char *ifilename, file_position_type ts_num, struct dstree_index *index)
 {
     double parse_time = 0;
@@ -967,3 +969,158 @@ int znorm_comp(const void *a, const void* b)
       return -1;
 
 }
+
+/* start kashif changes */
+enum response dstree_index_multiple_binary_files(const char * bin_files_directory, unsigned int total_data_files, struct dstree_index * index)
+{
+  int vector_length = index->settings->timeseries_size;
+  int opened_files = 0; 
+
+  // allocate memory for vector
+	struct vector v; 
+  v.values = (ts_type *) malloc(sizeof(ts_type) * vector_length);
+  ts_type val; 
+  unsigned int nvec = 0u;
+
+	// open source dir
+  struct dirent *dfile;
+  DIR *dir = opendir(bin_files_directory);
+  if (!dir)
+  {
+    printf("Error in dstree_file_loader.c: Unable to open directory stream!");
+    exit(1);
+  }
+
+  while ((dfile = readdir(dir)) != NULL && total_data_files > 0)
+  {
+    if(is_binaryfile(dfile->d_name))
+    {
+      total_data_files --;
+      opened_files += 1;
+
+      // get fill path of bin file
+      char bin_file_path[PATH_MAX + 1] = ""; 
+      strcat(bin_file_path, bin_files_directory);strcat(bin_file_path, "/");strcat(bin_file_path, dfile->d_name);
+      
+      // get binary table info 
+      int datasize, table_id, nsets, vector_length_in_filename;
+      sscanf(dfile->d_name,"data_size%d_t%dc%d_len%d_noznorm.bin",&datasize,&table_id,&nsets,&vector_length_in_filename);
+
+      // check if vector length in file name matches vector length passed as argument
+      if(vector_length_in_filename != vector_length)
+      {
+        fprintf(stderr, "Error in dstree_file_loaders.c:  Vector length passed in argumentes (--timeseries-size %d) does not match vector length in file (%d) %s.\n", vector_length_in_filename, vector_length, bin_file_path);
+        return FAILURE;
+      }
+
+      COUNT_PARTIAL_RAND_INPUT
+      COUNT_PARTIAL_INPUT_TIME_START
+      FILE * bin_file = fopen (bin_file_path, "rb");
+      COUNT_PARTIAL_INPUT_TIME_END
+
+      if (bin_file == NULL)
+      {
+        fprintf(stderr, "Error in dstree_file_loaders.c: File %s not found!\n", bin_file_path);
+        return FAILURE;
+      }
+
+      /* Start processing file: read every vector in binary file*/
+      int i = 0 , j = 0, set_id = 0, total_bytes = (datasize * vector_length) + nsets;
+      while(total_bytes)
+      {
+        if(i == 0)
+        { 
+            i++;
+            j = 0;
+            //read first integer to check how many vactors in current set
+            fread(&nvec, sizeof(nvec), 1, bin_file);
+            total_bytes--;
+            v.table_id = table_id;
+            v.set_id = set_id;
+
+            set_id += 1;
+            
+        }
+        else if(i <= (unsigned int)nvec * vector_length)
+        {
+            // end of vector but still in current set
+            if(j > (vector_length - 1)){
+                j = 0; 
+                /*Index v in dstree */
+                if (!dstree_index_insert_vector(index,v.values, v.table_id, v.set_id))
+                {
+                fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add the time series to the index.\n");
+                return FAILURE;              
+                }
+
+                index->stats->idx_building_total_time  += partial_time;	
+                index->stats->idx_building_input_time  += partial_input_time;
+                index->stats->idx_building_output_time += partial_output_time;
+
+                index->stats->idx_building_seq_input_count  += partial_seq_input_count;
+                index->stats->idx_building_seq_output_count += partial_seq_output_count;
+                index->stats->idx_building_rand_input_count  += partial_rand_input_count;
+                index->stats->idx_building_rand_output_count += partial_rand_output_count;
+            }
+            COUNT_PARTIAL_SEQ_INPUT
+	          COUNT_PARTIAL_INPUT_TIME_START 
+            fread((void*)(&val), sizeof(val), 1, bin_file);
+            COUNT_PARTIAL_INPUT_TIME_END 
+            total_bytes--;
+            v.values[j] = val;
+
+            // end of last vector in current  set
+            if(i == (unsigned int)nvec * vector_length)
+            {   
+                /*Index v in dstree */
+                if (!dstree_index_insert_vector(index,v.values, v.table_id, v.set_id))
+                {
+                  fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add the time series to the index.\n");
+                  return FAILURE;              
+                }
+                index->stats->idx_building_total_time  += partial_time;	
+                index->stats->idx_building_input_time  += partial_input_time;
+                index->stats->idx_building_output_time += partial_output_time;
+
+                index->stats->idx_building_seq_input_count  += partial_seq_input_count;
+                index->stats->idx_building_seq_output_count += partial_seq_output_count;
+                index->stats->idx_building_rand_input_count  += partial_rand_input_count;
+                index->stats->idx_building_rand_output_count += partial_rand_output_count;
+
+                i = 0; j = 0;
+                nvec = 0u;
+                continue;
+            }
+            i++;
+            j++;
+        }
+      }
+      
+      COUNT_PARTIAL_INPUT_TIME_START
+      if(fclose(bin_file))
+      {   
+        fprintf(stderr, "Error in dstree_file_loaders.c: Could not close the filename %s", bin_file_path);
+        return FAILURE;
+      }
+      COUNT_PARTIAL_INPUT_TIME_END
+      COUNT_PARTIAL_TIME_END
+      /* end read processing file */
+      index->stats->idx_building_total_time  += partial_time;	
+	    index->stats->idx_building_input_time  += partial_input_time;
+	    index->stats->idx_building_output_time += partial_output_time;
+	    index->stats->idx_building_seq_input_count  += partial_seq_input_count;
+	    index->stats->idx_building_seq_output_count += partial_seq_output_count;
+	    index->stats->idx_building_rand_input_count  += partial_rand_input_count;
+	    index->stats->idx_building_rand_output_count += partial_rand_output_count;
+      RESET_PARTIAL_COUNTERS()
+	    COUNT_PARTIAL_TIME_START
+    }
+  }
+  free(v.values);
+  if(opened_files == 0)
+  {
+    fprintf(stderr, "Error in dstree_file_loaders.c:  Could not find any binary file in directory %s.\n", bin_files_directory);
+    return FAILURE;
+  }   
+}
+/* end kashif changes */
