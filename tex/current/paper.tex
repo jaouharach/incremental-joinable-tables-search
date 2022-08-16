@@ -1,0 +1,228 @@
+\documentclass[sigconf, nonacm]{acmart}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{multirow}
+%\usepackage{algorithm}\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage[ruled,vlined,linesnumbered,noend]{algorithm2e}
+\PassOptionsToPackage{noend}{algpseudocode}
+\usepackage{algpseudocode}
+\pagenumbering{arabic}
+%\pagenumbering{gobble}
+%\definecolor{mygray}{rgb}{0.81, 0.81, 0.77}
+\usepackage[labelfont=bf,textfont=bf]{caption}
+\usepackage[labelfont=bf,textfont=bf,singlelinecheck=off,justification=raggedright]{subcaption}
+\newcommand{\setHeight}{2cm}
+\usepackage[normalem]{ulem}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{url}
+\usepackage{balance}
+\usepackage{color}
+\usepackage{paralist}
+\usepackage{amsmath}
+\let\proof\relax  
+\let\endproof\relax
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage[normalem]{ulem} 
+\newtheorem{defn}{Definition}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{propt}{Property}
+\newtheorem{lem}[thm]{Lemma}
+
+\usepackage[ruled,vlined,linesnumbered,noend]{algorithm2e}
+\PassOptionsToPackage{noend}{algpseudocode}
+\usepackage{algpseudocode}
+%\definecolor{mygray}{rgb}{0.81, 0.81, 0.77}
+\usepackage[labelfont=bf,textfont=bf]{caption}
+\usepackage[labelfont=bf,textfont=bf,singlelinecheck=off,justification=raggedright]{subcaption}
+
+\usepackage[normalem]{ulem}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{url}
+\usepackage{balance}
+\usepackage{color}
+%\usepackage[table]{xcolor}
+\usepackage{hhline}
+\usepackage{paralist}
+\usepackage{amsmath}
+ \let\proof\relax  
+\let\endproof\relax
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage[normalem]{ulem} 
+\graphicspath{{../../img/}}
+\definecolor{myred}{RGB}{189, 52, 67}
+\definecolor{mygreen}{RGB}{19, 136, 8}
+\definecolor{myblue}{RGB}{16, 52, 166}
+\usepackage{float}% http://ctan.org/pkg/float
+
+\newcommand{\here}[1]{{\bf [[#1]]}}
+\newcommand{\karima}[1]{{\color{blue} #1}\normalcolor}
+
+%% The following content must be adapted for the final version
+% paper-specific
+\newcommand\vldbdoi{XX.XX/XXX.XX}
+\newcommand\vldbpages{XXX-XXX}
+% issue-specific
+\newcommand\vldbvolume{15}
+\newcommand\vldbissue{10}
+\newcommand\vldbyear{2022}
+% should be fine as it is
+\newcommand\vldbauthors{\authors}
+\newcommand\vldbtitle{\shorttitle} 
+% leave empty if no availability url should be set
+\newcommand\vldbavailabilityurl{https://echihabi.com/publications/projects/project-name}
+% whether page numbers should be shown or not, use 'plain' for review versions, 'empty' for camera ready
+\newcommand\vldbpagestyle{empty} 
+
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{observation}[theorem]{Observation}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{property}[theorem]{Property}
+
+%\excludecomment{figure}
+
+\newcommand{\ignore}[1]{}
+\newcommand{\remove}[1]{}
+
+% text to remove for the vldb22 submission
+\newcommand{\hidevldb}[1]{}
+
+
+\SetAlFnt{\small\tt}
+\SetAlTitleFnt{\small\tt}
+%\SetAlCapFnt{\tt}
+
+%\newcommand{\myfuncsty}[1]{\textcolor{red}{\textbf{\texttt{#1}}}}
+%\newcommand{\mykwsty}[1]{\textcolor{blue}{\emph{#1}}}
+%\newcommand{\mykwsty}[1]{\textcolor{red}{{\texttt{#1}}}}
+%\newcommand{\myvarsty}[1]{\textcolor{GoogleGreen}{\texttt{#1}}}
+
+%\SetKwSty{mykwsty}
+%\SetArgSty{textbf}
+%\SetFuncSty{myfuncsty}
+%\SetDataSty{myvarsty}
+
+
+\sloppy
+% Define the switch for the different paper versions
+% The switch Journal defines the journal version
+% The switch Future defines the full draft with future work
+
+
+%\Colortrue
+
+%To activate the journal version, uncomment the line below
+%\Journaltrue
+
+%To activate the Future work version, uncomment the line below
+%\Futuretrue
+
+%To activate the Full draft  uncomment both switches
+
+
+\begin{document}
+	\title{Paper Title}	
+	
+	
+	\author{Student Name}
+		\affiliation{%
+		\institution{UM6P}
+%		\email{ilias.azizi@um6p.ma}
+	}
+	\author{Karima Echihabi}
+		\affiliation{%
+		\institution{UM6P}
+%		\email{karima.echihabi@um6p.ma}
+	}
+	
+\begin{abstract}
+~300 word description of the project
+\end{abstract}
+
+\maketitle
+
+\pagestyle{\vldbpagestyle}
+\begingroup\small\noindent\raggedright\textbf{PVLDB Reference Format:}\\
+%\vldbauthors. \vldbtitle. PVLDB, \vldbvolume(\vldbissue): \vldbpages, \vldbyear.\\
+\vldbauthors. \vldbtitle, \vldbvolume(\vldbissue): \vldbpages, \vldbyear.\\
+\href{https://doi.org/\vldbdoi}{doi:\vldbdoi}
+\endgroup
+\begingroup
+\renewcommand\thefootnote{}\footnote{\noindent
+	This work is licensed under the Creative Commons BY-NC-ND 4.0 International License. Visit \url{https://creativecommons.org/licenses/by-nc-nd/4.0/} to view a copy of this license. For any use beyond those covered by this license, obtain permission by emailing \href{mailto:info@vldb.org}{info@vldb.org}. Copyright is held by the owner/author(s). Publication rights licensed to the VLDB Endowment. \\
+	\raggedright Proceedings of the VLDB Endowment, Vol. \vldbvolume, No. \vldbissue\ %
+	ISSN 2150-8097. \\
+	\href{https://doi.org/\vldbdoi}{doi:\vldbdoi} \\
+}\addtocounter{footnote}{-1}\endgroup
+
+%All experimental results are summarized in this spreadsheet
+%https://docs.google.com/spreadsheets/d/1SEcoAHr_pDwVcGKknyMgMZeFn5CEKqGL26XYcZ6jbDY/edit?usp=sharing
+
+	
+\input{introduction}
+\input{preliminaries}
+\input{related-work}
+\input{proposed-approach}
+\input{experiments}
+\input{conclusions}
+\input{ideas}	
+	
+%advanced techniques
+%we put them together to solve the problem faster
+%
+	
+\begin{acks}
+We sincerely thank X, Y and Z.
+%the African Supercomputer Center team for their technical support. 	
+\end{acks}
+	
+\balance
+	
+	% The following two commands are all you need in the
+	% initial runs of your .tex file to
+	% produce the bibliography for the citations in your paper.
+	\bibliographystyle{abbrv}
+	%\vspace*{-5pt}
+	\def\thebibliography#1{
+		\section*{References}
+		\normalsize                  % smaller; put \normalsize after bib --dt
+		%\footnotesize
+		%\small
+		%\scriptsize
+		\list
+		{[\arabic{enumi}]}
+		{\settowidth\labelwidth{[#1]}
+			\leftmargin\labelwidth
+			\parsep 1pt                % tighter --dt
+			\itemsep 0.6pt               % tighter --dt
+			\advance\leftmargin\labelsep
+			\usecounter{enumi}
+		}
+		\def\newblock{\hskip .11em plus .33em minus .07em}
+		\sloppy\clubpenalty10000\widowpenalty10000
+		\sfcode`\.=1000\relax
+	}
+	\bibliography{ref}  % vldb_sample.bib is the name of the Bibliography in this case
+	% You must have a proper ".bib" file
+	%  and remember to run:
+	% latex bibtex latex latex
+	% to resolve all references
+	
+	
+	
+\end{document}
+
+
+
+
+
+
+
