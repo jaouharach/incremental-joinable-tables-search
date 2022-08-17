@@ -36,6 +36,15 @@ enum response reorder_query(ts_type * query_ts, ts_type * query_ts_reordered, in
 enum response dstree_tlb_binary_file(const char *ifilename, int q_num, struct dstree_index *index,float minimum_distance);
 
 /* start kashif changes */
-enum response dstree_index_multiple_binary_files(const char * bin_files_directory, unsigned int l, struct dstree_index * index);
+enum response dstree_index_multiple_binary_files(const char * bin_files_directory, unsigned int total_data_files, struct dstree_index * index);
+
+enum response dstree_knn_query_multiple_binary_files(
+    const char *bin_files_directory, unsigned int qset_num,
+    unsigned int min_qset_size, unsigned int max_qset_size, unsigned int x,
+    struct dstree_index *index, float minimum_distance, ts_type epsilon,
+    ts_type r_delta, unsigned int k, boolean track_bsf, boolean track_pruning,
+    boolean all_mindists, boolean max_policy, unsigned int nprobes,
+    unsigned char incremental, char *result_dir, unsigned int total_data_files,
+    unsigned int dlsize, float warping);
 /* end kashif changes */
 #endif

@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   float warping = 0;
 
   /* start kashif changes */
-  static char *experiment_dir =
+  static char *result_dir =
       "/home/jaouhara/Documents/Dissertation/dssdl/experiment-results/dstree/";
   static unsigned int total_data_files = 100; // number of datasets to be indexed
   unsigned char track_vector = 0;
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
         {"help", no_argument, 0, '?'},
 
         /* start kashif changes */
-        {"experiment-dir", required_argument, 0, '>'},
+        {"result-dir", required_argument, 0, '>'},
         {"total-data-files", required_argument, 0,
          '|'}, // number of datasets to be indexed (tables)
         {"nq", required_argument, 0, '%'}, // number of query sets
@@ -299,7 +299,7 @@ int main(int argc, char **argv) {
       break;
 
     case '>':
-      experiment_dir = optarg;
+      result_dir = optarg;
       break;
 
     case '|':
@@ -351,7 +351,8 @@ int main(int argc, char **argv) {
     if (!use_ascii_input)
     {
       /* start kashif changes */
-      if (classify) {        
+      if (classify)
+      {        
         printf("Error in dstree.c: Function dstree_index_classify_multiple_binary_file() is not implemented!\n");
         exit(1);
 
@@ -361,7 +362,9 @@ int main(int argc, char **argv) {
         // index->settings->track_file_pos = track_file_pos;
         // dstree_index_classify_binary_file(dataset, dataset_size, index);
 
-      } else {
+      } 
+      else 
+      {
         dstree_index_multiple_binary_files(dataset, dataset_size, index);
         // dstree_index_binary_file(dataset, dataset_size, index);
       }
@@ -465,6 +468,16 @@ int main(int argc, char **argv) {
       if (index->fp_cache != NULL)
         free(index->fp_cache);
     }
+    /* start kashif changes */
+    if (!track_vector)
+    {
+      index->settings->track_file_pos = 0;
+      if (index->fp_filename != NULL)
+        free(index->fp_filename);
+      if (index->fp_cache != NULL)
+        free(index->fp_cache);
+    }
+    /* end kashif changes */
     if (index == NULL) {
       fprintf(stderr, "Error main.c:  Could not read the index from disk.\n");
       return -1;
@@ -486,27 +499,7 @@ int main(int argc, char **argv) {
     // COUNT_TOTAL_TIME_START
 
     fprintf(stderr, ">>> Index loaded successfully from: %s\n", index_path);
-    /*
-    if (use_ascii_input)
-    {
-       if (!dstree_query_ascii_file(queries, queries_size, DELIMITER, index,
-    minimum_distance, epsilon, delta))
-       {
-          fprintf(stderr, "Error main.c:  Could not execute the query.\n");
-          return -1;
-       }
-    }
-    else
-    {
-    if (!dstree_knn_query_binary_file(queries, queries_size, index,
-                                      minimum_distance, epsilon, delta,k,
-    track_bsf))
-       {
-          fprintf(stderr, "Error main.c:  Could not execute the query.\n");
-          return -1;
-       }
-       }*/
-
+    
     // calculate r_delta
     ts_type r_delta = FLT_MAX;
 
@@ -537,10 +530,14 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Using r_delta = %lf.\n", r_delta);
     }
 
-    dstree_knn_query_binary_file(queries, queries_size, index, minimum_distance,
-                                 epsilon, r_delta, k, track_bsf, track_pruning,
-                                 all_mindists, max_policy, nprobes, incremental,
-                                 warping);
+    /* start kashif changes */
+    dstree_knn_query_multiple_binary_files(queries, qset_num,
+                                    min_qset_size, 
+                                    max_qset_size, top, index,
+                                    minimum_distance, epsilon, r_delta,
+                                    k, track_bsf, track_pruning, all_mindists,
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, dlsize, warping);
+    /* end kashif changes */
   } 
   else if (mode == 2) // build the index, execute queries and store the index
   {
@@ -563,12 +560,15 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Error main.c:  Could not initialize the index.\n");
       return -1;
     }
-    if (!use_ascii_input) {
-
-      if (!dstree_index_binary_file(dataset, dataset_size, index)) {
+    if (!use_ascii_input)
+    {
+      /* start kashif changes */
+      if (!dstree_index_multiple_binary_files(dataset, dataset_size, index))
+      {
         fprintf(stderr, "Error main.c:  Could not build the index.\n");
         return -1;
       }
+      /* end kashif changes */
       COUNT_PARTIAL_TIME_END
       // COUNT_TOTAL_TIME_END
       index->stats->idx_building_total_time = partial_time;
@@ -585,8 +585,12 @@ int main(int argc, char **argv) {
       dstree_print_index_stats(index, dataset);
       COUNT_TOTAL_TIME_START
 
-      if (!dstree_query_binary_file(queries, queries_size, index,
-                                    minimum_distance, epsilon, delta)) {
+      if (!dstree_knn_query_multiple_binary_files(queries, qset_num,
+                                    min_qset_size, 
+                                    max_qset_size, top, index,
+                                    minimum_distance, epsilon, delta,
+                                    k, track_bsf, track_pruning, all_mindists,
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, dlsize, warping)) {
         fprintf(stderr, "Error main.c:  Could not execute the query.\n");
         return -1;
       }
@@ -608,42 +612,21 @@ int main(int argc, char **argv) {
       index->stats->idx_writing_rand_input_count = partial_rand_input_count;
       index->stats->idx_writing_rand_output_count = partial_rand_output_count;
       // ADD TIME COUNTERS
-    } else {
-      // ADD TIME COUNTERS HERE
-      if (!dstree_index_ascii_file(dataset, dataset_size, DELIMITER, index)) {
-        fprintf(stderr, "Error main.c:  Could not build the index.\n");
-        return -1;
-      }
-
-      if (!dstree_query_ascii_file(queries, queries_size, DELIMITER, index,
-                                   minimum_distance, epsilon, delta)) {
-        fprintf(stderr, "Error main.c:  Could not execute the query.\n");
-        return -1;
-      }
-
-      if (!dstree_index_write(index)) {
-        fprintf(stderr, "Error main.c:  Could not save the index to disk.\n");
-        return -1;
-      }
+    }
+    else
+    {
+      /* start kashif changes */
+      fprintf(stderr, "Error in dstree.c: Kashif cannot take ascii input.\n");
+      exit(1);
+      /* end kashif changes */
     }
   }
   else if (mode == 3) // read an existing index and execute queries
   {
-    is_index_new = 0;
-    index = dstree_index_read(index_path);
-    if (index == NULL) {
-      fprintf(stderr, "Error main.c:  Could not read the index from disk.\n");
-      return -1;
-    }
-
-    fprintf(stderr, ">>> Index loaded successfully from: %s\n", index_path);
-    if (!use_ascii_input) {
-      if (!dstree_tlb_binary_file(queries, queries_size, index,
-                                  minimum_distance)) {
-        fprintf(stderr, "Error main.c:  Could not execute the query.\n");
-        return -1;
-      }
-    }
+    /* start kashif changes */
+      fprintf(stderr, "Error in dstree.c: Mode 3 not implemented for Kashif.\n");
+      exit(1);
+      /* end kashif changes */
   }
   else {
     fprintf(
