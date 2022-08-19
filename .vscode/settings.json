@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "kashif_utils.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "typeinfo": "c",
+        "ts.h": "c"
     }
 }

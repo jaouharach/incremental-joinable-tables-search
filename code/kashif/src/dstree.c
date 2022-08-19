@@ -306,7 +306,7 @@ int main(int argc, char **argv) {
       total_data_files = atoi(optarg);
       break;
     case '*':
-      track_vector = true;
+      track_vector = 1;
       break;
     /* end kashif changes */
     default:
@@ -339,8 +339,10 @@ int main(int argc, char **argv) {
               "Error main.c:  Could not initialize the index settings.\n");
       return -1;
     }
-
+    
     index = dstree_index_init(index_settings);
+    index->settings->track_vector = track_vector;
+
     index->first_node = dstree_root_node_init(index->settings);
     if (index == NULL) {
       fprintf(stderr, "Error main.c:  Could not initialize the index.\n");
@@ -355,13 +357,6 @@ int main(int argc, char **argv) {
       {        
         printf("Error in dstree.c: Function dstree_index_classify_multiple_binary_file() is not implemented!\n");
         exit(1);
-
-        // todo: index classify multiple binary files
-        // index->settings->classify = 1;
-        // index->settings->track_vector = track_vector;
-        // index->settings->track_file_pos = track_file_pos;
-        // dstree_index_classify_binary_file(dataset, dataset_size, index);
-
       } 
       else 
       {
@@ -461,7 +456,7 @@ int main(int argc, char **argv) {
       if (index->gt_cache != NULL)
         free(index->gt_cache);
     }
-    if (!track_file_pos) {
+    if (!track_file_pos){
       index->settings->track_file_pos = 0;
       if (index->fp_filename != NULL)
         free(index->fp_filename);
@@ -471,11 +466,11 @@ int main(int argc, char **argv) {
     /* start kashif changes */
     if (!track_vector)
     {
-      index->settings->track_file_pos = 0;
-      if (index->fp_filename != NULL)
-        free(index->fp_filename);
-      if (index->fp_cache != NULL)
-        free(index->fp_cache);
+      index->settings->track_vector = 0;
+      if (index->vid_filename != NULL)
+        free(index->vid_filename);
+      if (index->vid_cache != NULL)
+        free(index->vid_cache);
     }
     /* end kashif changes */
     if (index == NULL) {
@@ -530,6 +525,7 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Using r_delta = %lf.\n", r_delta);
     }
 
+    index->settings->track_vector = track_vector;
     /* start kashif changes */
     dstree_knn_query_multiple_binary_files(queries, qset_num,
                                     min_qset_size, 
@@ -555,13 +551,14 @@ int main(int argc, char **argv) {
 
     index = dstree_index_init(index_settings);
     index->first_node = dstree_root_node_init(index->settings);
-
     if (index == NULL) {
       fprintf(stderr, "Error main.c:  Could not initialize the index.\n");
       return -1;
     }
     if (!use_ascii_input)
     {
+      index->settings->track_vector = track_vector;
+
       /* start kashif changes */
       if (!dstree_index_multiple_binary_files(dataset, dataset_size, index))
       {
@@ -628,7 +625,8 @@ int main(int argc, char **argv) {
       exit(1);
       /* end kashif changes */
   }
-  else {
+  else 
+  {
     fprintf(
         stderr,
         "Please use a valid mode. run dstree --help for more information. \n");

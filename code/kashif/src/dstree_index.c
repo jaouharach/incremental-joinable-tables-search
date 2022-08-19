@@ -726,6 +726,8 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
         free(index->gt_cache);
       if (index->fp_cache != NULL)
         free(index->fp_cache);
+      if (index->vid_cache != NULL)
+        free(index->vid_cache);
     }
   }
   if (!node->is_leaf) {
@@ -748,6 +750,14 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
   if (node->fp != NULL) {
     free(node->fp);
   }
+
+  /* start kashif changes */
+  if (node->vid != NULL)
+  {
+    free(node->vid);
+    node->vid = NULL;
+  }
+  /* end kashif changes */
 
   if (node->file_buffer != NULL) {
     free(node->file_buffer->buffered_list);
@@ -808,7 +818,8 @@ void destroy_buffer_manager(struct dstree_index *index) {
 }
 
 enum response dstree_index_insert(struct dstree_index *index,
-                                  ts_type *timeseries) {
+                                  ts_type *timeseries) 
+{
 
   // traverse the index tree to find the appropriate node
   struct dstree_node *node = index->first_node;
@@ -1749,17 +1760,49 @@ enum response dstree_index_write(struct dstree_index *index) {
     index->gt_pos_ctr = 0;
   }
 
-  if (index->settings->track_file_pos) {
+  if (index->settings->track_file_pos)
+  {
     const char *fp_filename =
         malloc(sizeof(char) * (strlen(index->settings->root_directory) + 8));
     strcpy(fp_filename, index->settings->root_directory);
     strcat(fp_filename, "fp.idx\0");
     index->fp_file = fopen(fp_filename, "wb");
 
+    if (index->fp_file == NULL)
+    {
+      fprintf(stderr,
+              "Error in dstree_index.c: Could not open"
+              " the fp file. Reason = %s\n", strerror(errno));
+      return FAILURE;
+    }
+
     free(fp_filename);
 
     index->fp_pos_ctr = 0;
   }
+
+  /* start kashif changes */
+  if (index->settings->track_vector)
+  {
+    //open vid.edx
+    const char *vid_filename = malloc(sizeof(char) * (strlen(index->settings->root_directory) + 9));
+    strcpy(vid_filename, index->settings->root_directory);
+    strcat(vid_filename, "vid.idx\0");
+    index->vid_file = fopen(vid_filename, "wb");
+
+    if (index->vid_file == NULL)
+    {
+      fprintf(stderr,
+              "Error in dstree_index.c: Could not open"
+              " the vid file. Reason = %s\n", strerror(errno));
+      return FAILURE;
+    }
+
+    free(vid_filename);
+
+    index->vid_pos_ctr = 0;
+  }
+  /* end kashif changes */
 
   if (file == NULL) {
     fprintf(stderr,
@@ -1775,6 +1818,7 @@ enum response dstree_index_write(struct dstree_index *index) {
   double buffered_memory_size = index->settings->buffered_memory_size;
   unsigned char classify = index->settings->classify;
   unsigned char track_file_pos = index->settings->track_file_pos;
+  unsigned char track_vector =  index->settings->track_vector;
   unsigned int dataset_size = index->first_node->node_size;
 
   // SETTINGS DATA
@@ -1791,6 +1835,7 @@ enum response dstree_index_write(struct dstree_index *index) {
   fwrite(&dataset_size, sizeof(unsigned int), 1, file);
   fwrite(&classify, sizeof(unsigned char), 1, file);
   fwrite(&track_file_pos, sizeof(unsigned char), 1, file);
+  fwrite(&track_vector, sizeof(unsigned char), 1, file);
   COUNT_PARTIAL_OUTPUT_TIME_END
 
   // NODES AND FILE BUFFERS
@@ -1841,6 +1886,7 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
   boolean is_index_new = 0;
   unsigned char classify = 0;
   unsigned char track_file_pos = 0;
+  unsigned char track_vector = 0;
   unsigned int dataset_size = 0;
 
   COUNT_PARTIAL_SEQ_INPUT
@@ -1856,6 +1902,7 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
   fread(&dataset_size, sizeof(unsigned int), 1, file);
   fread(&classify, sizeof(unsigned char), 1, file);
   fread(&track_file_pos, sizeof(unsigned char), 1, file);
+  fread(&track_vector, sizeof(unsigned char), 1, file);
   COUNT_PARTIAL_INPUT_TIME_END
 
   struct dstree_index_settings *index_settings = dstree_index_settings_init(
@@ -1870,6 +1917,7 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
 
   index->settings->classify = classify;
   index->settings->track_file_pos = track_file_pos;
+  index->settings->track_vector = track_vector;
 
   if (index->settings->classify) {
     const char *gt_filename =
@@ -1918,6 +1966,41 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
     index->fp_cache = malloc(sizeof(unsigned int) * dataset_size);
     fread(index->fp_cache, sizeof(unsigned int), dataset_size, index->fp_file);
   }
+
+  if (index->settings->track_vector)
+  {
+    printf("index tracks vectors.\n");
+    // open vid.idx
+    const char *vid_filename = malloc(sizeof(char) * (strlen(index->settings->root_directory) + 8));
+    strcpy(vid_filename, index->settings->root_directory);
+    strcat(vid_filename, "vid.idx\0");
+    index->vid_filename = vid_filename;
+    index->vid_file = fopen(vid_filename, "rb");
+
+    if (index->vid_file == NULL)
+    {
+      fprintf(stderr, "Error in dstree_index.c: Could not open"
+                      "the index file. Reason = %s\n",
+              strerror(errno));
+      return FAILURE;
+    }
+    index->vid_pos_ctr = 0;
+    index->vid_cache = NULL;
+
+    index->vid_cache = malloc(sizeof(struct vid) * dataset_size);
+    fread(index->vid_cache, sizeof(struct vid), dataset_size, index->vid_file);
+
+
+    FILE * sc_file;
+    sc_file = fopen("sanity_check_2.txt", "a+");
+    for(int i = 0; i < dataset_size; i++){
+      fprintf(sc_file, "(%u, %u, %u)", index->vid_cache[i].table_id, 
+          index->vid_cache[i].set_id, 
+          index->vid_cache[i].pos);
+    }
+    fclose(sc_file);
+  }
+
 
   index->first_node = dstree_node_read(index, file);
   COUNT_PARTIAL_INPUT_TIME_START
@@ -2023,10 +2106,32 @@ enum response dstree_node_write(struct dstree_index *index,
 
         index->fp_pos_ctr += node->node_size;
       }
+      if (index->settings->track_vector)
+      {
+        node->vid_pos = index->vid_pos_ctr;
+
+        // save vids to file
+        COUNT_PARTIAL_OUTPUT_TIME_START
+        fwrite(&(node->vid_pos), sizeof(unsigned int), 1, file);
+
+        FILE * scf = fopen("sanity_check_1.txt", "a+");
+        for(int w = 0; w < node->node_size; w++)
+        {
+          fprintf(scf, "(%u, %u, %u)", node->vid[w].table_id, node->vid[w].set_id, node->vid[w].pos);
+        }
+        fclose(scf);
+
+        fwrite(node->vid, sizeof(struct vid), node->node_size, index->vid_file);
+        COUNT_PARTIAL_OUTPUT_TIME_END
+
+        index->vid_pos_ctr += node->node_size;
+      }
       COUNT_LEAF_NODE
       // collect stats while traversing the index
       dstree_update_index_stats(index, node);
-    } else {
+    } 
+    else 
+    {
       int filename_size = 0;
       COUNT_PARTIAL_SEQ_OUTPUT
       COUNT_PARTIAL_OUTPUT_TIME_START
@@ -2060,7 +2165,8 @@ enum response dstree_node_write(struct dstree_index *index,
   return SUCCESS;
 }
 
-struct dstree_node *dstree_node_read(struct dstree_index *index, FILE *file) {
+struct dstree_node *dstree_node_read(struct dstree_index *index, FILE *file) 
+{
 
   struct dstree_node *node = NULL;
   // to initialize node values for leaf and internal nodes
@@ -2132,8 +2238,24 @@ struct dstree_node *dstree_node_read(struct dstree_index *index, FILE *file) {
       }
 
       COUNT_LEAF_NODE
-      fread(&(node->gt_pos), sizeof(unsigned int), 1, file);
-      fread(&(node->fp_pos), sizeof(unsigned int), 1, file);
+      
+      if(index->settings->classify)
+      {
+        fread(&(node->gt_pos), sizeof(unsigned int), 1, file);
+        fread(&(node->gt), sizeof(label_type), node->node_size, index->gt_file);
+      }
+      
+      if(index->settings->track_file_pos)
+      {
+        fread(&(node->fp_pos), sizeof(unsigned int), 1, file);
+        fread(&(node->fp), sizeof(unsigned int), node->node_size, index->fp_file);
+      }
+
+      if(index->settings->track_vector)
+      {
+        fread(&(node->vid_pos), sizeof(unsigned int), 1, file);
+        fread(&(node->vid), sizeof(struct vid), node->node_size, index->vid_file);
+      }
 
       index->stats->leaves_heights[index->stats->leaves_counter] =
           node->level + 1;
@@ -2203,16 +2325,16 @@ struct dstree_node *dstree_node_read(struct dstree_index *index, FILE *file) {
 }
 
 /* start kashif changes */
-//new function insert vector and track table_id, set_id
-enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *vector, unsigned int table_id, unsigned int set_id)
+enum response dstree_index_insert_vector(struct dstree_index *index,
+                                  ts_type *vector, unsigned int table_id, 
+                                  unsigned int set_id, 
+                                  unsigned int pos, FILE * sc_file) 
 {
-  //traverse the index tree to find the appropriate node
+  // traverse the index tree to find the appropriate node
   struct dstree_node *node = index->first_node;
 
-  while (!node->is_leaf)
-  {
-    if (!update_node_statistics(node, vector))
-    {
+  while (!node->is_leaf) {
+    if (!update_node_statistics(node, vector)) {
       fprintf(stderr, "Error in dstree_index.c: could not update \
                         statistics at node %s\n",
               node->filename);
@@ -2229,28 +2351,33 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
   index->stats->idx_traverse_tree_total_time += partial_time;
   index->stats->idx_traverse_tree_input_time += partial_input_time;
   index->stats->idx_traverse_tree_output_time += partial_output_time;
-  index->stats->idx_traverse_tree_cpu_time += partial_time - partial_input_time - partial_output_time;
+  index->stats->idx_traverse_tree_cpu_time +=
+      partial_time - partial_input_time - partial_output_time;
   index->stats->idx_traverse_tree_seq_input_count += partial_seq_input_count;
   index->stats->idx_traverse_tree_seq_output_count += partial_seq_output_count;
   index->stats->idx_traverse_tree_rand_input_count += partial_rand_input_count;
-  index->stats->idx_traverse_tree_rand_output_count += partial_rand_output_count;
+  index->stats->idx_traverse_tree_rand_output_count +=
+      partial_rand_output_count;
 
   RESET_PARTIAL_COUNTERS()
   COUNT_PARTIAL_TIME_START
 
-  if (node->is_leaf)
-  {
+  if (node->is_leaf) {
+    // printf("curr node size = %d\n", node->node_size);
+    // for(int z = 0; z < node->node_size; z++)
+    // {
+    //   printf("v(%u, %u, %u)", node->vid[z].table_id, node->vid[z].set_id, node->vid[z].pos);
+    // }
+    // printf("\n\n");
 
-    if (!update_node_statistics(node, vector))
-    {
+    if (!update_node_statistics(node, vector)) {
       fprintf(stderr, "Error in dstree_index.c: could not update \
                         statistics at node %s\n",
               node->filename);
       return FAILURE;
     }
 
-    if (!append_vector_to_node(index, node, vector, table_id, set_id))
-    {
+    if (!append_vector_to_node(index, node, vector, table_id, set_id, pos, sc_file)) {
       fprintf(stderr, "Error in dstree_index.c: could not append \
                         time series to node %s\n",
               node->filename);
@@ -2261,56 +2388,60 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
     index->stats->idx_append_ts_to_leaf_total_time += partial_time;
     index->stats->idx_append_ts_to_leaf_input_time += partial_input_time;
     index->stats->idx_append_ts_to_leaf_output_time += partial_output_time;
-    index->stats->idx_append_ts_to_leaf_cpu_time += partial_time - partial_input_time - partial_output_time;
-    index->stats->idx_append_ts_to_leaf_seq_input_count += partial_seq_input_count;
-    index->stats->idx_append_ts_to_leaf_seq_output_count += partial_seq_output_count;
-    index->stats->idx_append_ts_to_leaf_rand_input_count += partial_rand_input_count;
-    index->stats->idx_append_ts_to_leaf_rand_output_count += partial_rand_output_count;
+    index->stats->idx_append_ts_to_leaf_cpu_time +=
+        partial_time - partial_input_time - partial_output_time;
+    index->stats->idx_append_ts_to_leaf_seq_input_count +=
+        partial_seq_input_count;
+    index->stats->idx_append_ts_to_leaf_seq_output_count +=
+        partial_seq_output_count;
+    index->stats->idx_append_ts_to_leaf_rand_input_count +=
+        partial_rand_input_count;
+    index->stats->idx_append_ts_to_leaf_rand_output_count +=
+        partial_rand_output_count;
 
     RESET_PARTIAL_COUNTERS()
     COUNT_PARTIAL_TIME_START
 
-    //if split needed, split the node and refresh curr_node
+    // if split needed, split the node and refresh curr_node
     if (node->node_size >= index->settings->max_leaf_size)
     {
-
       struct node_split_policy curr_node_split_policy;
       ts_type max_diff_value = (FLT_MAX * (-1));
       ts_type avg_children_range_value = 0;
       short hs_split_point = -1;
       short *child_node_points;
       int num_child_node_points = 0;
-      const int num_child_segments = 2; //by default split to two subsegments
+      const int num_child_segments = 2; // by default split to two subsegments
 
-      //we want to test every possible split policy for each segment
+      // we want to test every possible split policy for each segment
 
-      //for each segment
-      for (int i = 0; i < node->num_node_points; ++i)
+      // for each segment
+      for (int i = 0; i < node->num_node_points; ++i) 
       {
-        struct segment_sketch curr_node_segment_sketch = node->node_segment_sketches[i];
+        struct segment_sketch curr_node_segment_sketch =
+            node->node_segment_sketches[i];
 
-        //This is the QoS of this segment. QoS is the estimation quality evaluated as =
-        //QoS = segment_length * (max_mean_min_mean) * ((max_mean_min_mean) +
+        // This is the QoS of this segment. QoS is the estimation quality
+        // evaluated as = QoS = segment_length * (max_mean_min_mean) *
+        // ((max_mean_min_mean) +
         //     (max_stdev * max_stdev))
-        //The smaller the QoS, the more effective the bounds are for similarity
-        //estimation
+        // The smaller the QoS, the more effective the bounds are for similarity
+        // estimation
 
-        ts_type node_range_value = range_calc(curr_node_segment_sketch,
-                                              get_segment_length(node->node_points, i));
+        ts_type node_range_value = range_calc(
+            curr_node_segment_sketch, get_segment_length(node->node_points, i));
 
-        //for every split policy
-        for (int j = 0; j < node->num_node_segment_split_policies; ++j)
-        {
+        // for every split policy
+        for (int j = 0; j < node->num_node_segment_split_policies; ++j) {
           struct node_segment_split_policy curr_node_segment_split_policy =
               node->node_segment_split_policies[j];
-          //to hold the two child segments
+          // to hold the two child segments
           struct segment_sketch *child_node_segment_sketches = NULL;
 
-          child_node_segment_sketches = malloc(sizeof(struct segment_sketch) *
-                                               num_child_segments);
+          child_node_segment_sketches =
+              malloc(sizeof(struct segment_sketch) * num_child_segments);
 
-          if (child_node_segment_sketches == NULL)
-          {
+          if (child_node_segment_sketches == NULL) {
             fprintf(stderr, "Error in dstree_index.c: could not allocate \
                             memory for the child node segment sketches for \
                             node  %s\n",
@@ -2318,13 +2449,11 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
             return FAILURE;
           }
 
-          for (int k = 0; k < num_child_segments; ++k)
-          {
+          for (int k = 0; k < num_child_segments; ++k) {
             child_node_segment_sketches[k].indicators = NULL;
-            child_node_segment_sketches[k].indicators = malloc(sizeof(ts_type) *
-                                                               curr_node_segment_sketch.num_indicators);
-            if (child_node_segment_sketches[k].indicators == NULL)
-            {
+            child_node_segment_sketches[k].indicators = malloc(
+                sizeof(ts_type) * curr_node_segment_sketch.num_indicators);
+            if (child_node_segment_sketches[k].indicators == NULL) {
               fprintf(stderr, "Error in dstree_index.c: could not allocate\
                                memory for the child node segment sketches \
                                indicators for node  %s\n",
@@ -2334,15 +2463,14 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
           }
 
           if (is_split_policy_mean(curr_node_segment_split_policy))
-            mean_node_segment_split_policy_split(&curr_node_segment_split_policy,
-                                                 curr_node_segment_sketch,
-                                                 child_node_segment_sketches);
+            mean_node_segment_split_policy_split(
+                &curr_node_segment_split_policy, curr_node_segment_sketch,
+                child_node_segment_sketches);
           else if (is_split_policy_stdev(curr_node_segment_split_policy))
-            stdev_node_segment_split_policy_split(&curr_node_segment_split_policy,
-                                                  curr_node_segment_sketch,
-                                                  child_node_segment_sketches);
-          else
-          {
+            stdev_node_segment_split_policy_split(
+                &curr_node_segment_split_policy, curr_node_segment_sketch,
+                child_node_segment_sketches);
+          else {
             fprintf(stderr, "Error in dstree_index.c: Split policy was not \
                             set properly for node %s\n",
                     node->filename);
@@ -2350,72 +2478,78 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
           }
 
           ts_type range_values[num_child_segments];
-          for (int k = 0; k < num_child_segments; ++k)
-          {
-            struct segment_sketch child_node_segment_sketch = child_node_segment_sketches[k];
-            range_values[k] = range_calc(child_node_segment_sketch,
-                                         get_segment_length(node->node_points, i));
+          for (int k = 0; k < num_child_segments; ++k) {
+            struct segment_sketch child_node_segment_sketch =
+                child_node_segment_sketches[k];
+            range_values[k] =
+                range_calc(child_node_segment_sketch,
+                           get_segment_length(node->node_points, i));
           }
 
-          //diff_value represents the splitting benefit
-          //B = QoS(N) - (QoS_leftNode + QoS_rightNode)/2
-          //the higher the diff_value, the better is the splitting
+          // diff_value represents the splitting benefit
+          // B = QoS(N) - (QoS_leftNode + QoS_rightNode)/2
+          // the higher the diff_value, the better is the splitting
 
-          avg_children_range_value = calc_mean(range_values, 0, num_child_segments);
+          avg_children_range_value =
+              calc_mean(range_values, 0, num_child_segments);
           ts_type diff_value = node_range_value - avg_children_range_value;
 
-          if (diff_value > max_diff_value)
-          {
+          if (diff_value > max_diff_value) {
             max_diff_value = diff_value;
-            curr_node_split_policy.split_from = get_segment_start(node->node_points, i);
-            curr_node_split_policy.split_to = get_segment_end(node->node_points, i);
-            curr_node_split_policy.indicator_split_idx = curr_node_segment_split_policy.indicator_split_idx;
-            curr_node_split_policy.indicator_split_value = curr_node_segment_split_policy.indicator_split_value;
-            curr_node_split_policy.curr_node_segment_split_policy = curr_node_segment_split_policy;
+            curr_node_split_policy.split_from =
+                get_segment_start(node->node_points, i);
+            curr_node_split_policy.split_to =
+                get_segment_end(node->node_points, i);
+            curr_node_split_policy.indicator_split_idx =
+                curr_node_segment_split_policy.indicator_split_idx;
+            curr_node_split_policy.indicator_split_value =
+                curr_node_segment_split_policy.indicator_split_value;
+            curr_node_split_policy.curr_node_segment_split_policy =
+                curr_node_segment_split_policy;
           }
-          for (int k = 0; k < num_child_segments; ++k)
-          {
-            // segmentaion fault 
+          for (int k = 0; k < num_child_segments; ++k) {
             free(child_node_segment_sketches[k].indicators);
           }
           free(child_node_segment_sketches);
         }
       }
 
-      //add trade-off for horizontal split
+      // add trade-off for horizontal split
       max_diff_value = max_diff_value * 2;
 
-      //we want to test every possible split policy for each horizontal segment
-      for (int i = 0; i < node->num_hs_node_points; ++i)
-      {
-        struct segment_sketch curr_hs_node_segment_sketch = node->hs_node_segment_sketches[i];
-        ts_type node_range_value = range_calc(curr_hs_node_segment_sketch,
-                                              get_segment_length(node->hs_node_points, i));
+      // we want to test every possible split policy for each horizontal segment
+      for (int i = 0; i < node->num_hs_node_points; ++i) {
+        struct segment_sketch curr_hs_node_segment_sketch =
+            node->hs_node_segment_sketches[i];
+        ts_type node_range_value =
+            range_calc(curr_hs_node_segment_sketch,
+                       get_segment_length(node->hs_node_points, i));
 
-        //for every split policy
-        for (int j = 0; j < node->num_node_segment_split_policies; ++j)
-        {
-          struct node_segment_split_policy curr_hs_node_segment_split_policy = node->node_segment_split_policies[j];
+        // for every split policy
+        for (int j = 0; j < node->num_node_segment_split_policies; ++j) {
+          struct node_segment_split_policy curr_hs_node_segment_split_policy =
+              node->node_segment_split_policies[j];
 
-          struct segment_sketch *child_node_segment_sketches = NULL; //to hold the two child segments
-          child_node_segment_sketches = malloc(sizeof(struct segment_sketch) *
-                                               num_child_segments);
-          if (child_node_segment_sketches == NULL)
-          {
-            fprintf(stderr, "Error in dstree_index.c: could not allocate memory \
+          struct segment_sketch *child_node_segment_sketches =
+              NULL; // to hold the two child segments
+          child_node_segment_sketches =
+              malloc(sizeof(struct segment_sketch) * num_child_segments);
+          if (child_node_segment_sketches == NULL) {
+            fprintf(stderr,
+                    "Error in dstree_index.c: could not allocate memory \
                             for the horizontal child node segment sketches for \
                             node  %s\n",
                     node->filename);
             return FAILURE;
           }
 
-          for (int k = 0; k < num_child_segments; ++k)
-          {
+          for (int k = 0; k < num_child_segments; ++k) {
             child_node_segment_sketches[k].indicators = NULL;
-            child_node_segment_sketches[k].indicators = malloc(sizeof(ts_type) * curr_hs_node_segment_sketch.num_indicators);
-            if (child_node_segment_sketches[k].indicators == NULL)
-            {
-              fprintf(stderr, "Error in dstree_index.c: could not allocate memory \
+            child_node_segment_sketches[k].indicators = malloc(
+                sizeof(ts_type) * curr_hs_node_segment_sketch.num_indicators);
+            if (child_node_segment_sketches[k].indicators == NULL) {
+              fprintf(stderr,
+                      "Error in dstree_index.c: could not allocate memory \
                              for the horizontal child node segment sketches indicators \
                              for node  %s\n",
                       node->filename);
@@ -2424,44 +2558,48 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
           }
 
           if (is_split_policy_mean(curr_hs_node_segment_split_policy))
-            mean_node_segment_split_policy_split(&curr_hs_node_segment_split_policy,
-                                                 curr_hs_node_segment_sketch,
-                                                 child_node_segment_sketches);
+            mean_node_segment_split_policy_split(
+                &curr_hs_node_segment_split_policy, curr_hs_node_segment_sketch,
+                child_node_segment_sketches);
           else if (is_split_policy_stdev(curr_hs_node_segment_split_policy))
-            stdev_node_segment_split_policy_split(&curr_hs_node_segment_split_policy,
-                                                  curr_hs_node_segment_sketch,
-                                                  child_node_segment_sketches);
+            stdev_node_segment_split_policy_split(
+                &curr_hs_node_segment_split_policy, curr_hs_node_segment_sketch,
+                child_node_segment_sketches);
           else
             printf("split policy not initialized properly\n");
 
           ts_type range_values[num_child_segments];
-          for (int k = 0; k < num_child_segments; ++k)
-          {
-            struct segment_sketch child_node_segment_sketch = child_node_segment_sketches[k];
-            range_values[k] = range_calc(child_node_segment_sketch,
-                                         get_segment_length(node->hs_node_points, i));
+          for (int k = 0; k < num_child_segments; ++k) {
+            struct segment_sketch child_node_segment_sketch =
+                child_node_segment_sketches[k];
+            range_values[k] =
+                range_calc(child_node_segment_sketch,
+                           get_segment_length(node->hs_node_points, i));
           }
 
-          avg_children_range_value = calc_mean(range_values, 0, num_child_segments);
+          avg_children_range_value =
+              calc_mean(range_values, 0, num_child_segments);
 
           ts_type diff_value = node_range_value - avg_children_range_value;
 
-          if (diff_value > max_diff_value)
-          {
+          if (diff_value > max_diff_value) {
             max_diff_value = diff_value;
-            curr_node_split_policy.split_from = get_segment_start(node->hs_node_points, i);
-            curr_node_split_policy.split_to = get_segment_end(node->hs_node_points, i);
-            curr_node_split_policy.indicator_split_idx = curr_hs_node_segment_split_policy.indicator_split_idx;
-            curr_node_split_policy.indicator_split_value = curr_hs_node_segment_split_policy.indicator_split_value;
-            curr_node_split_policy.curr_node_segment_split_policy = curr_hs_node_segment_split_policy;
-            hs_split_point = get_hs_split_point(node->node_points,
-                                                curr_node_split_policy.split_from,
-                                                curr_node_split_policy.split_to,
-                                                node->num_node_points);
+            curr_node_split_policy.split_from =
+                get_segment_start(node->hs_node_points, i);
+            curr_node_split_policy.split_to =
+                get_segment_end(node->hs_node_points, i);
+            curr_node_split_policy.indicator_split_idx =
+                curr_hs_node_segment_split_policy.indicator_split_idx;
+            curr_node_split_policy.indicator_split_value =
+                curr_hs_node_segment_split_policy.indicator_split_value;
+            curr_node_split_policy.curr_node_segment_split_policy =
+                curr_hs_node_segment_split_policy;
+            hs_split_point = get_hs_split_point(
+                node->node_points, curr_node_split_policy.split_from,
+                curr_node_split_policy.split_to, node->num_node_points);
           }
 
-          for (int k = 0; k < num_child_segments; ++k)
-          {
+          for (int k = 0; k < num_child_segments; ++k) {
             free(child_node_segment_sketches[k].indicators);
           }
 
@@ -2471,8 +2609,7 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
 
       node->split_policy = NULL;
       node->split_policy = malloc(sizeof(struct node_split_policy));
-      if (node->split_policy == NULL)
-      {
+      if (node->split_policy == NULL) {
         fprintf(stderr, "Error in dstree_index.c: could not allocate memory \
                         for the split policy of node  %s\n",
                 node->filename);
@@ -2480,73 +2617,82 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
       }
       node->split_policy->split_from = curr_node_split_policy.split_from;
       node->split_policy->split_to = curr_node_split_policy.split_to;
-      node->split_policy->indicator_split_idx = curr_node_split_policy.indicator_split_idx;
-      node->split_policy->indicator_split_value = curr_node_split_policy.indicator_split_value;
-      node->split_policy->curr_node_segment_split_policy = curr_node_split_policy.curr_node_segment_split_policy;
+      node->split_policy->indicator_split_idx =
+          curr_node_split_policy.indicator_split_idx;
+      node->split_policy->indicator_split_value =
+          curr_node_split_policy.indicator_split_value;
+      node->split_policy->curr_node_segment_split_policy =
+          curr_node_split_policy.curr_node_segment_split_policy;
 
       COUNT_PARTIAL_TIME_END
       index->stats->idx_evaluate_split_policies_total_time += partial_time;
-      index->stats->idx_evaluate_split_policies_input_time += partial_input_time;
-      index->stats->idx_evaluate_split_policies_output_time += partial_output_time;
-      index->stats->idx_evaluate_split_policies_cpu_time += partial_time - partial_input_time - partial_output_time;
-      index->stats->idx_evaluate_split_policies_seq_input_count += partial_seq_input_count;
-      index->stats->idx_evaluate_split_policies_seq_output_count += partial_seq_output_count;
-      index->stats->idx_evaluate_split_policies_rand_input_count += partial_rand_input_count;
-      index->stats->idx_evaluate_split_policies_rand_output_count += partial_rand_output_count;
+      index->stats->idx_evaluate_split_policies_input_time +=
+          partial_input_time;
+      index->stats->idx_evaluate_split_policies_output_time +=
+          partial_output_time;
+      index->stats->idx_evaluate_split_policies_cpu_time +=
+          partial_time - partial_input_time - partial_output_time;
+      index->stats->idx_evaluate_split_policies_seq_input_count +=
+          partial_seq_input_count;
+      index->stats->idx_evaluate_split_policies_seq_output_count +=
+          partial_seq_output_count;
+      index->stats->idx_evaluate_split_policies_rand_input_count +=
+          partial_rand_input_count;
+      index->stats->idx_evaluate_split_policies_rand_output_count +=
+          partial_rand_output_count;
 
       RESET_PARTIAL_COUNTERS()
       COUNT_PARTIAL_TIME_START
 
-      //when hs_split_point stays less than 0, it means that
-      //considering splitting a vertical segment is not worth it
-      //according to the QoS heuristic
+      // when hs_split_point stays less than 0, it means that
+      // considering splitting a vertical segment is not worth it
+      // according to the QoS heuristic
 
-      if (hs_split_point < 0)
+      if (hs_split_point < 0) 
       {
         num_child_node_points = node->num_node_points;
         child_node_points = NULL;
         child_node_points = malloc(sizeof(short) * num_child_node_points);
-        if (child_node_points == NULL)
-        {
+        if (child_node_points == NULL) {
           fprintf(stderr, "Error in dstree_index.c: could not allocate memory \
                           for the child node segment points node  %s\n",
                   node->filename);
           return FAILURE;
         }
-        //children will have the same number of segments as parent
-        for (int i = 0; i < num_child_node_points; ++i)
-        {
+        // children will have the same number of segments as parent
+        for (int i = 0; i < num_child_node_points; ++i) {
           child_node_points[i] = node->node_points[i];
         }
       }
-      else
+      else 
       {
         num_child_node_points = node->num_node_points + 1;
         child_node_points = NULL;
         child_node_points = malloc(sizeof(short) * num_child_node_points);
-        if (child_node_points == NULL)
-        {
+        if (child_node_points == NULL) {
           fprintf(stderr, "Error in dstree_index.c: could not allocate memory \
                           for the child node segment points node  %s\n",
                   node->filename);
           return FAILURE;
         }
-        //children will have one additional segment than the parent
-        for (int i = 0; i < (num_child_node_points - 1); ++i)
-        {
+        // children will have one additional segment than the parent
+        for (int i = 0; i < (num_child_node_points - 1); ++i) {
           child_node_points[i] = node->node_points[i];
         }
-        child_node_points[num_child_node_points - 1] = hs_split_point; //initialize newly added point
+        child_node_points[num_child_node_points - 1] =
+            hs_split_point; // initialize newly added point
 
-        qsort(child_node_points, num_child_node_points, sizeof(short), compare_short);
+        qsort(child_node_points, num_child_node_points, sizeof(short),
+              compare_short);
       }
 
-      //this will put the time series of this node in the file_buffer->buffered_list aray
-      //it will include the time series in disk and those in memory
+      // this will put the time series of this node in the
+      // file_buffer->buffered_list aray it will include the time series in disk
+      // and those in memory
 
-      if (!split_node(index, node, child_node_points, num_child_node_points))
-      {
-        fprintf(stderr, "Error in dstree_index.c: could not split node %s.\n", node->filename);
+      if (!split_node(index, node, child_node_points, num_child_node_points)) {
+        fprintf(stderr, "Error in dstree_index.c: could not split node %s.\n",
+                node->filename);
         return FAILURE;
       }
 
@@ -2554,8 +2700,7 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
 
       node->file_buffer->do_not_flush = true;
 
-      if (!get_file_buffer(index, node))
-      {
+      if (!get_file_buffer(index, node)) {
         fprintf(stderr, "Error in dstree_index.c: could not get the file \
                            buffer for node %s.\n",
                 node->filename);
@@ -2565,16 +2710,14 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
       ts_type **ts_list;
       ts_list = get_all_time_series_in_node(index, node);
 
-      //copying the contents of the the node being split
-      //in case it gets flushed from memory to disk
+      // copying the contents of the the node being split
+      // in case it gets flushed from memory to disk
 
-      //printf ("splitting node %s with size %d", node->filename, node->file_buffer->buffered_list_size);
-      for (int idx = 0; idx < index->settings->max_leaf_size; ++idx)
-      {
-        if (node_split_policy_route_to_left(node, ts_list[idx]))
-        {
-          if (!update_node_statistics(node->left_child, ts_list[idx]))
-          {
+      // printf ("splitting node %s with size %d", node->filename,
+      // node->file_buffer->buffered_list_size);
+      for (int idx = 0; idx < index->settings->max_leaf_size; ++idx) {
+        if (node_split_policy_route_to_left(node, ts_list[idx])) {
+          if (!update_node_statistics(node->left_child, ts_list[idx])) {
             fprintf(stderr, "Error in dstree_index.c: could not update \
                              statistics at left child of\
                              node %s\n",
@@ -2582,19 +2725,17 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
             return FAILURE;
           }
 
-          if (!append_ts_to_child_node(index, node->left_child, ts_list[idx], node, idx))
-          {
+          if (!append_vector_to_child_node(index, node->left_child, ts_list[idx],
+                  node->vid[idx].table_id, node->vid[idx].set_id, node->vid[idx].pos)) {
             fprintf(stderr, "Error in dstree_index.c: could not append \
                            time series to left child of \
                            node %s\n",
                     node->filename);
             return FAILURE;
           }
-        }
-        else
-        {
-          if (!update_node_statistics(node->right_child, ts_list[idx]))
-          {
+
+        } else {
+          if (!update_node_statistics(node->right_child, ts_list[idx])) {
             fprintf(stderr, "Error in dstree_index.c: could not update \
                              statistics at right child of\
                              node %s\n",
@@ -2602,8 +2743,8 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
             return FAILURE;
           }
 
-          if (!append_ts_to_child_node(index, node->right_child, ts_list[idx], node, idx))
-          {
+          if (!append_vector_to_child_node(index, node->right_child,ts_list[idx],
+                  node->vid[idx].table_id, node->vid[idx].set_id, node->vid[idx].pos)) {
             fprintf(stderr, "Error in dstree_index.c: could not append \
                            time series to right child of \
                            node %s\n",
@@ -2613,22 +2754,15 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
         }
       }
 
-      for (int i = 0; i < index->settings->max_leaf_size; ++i)
-      {
+      for (int i = 0; i < index->settings->max_leaf_size; ++i) {
         free(ts_list[i]);
       }
 
       free(ts_list);
-      if(index->settings->track_vector)
-      {
-        // free vector id
-        free(node->vid);
-        node->vid = NULL;
-      }
 
-      if (!delete_file_buffer(index, node))
-      {
-        fprintf(stderr, "Error in dstree_index.c: could not delete file buffer for \
+      if (!delete_file_buffer(index, node)) {
+        fprintf(stderr,
+                "Error in dstree_index.c: could not delete file buffer for \
                            node %s\n",
                 node->filename);
         return FAILURE;
@@ -2638,21 +2772,22 @@ enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *ve
       index->stats->idx_split_node_total_time += partial_time;
       index->stats->idx_split_node_input_time += partial_input_time;
       index->stats->idx_split_node_output_time += partial_output_time;
-      index->stats->idx_split_node_cpu_time += partial_time - partial_input_time - partial_output_time;
+      index->stats->idx_split_node_cpu_time +=
+          partial_time - partial_input_time - partial_output_time;
       index->stats->idx_split_node_seq_input_count += partial_seq_input_count;
       index->stats->idx_split_node_seq_output_count += partial_seq_output_count;
       index->stats->idx_split_node_rand_input_count += partial_rand_input_count;
-      index->stats->idx_split_node_rand_output_count += partial_rand_output_count;
+      index->stats->idx_split_node_rand_output_count +=
+          partial_rand_output_count;
 
       RESET_PARTIAL_COUNTERS()
       COUNT_PARTIAL_TIME_START
 
-    } //end if_split_node
-  }   //end if_node_is_leaf
+    } // end if_split_node
+  }   // end if_node_is_leaf
 
   return SUCCESS;
 }
-
 /* end kashif changes */
 
 /*

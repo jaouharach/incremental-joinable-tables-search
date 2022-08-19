@@ -25,6 +25,7 @@
 struct vid { // vector id
   unsigned int table_id;
   unsigned int set_id;
+  unsigned int pos;
 };
 /* end kashif changes */
 struct dstree_node {
@@ -115,7 +116,16 @@ enum response append_ts_gt_to_node(struct dstree_index * index,
 				   unsigned int fp);
 
 /* start kashif changes */
-enum response append_vector_to_node(struct dstree_index * index,struct dstree_node * node, ts_type * vector, unsigned int table_id, unsigned int set_id);
+enum response append_vector_to_node(struct dstree_index * index,
+            struct dstree_node * node, ts_type * vector, 
+            unsigned int table_id, 
+            unsigned int set_id, 
+            unsigned int pos,
+            FILE * sc_file);
+
+enum response append_vector_to_child_node(struct dstree_index *index,
+              struct dstree_node *node, ts_type *vector, unsigned int table_id, 
+              unsigned int set_id, unsigned int pos);
 /* end kashif changes */
 /*
   enum response append_ts_gt_to_node(struct dstree_index * index,

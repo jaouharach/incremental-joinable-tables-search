@@ -44,6 +44,10 @@ typedef struct bsf_snapshot {
   label_type label;
   unsigned int file_pos;
   ////ts_type *raw_series;
+
+  /* start kashif changes */
+  struct vid * vector_id;
+  /* end kashif changes */
 };
 
 /// Data structure for sorting the query.

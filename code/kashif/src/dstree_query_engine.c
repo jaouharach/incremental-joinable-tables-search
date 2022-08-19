@@ -2021,7 +2021,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     char *qfilename, double *total_query_set_time,
     unsigned int *total_checked_ts, struct bsf_snapshot **bsf_snapshots,
     unsigned int *cur_bsf_snapshot, float warping, FILE *dataset_file,
-    FILE *series_file) {
+    FILE *series_file)
+{
 
   unsigned int curr_size = 0;
   ts_type bsf = FLT_MAX;
@@ -2038,6 +2039,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   for (int idx = 0; idx < k; ++idx) {
     knn_results[idx].node = NULL;
     knn_results[idx].distance = FLT_MAX;
+    knn_results[idx].vector_id = malloc(sizeof(struct vid));
   }
 
   // return k approximate results
@@ -2122,8 +2124,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         COUNT_PARTIAL_TIME_END
 
         update_query_stats(index, q_id, found_knn, bsf_result);
-        get_query_stats(index, found_knn);
-        print_query_stats(index, q_id, found_knn, qfilename);
+        // get_query_stats(index, found_knn);
+        // print_query_stats(index, q_id, found_knn, qfilename);
         print_perk_progressive_bsf_snapshots(
             index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
             bsf_result.distance, dataset_file, series_file, series);
@@ -2217,8 +2219,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     found_knn = pos + 1;
     COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
-    get_query_stats(index, found_knn);
-    print_query_stats(index, q_id, found_knn, qfilename);
+    // get_query_stats(index, found_knn);
+    // print_query_stats(index, q_id, found_knn, qfilename);
     print_perk_progressive_bsf_snapshots(
         index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
         bsf_result.distance, dataset_file, series_file, series);
@@ -2261,7 +2263,8 @@ struct query_result *exact_de_knn_search_2(
     unsigned int offset, struct dstree_index *index, ts_type minimum_distance,
     ts_type epsilon, ts_type r_delta, unsigned int k, unsigned int q_id,
     char *qfilename, double *total_query_set_time,
-    unsigned int *total_checked_ts) {
+    unsigned int *total_checked_ts)
+{
 
   unsigned int curr_size = 0;
   ts_type bsf = FLT_MAX;
@@ -2276,6 +2279,7 @@ struct query_result *exact_de_knn_search_2(
   for (int idx = 0; idx < k; ++idx) {
     knn_results[idx].node = NULL;
     knn_results[idx].distance = FLT_MAX;
+    knn_results[idx].vector_id = malloc(sizeof(struct vid));
   }
 
   // return k approximate results
@@ -2304,11 +2308,14 @@ struct query_result *exact_de_knn_search_2(
   index->stats->query_filter_checked_nodes_count = checked_nodes_count;
   index->stats->query_filter_checked_ts_count = checked_ts_count;
 
-  index->stats->query_approx_distance = sqrtf(approximate_result.distance);
-  index->stats->query_approx_node_filename = approximate_result.node->filename;
-  index->stats->query_approx_node_size = approximate_result.node->node_size;
-  ;
-  index->stats->query_approx_node_level = approximate_result.node->level;
+  /* start kashif changes (to fix)*/
+  // sig fault in this line
+  // index->stats->query_approx_distance = sqrtf(approximate_result.distance);
+  // index->stats->query_approx_node_filename = approximate_result.node->filename;
+  // index->stats->query_approx_node_size = approximate_result.node->node_size;
+  // ;
+  // index->stats->query_approx_node_level = approximate_result.node->level;
+  /* end kashif changes */
 
   index->stats->queries_filter_total_time +=
       index->stats->query_filter_total_time;
@@ -2504,6 +2511,7 @@ struct query_result *exact_de_progressive_knn_search_2(
   for (int idx = 0; idx < k; ++idx) {
     knn_results[idx].node = NULL;
     knn_results[idx].distance = FLT_MAX;
+    knn_results[idx].vector_id = malloc(sizeof(struct vid));
   }
 
   // return k approximate results
@@ -2655,8 +2663,8 @@ struct query_result *exact_de_progressive_knn_search_2(
     found_knn = pos + 1;
     // COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
-    get_query_stats(index, found_knn);
-    print_query_stats(index, q_id, found_knn, qfilename);
+    // get_query_stats(index, found_knn);
+    // print_query_stats(index, q_id, found_knn, qfilename);
     print_perk_progressive_bsf_snapshots(index, q_id, found_knn, qfilename,
                                          bsf_snapshots, *cur_bsf_snapshot,
                                          bsf_result.distance, NULL, NULL, NULL);
@@ -2839,7 +2847,13 @@ void print_perk_progressive_bsf_snapshots(
       printf("Query_bsf_snapshot_file_pos\t%u\t%s\t%u\t%u\n",
              (unsigned int)bsf_snapshots[found_knn - 1][j].file_pos, queries,
              query_num, found_knn);
-
+    
+    if (index->settings->track_vector) {
+      printf("Query_bsf_snapshot_vector_id\t(%u, %u)\t%s\t%u\t%u\n",
+             (unsigned int)bsf_snapshots[found_knn - 1][j].vector_id->table_id, 
+             (unsigned int)bsf_snapshots[found_knn - 1][j].vector_id->set_id, queries,
+             query_num, found_knn);
+    }
       // printf("%u,%u,%u",query_num-1,found_knn-1,j);
       // printf("COUCOU");
       /*
@@ -2865,7 +2879,8 @@ void print_perk_progressive_bsf_snapshots(
 void print_bsf_snapshots(struct dstree_index *index, unsigned int query_num,
                          unsigned int k, char *queries,
                          struct bsf_snapshot **bsf_snapshots,
-                         unsigned int cur_bsf_snapshot) {
+                         unsigned int cur_bsf_snapshot)
+{
 
   for (unsigned int i = 0; i < k; ++i) {
     for (unsigned int j = 0; j < cur_bsf_snapshot; ++j) {
@@ -2961,6 +2976,12 @@ void print_query_stats(struct dstree_index *index, unsigned int query_num,
            (unsigned int)index->stats->query_file_pos, queries, query_num,
            found_knn);
   }
+   if (index->settings->track_vector)
+  {
+    printf("Query_vector_id\t(%u, %u)\t%s\t%u\t%u\n",
+          index->stats->query_vector_id->table_id, index->stats->query_vector_id->set_id,
+          queries, query_num, found_knn);
+  } 
   printf("Query_exact_node_filename\t%s\t%s\t%u\t%u\n",
          index->stats->query_exact_node_filename, queries, query_num,
          found_knn);
@@ -3003,6 +3024,9 @@ void update_query_stats(struct dstree_index *index, unsigned int query_id,
     index->stats->query_label = bsf_result.label;
   if (index->settings->track_file_pos)
     index->stats->query_file_pos = bsf_result.file_pos;
+  if (index->settings->track_vector)
+    index->stats->query_vector_id = bsf_result.vector_id;
+  
 
   // index->stats->query_exact_node_filename = bsf_result.node->filename;
   // index->stats->query_exact_node_size = bsf_result.node->node_size;;

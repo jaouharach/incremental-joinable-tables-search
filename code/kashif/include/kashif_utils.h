@@ -14,8 +14,9 @@ typedef float ts_type;
 
 typedef struct vector 
 {
-  int table_id;
-  int set_id;
+  unsigned int table_id;
+  unsigned int set_id;
+  unsigned int pos;
   ts_type *values;
 } vector;
 
@@ -206,19 +207,19 @@ char * make_file_path(char * result_dir, unsigned int qtable_id, unsigned int qs
 		printf("WARNING! Experiment direstory '%s' does not exist!", result_dir);
 		exit(1);
 	}
-    char * filepath = malloc(get_ndigits(qtable_id) + get_ndigits(qset_id) + get_ndigits(total_data_files)
+  char * filepath = malloc(get_ndigits(qtable_id) + get_ndigits(qset_id) + get_ndigits(total_data_files)
 							 + get_ndigits(dlsize) + get_ndigits(vector_length) + get_ndigits((unsigned int) runtime) + get_ndigits(total_checked_vec)
 							 + get_ndigits(qsize) + strlen("TQ_Q_qsize_l_dlsize_len_runtime_ndistcalc_dataaccess.csv")
 							 + strlen(result_dir)
-							 + 6 // float decimal precision for dlsize and runtime (.00)
+							 + 10// float decimal precision for dlsize and runtime (.00)
 							 + 1);
 
-	sprintf(filepath, "%s/TQ%u_Q%u_qsize%u_l%u_dlsize%u_len%u_runtime%.4f_ndistcalc_dataaccess%u.csv"
+	sprintf(filepath, "%s/TQ%u_Q%u_qsize%u_l%u_dlsize%u_len%u_runtime%.3f_ndistcalc_dataaccess%u.csv\0"
 			, result_dir, qtable_id, qset_id, qsize, total_data_files, dlsize, vector_length, runtime, total_checked_vec);
-
+  
+  closedir(dir);
 	return filepath;
 }
-
 
 // save query results to csv file
 void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned int qset_id, int num_knns, struct query_result * knn_results)
@@ -227,16 +228,18 @@ void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned
 	int i,j;
 	fp = fopen(csv_file,"w+");
 
-  if (fp == NULL) {
-        fprintf(stderr, "Error in dstree_file_loaders.c: Could not open file %s!\n", csv_file);
-        return FAILURE;
+  if (fp == NULL)
+  {
+    fprintf(stderr, "Error in dstree_file_loaders.c: Could not open file %s!\n", csv_file);
+    return FAILURE;
   }
 
 	// write header
 	fprintf(fp, "TQ:Q, TS:S, qindex, sindex, q, s, d");
 	
   // write results
-  for(int i = 0; i < num_knns; i++){
+  for(int i = 0; i < num_knns; i++)
+  {
     fprintf(fp, "\n");
     fprintf(fp,"%u:%u, %u:%u, 0, 0, [], [], %.3f", qtable_id, qset_id, knn_results[i].vector_id->table_id, knn_results[i].vector_id->set_id, knn_results[i].distance);
   }

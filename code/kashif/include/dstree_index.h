@@ -35,6 +35,10 @@ struct dstree_index_settings {
 
 struct stats_info {
 
+  /* start kashif changes */
+  struct vid * query_vector_id; 
+  /* end kashif changes */
+
   double idx_traverse_tree_total_time;
   double idx_traverse_tree_input_time;
   double idx_traverse_tree_output_time;
@@ -330,6 +334,13 @@ struct dstree_index {
   // unsigned char * gt_cache;
   unsigned int *fp_cache;
   unsigned int fp_cache_size;
+
+  /* start kashif changes */
+  const char * vid_filename; 
+  FILE * vid_file;
+  unsigned int vid_pos_ctr;
+  struct vid * vid_cache;
+  /* end kahif changes */
 };
 
 struct dstree_index *dstree_index_init(struct dstree_index_settings *settings);
@@ -367,6 +378,8 @@ enum response dstree_index_classify_insert(struct dstree_index *index,
 // dstree_node * node);
 
 /* start kashif changes */
-enum response dstree_index_insert_vector(struct dstree_index *index, ts_type *vector, unsigned int table_id, unsigned int set_id);
+enum response dstree_index_insert_vector(struct dstree_index *index, 
+                    ts_type *vector, unsigned int table_id, 
+                    unsigned int set_id, unsigned int pos, FILE * sc_file);
 /* end kashif changes */
 #endif
