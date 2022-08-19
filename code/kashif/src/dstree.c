@@ -641,6 +641,8 @@ int main(int argc, char **argv) {
 
   dstree_index_destroy(index, index->first_node, is_index_new);
 
+  free(index->stats->leaves_heights);
+  free(index->stats->leaves_sizes);
   free(index->stats);
   free(index->settings);
   free(index);

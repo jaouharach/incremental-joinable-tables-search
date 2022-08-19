@@ -719,13 +719,25 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
       free(node->node_segment_split_policies);
     if (index->buffer_manager != NULL)
       destroy_buffer_manager(index);
-    if (index->settings->classify) {
+
+    if (index->settings->classify)
+    {
       if (index->gt_filename != NULL)
         free(index->gt_filename);
       if (index->gt_cache != NULL)
         free(index->gt_cache);
+    }
+    if(index->settings->track_file_pos)
+    {
+      if (index->fp_filename != NULL)
+        free(index->fp_filename);
       if (index->fp_cache != NULL)
         free(index->fp_cache);
+    }
+    if(index->settings->track_vector)
+    {
+      if (index->vid_filename != NULL)
+        free(index->vid_filename);
       if (index->vid_cache != NULL)
         free(index->vid_cache);
     }

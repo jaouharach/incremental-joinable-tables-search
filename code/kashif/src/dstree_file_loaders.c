@@ -495,7 +495,6 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
             query_time = 0.0;
             total_checked_ts = 0;
             qset_num--;
-            printf("malloc %u  results\n", k * nvec);
             all_knn_results = malloc(k * nvec * sizeof(struct query_result));
             knn_array_idx = 0;
             RESET_QUERY_COUNTERS ()
@@ -540,17 +539,17 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
                         &query_time, &total_checked_ts,
                         bsf_snapshots, &cur_bsf_snapshot);
                   }
-                  for (unsigned int i = 0; i < k; ++i)
+                  for (unsigned int b = 0; b < k; ++b) 
                   {
-                    for (unsigned int j = 0; j < max_bsf_snapshots; ++j)
+                    for (unsigned int f = 0; f < max_bsf_snapshots; ++f) 
                     {
-                      bsf_snapshots[i][j].distance = FLT_MAX;
-                      bsf_snapshots[i][j].time = FLT_MAX;
-                      bsf_snapshots[i][j].series = NULL;
-                      bsf_snapshots[i][j].checked_nodes = -1;
-                      bsf_snapshots[i][j].label = 0;
-                      bsf_snapshots[i][j].vector_id->table_id = -1;
-                      bsf_snapshots[i][j].vector_id->set_id = -1;
+                      bsf_snapshots[b][f].distance = FLT_MAX;
+                      bsf_snapshots[b][f].time = FLT_MAX;
+                      bsf_snapshots[b][f].series = NULL;
+                      bsf_snapshots[b][f].checked_nodes = -1;
+                      bsf_snapshots[b][f].label = 0;
+                      bsf_snapshots[b][f].vector_id->table_id = -1;
+                      bsf_snapshots[b][f].vector_id->set_id = -1;
                     }
                   }
                 }
@@ -562,13 +561,13 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
                               qvectors_loaded, bin_file_path, &query_time, &total_checked_ts);
                 }
 
-                //append new knn(s) to knn_results array
-                for(int i = 0; i < k; i++)
+                //copy new knn(s) to knn_results array
+                for(int t = 0; t < k; t++)
                 {
                   all_knn_results[knn_array_idx].vector_id = malloc(sizeof(struct vid));
-                  all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[i].vector_id->table_id;
-                  all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[i].vector_id->set_id;
-                  all_knn_results[knn_array_idx].distance = curr_knn[i].distance;
+                  all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
+                  all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
+                  all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
 
                   knn_array_idx++;
                 }
@@ -576,6 +575,11 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
                 {
                   printf("Error in dstree_file_loaders.c: Storing more results that expected!");
                   exit(1);
+                }
+
+                for(int t = 0; t < k; t++)
+                {
+                  free(curr_knn[t].vector_id);
                 }
                 free(curr_knn);
             }
@@ -619,15 +623,17 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
                         &query_time, &total_checked_ts,
                         bsf_snapshots, &cur_bsf_snapshot);
                   }
-                  for (unsigned int i = 0; i < k; ++i) {
-                    for (unsigned int j = 0; j < max_bsf_snapshots; ++j) {
-                      bsf_snapshots[i][j].distance = FLT_MAX;
-                      bsf_snapshots[i][j].time = FLT_MAX;
-                      bsf_snapshots[i][j].series = NULL;
-                      bsf_snapshots[i][j].checked_nodes = -1;
-                      bsf_snapshots[i][j].label = 0;
-                      bsf_snapshots[i][j].vector_id->table_id = -1;
-                      bsf_snapshots[i][j].vector_id->set_id = -1;
+                  for (unsigned int b = 0; b < k; ++b) 
+                  {
+                    for (unsigned int f= 0; f < max_bsf_snapshots; ++f) 
+                    {
+                      bsf_snapshots[b][f].distance = FLT_MAX;
+                      bsf_snapshots[b][f].time = FLT_MAX;
+                      bsf_snapshots[b][f].series = NULL;
+                      bsf_snapshots[b][f].checked_nodes = -1;
+                      bsf_snapshots[b][f].label = 0;
+                      bsf_snapshots[b][f].vector_id->table_id = -1;
+                      bsf_snapshots[b][f].vector_id->set_id = -1;
                     }
                   }
                 }
@@ -641,12 +647,12 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
                 
                 
                 //append new knn(s) to knn_results array
-                for(int i = 0; i < k; i++)
+                for(int t = 0; t < k; t++)
                 {
                   all_knn_results[knn_array_idx].vector_id = malloc(sizeof(struct vid));
-                  all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[i].vector_id->table_id;
-                  all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[i].vector_id->set_id;
-                  all_knn_results[knn_array_idx].distance = curr_knn[i].distance;
+                  all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
+                  all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
+                  all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
 
                   knn_array_idx++;
                 }
@@ -661,13 +667,21 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
                 char * query_result_file = make_file_path(results_dir, table_id, query_vector.set_id, nvec, total_data_files, dlsize, vector_length, query_time, total_checked_ts);
                 save_to_query_result_file(query_result_file, table_id, query_vector.set_id, k * nvec, all_knn_results);
 
+
+                // free memory
                 for(int w = 0; w < knn_array_idx; w++)
                 {
                   free(all_knn_results[w].vector_id);
                 }
                 free(all_knn_results);
+
+                for(int t = 0; t < k; t++)
+                {
+                  free(curr_knn[t].vector_id);
+                }
                 free(curr_knn);
-                // free(query_result_file);
+                free(query_result_file);
+                
                 RESET_PARTIAL_COUNTERS()
                 COUNT_PARTIAL_TIME_START
 
@@ -683,18 +697,31 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
       /* end read binary file */
     }
   }
-  free(curr_knn);
+  
   if(found_query == false)
   {
     fprintf(stderr, "WARNING! Could not find any query in size range [%u - %u].\n", min_qset_size, max_qset_size);
     exit(-1);
   }
+  if(opened_files == 0)
+  {
+    fprintf(stderr, "Error in dstree_file_loaders.c:  Could not find any binary file in directory %s.\n", bin_files_directory);
+    return FAILURE;
+  }
   COUNT_PARTIAL_TIME_END
   RESET_PARTIAL_COUNTERS()
 
+  // free memory
+  closedir(dir);
+  for(int t = 0; t < k; t++)
+  {
+    free(curr_knn[t].vector_id);
+  }
+  free(curr_knn);
   free(query_vector.values);
   free(query_vector_reordered);
   free(query_order);
+  free(results_dir);
 
   if (track_bsf)
   {
@@ -712,11 +739,7 @@ enum response dstree_knn_query_multiple_binary_files(const char *bin_files_direc
     }
     free(bsf_snapshots);
   }
-  if(opened_files == 0)
-  {
-    fprintf(stderr, "Error in dstree_file_loaders.c:  Could not find any binary file in directory %s.\n", bin_files_directory);
-    return FAILURE;
-  }
+  
   
   return SUCCESS;
 }

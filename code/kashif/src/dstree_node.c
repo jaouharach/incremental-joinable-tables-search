@@ -674,6 +674,11 @@ void calculate_node_knn_distance(
 
       queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
       update_snapshots = true;
+      
+      if (index->settings->track_vector)
+      {
+        free(object_result.vector_id);
+      }
     }
   }
   // only print the snapshots after finished visiting leaf
@@ -962,7 +967,9 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[k - 1].node = d.node;
       q[k - 1].label = d.label;
       q[k - 1].file_pos = d.file_pos;
-      q[k - 1].vector_id = d.vector_id;
+      q[k - 1].vector_id->table_id = d.vector_id->table_id;
+      q[k - 1].vector_id->set_id = d.vector_id->set_id;
+      q[k - 1].vector_id->pos = d.vector_id->pos;
     }
     else
     {
@@ -970,7 +977,9 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[*cur_size].node = d.node;
       q[*cur_size].label = d.label;
       q[*cur_size].file_pos = d.file_pos;
-      q[*cur_size].vector_id = d.vector_id;
+      q[*cur_size].vector_id->table_id = d.vector_id->table_id;
+      q[*cur_size].vector_id->set_id = d.vector_id->set_id;
+      q[*cur_size].vector_id->pos = d.vector_id->pos;
       ++(*cur_size);
     }
 
@@ -991,7 +1000,9 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
         q[j - 1].node = temp.node;
         q[j - 1].label = temp.label;
         q[j - 1].file_pos = temp.file_pos;
-        q[j - 1].vector_id = temp.vector_id;
+        q[j - 1].vector_id->table_id = temp.vector_id->table_id;
+        q[j - 1].vector_id->set_id = temp.vector_id->set_id;
+        q[j - 1].vector_id->pos = temp.vector_id->pos;
         --j;
       }
       ++idx;
