@@ -1006,7 +1006,12 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
         q[j].node = q[j - 1].node;
         q[j].label = q[j - 1].label;
         q[j].file_pos = q[j - 1].file_pos;
-        q[j].vector_id = q[j - 1].vector_id;
+
+        q[j].vector_id->table_id = q[j - 1].vector_id->table_id;
+        q[j].vector_id->set_id = q[j - 1].vector_id->set_id;
+        q[j].vector_id->pos = q[j - 1].vector_id->pos;
+        strcpy(q[j].vector_id->raw_data_file, q[j - 1].vector_id->raw_data_file);
+
         q[j - 1].distance = temp.distance;
         q[j - 1].node = temp.node;
         q[j - 1].label = temp.label;

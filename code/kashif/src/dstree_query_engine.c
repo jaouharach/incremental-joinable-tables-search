@@ -2126,9 +2126,16 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         update_query_stats(index, q_id, found_knn, bsf_result);
         // get_query_stats(index, found_knn);
         // print_query_stats(index, q_id, found_knn, qfilename);
+
+
+        printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+
         print_perk_progressive_bsf_snapshots(
             index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
             bsf_result.distance, dataset_file, series_file, series);
+
+        printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+
         // print_perk_progressive_bsf_snapshots(index,
         // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
         // bsf_result.distance, NULL, NULL); printf("found NN = %u\n",
@@ -2221,9 +2228,14 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     update_query_stats(index, q_id, found_knn, bsf_result);
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn, qfilename);
+
+    printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+
     print_perk_progressive_bsf_snapshots(
         index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
         bsf_result.distance, dataset_file, series_file, series);
+    
+    printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
     // print_perk_progressive_bsf_snapshots(index,
     // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
     // bsf_result.distance, NULL, NULL); report all results for found_knn -
@@ -2828,6 +2840,7 @@ void print_perk_progressive_bsf_snapshots(
         continue;
       }
     }
+    printf("(***)\n");
     printf("Query_bsf_snapshot_time_secs\t%lf\t%s\t%u\t%u\n",
            bsf_snapshots[found_knn - 1][j].time / 1000000, queries, query_num,
            found_knn);
@@ -2854,6 +2867,7 @@ void print_perk_progressive_bsf_snapshots(
              (unsigned int)bsf_snapshots[found_knn - 1][j].vector_id->set_id, queries,
              query_num, found_knn);
     }
+    printf("(***)\n");
       // printf("%u,%u,%u",query_num-1,found_knn-1,j);
       // printf("COUCOU");
       /*

@@ -330,7 +330,7 @@ enum response dstree_knn_query_binary_file(
 // new function query from multiple binary files
 enum response dstree_knn_query_multiple_binary_files(
     const char *bin_files_directory, unsigned int qset_num,
-    unsigned int min_qset_size, unsigned int max_qset_size, unsigned int x,
+    unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top,
     struct dstree_index *index, float minimum_distance, ts_type epsilon,
     ts_type r_delta, unsigned int k, boolean track_bsf, boolean track_pruning,
     boolean all_mindists, boolean max_policy, unsigned int nprobes,
@@ -345,7 +345,7 @@ enum response dstree_knn_query_multiple_binary_files(
   FILE *dataset_file = NULL;
 
   if (track_bsf) {
-    max_bsf_snapshots = 10000;
+    max_bsf_snapshots = 100;
     cur_bsf_snapshot = 0;
 
     bsf_snapshots = calloc(k, sizeof(struct bsf_snapshot *));
@@ -557,7 +557,7 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
               strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file, curr_knn[t].vector_id->raw_data_file);
               
-              printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
+              // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
 
               all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
 
@@ -638,7 +638,7 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
               strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file,  curr_knn[t].vector_id->raw_data_file);
               
-              printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
+              // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
 
               all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
               knn_array_idx++;
@@ -667,11 +667,17 @@ enum response dstree_knn_query_multiple_binary_files(
               exit(1);
             }
 
+            struct vid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
+            for(int m = 0; m < num_top; m++)
+            {
+              printf("(+) match %d:(%u, %u) file: %s\n", m, top[m].table_id, top[m].set_id, top[m].raw_data_file);
+            }
+
             // free memory
             for (int knn = 0; knn < (k * nvec); knn++)
               free(all_knn_results[knn].vector_id);
             free(all_knn_results);
-
+            free(top);
             free(query_result_file);
 
             RESET_PARTIAL_COUNTERS()

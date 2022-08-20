@@ -66,14 +66,14 @@ int main(int argc, char **argv) {
   float warping = 0;
 
   /* start kashif changes */
-  static char *result_dir =
-      "/home/jaouhara/Documents/Dissertation/dssdl/experiment-results/dstree/";
+  static char *result_dir = "";
+  static char *raw_data_dir = "";
   static unsigned int total_data_files = 100; // number of datasets to be indexed
   unsigned char track_vector = 0;
   unsigned int qset_num = 3;
   unsigned int min_qset_size = 5;
   unsigned int max_qset_size = 10;
-  unsigned int top = 3;           // number top sets to be returned
+  unsigned int num_top = 3;           // number top sets to be returned
   static unsigned int dlsize = 0; // datalake size in GB
   /* end kashif changes */
 
@@ -109,6 +109,7 @@ int main(int argc, char **argv) {
 
         /* start kashif changes */
         {"result-dir", required_argument, 0, '>'},
+        {"raw-data-dir", required_argument, 0, '^'},
         {"total-data-files", required_argument, 0,
          '|'}, // number of datasets to be indexed (tables)
         {"nq", required_argument, 0, '%'}, // number of query sets
@@ -116,8 +117,7 @@ int main(int argc, char **argv) {
          'y'}, // minimum query set set size (number of vectors)
         {"max-qset-size", required_argument, 0,
          'w'}, // maxmum query set set size (number of vectors)
-        {"top", required_argument, 0,
-         '#'}, // maxmum query set set size (number of vectors)
+        {"top", required_argument, 0, '#'}, // maxmum query set set size (number of vectors)
         {"track-vector", no_argument, 0, '*'},
         /* end kashif changes */
     };
@@ -295,11 +295,15 @@ int main(int argc, char **argv) {
       break;
 
     case '#':
-      top = atoi(optarg);
+      num_top = atoi(optarg);
       break;
 
     case '>':
       result_dir = optarg;
+      break;
+
+    case '^':
+      raw_data_dir = optarg;
       break;
 
     case '|':
@@ -529,7 +533,7 @@ int main(int argc, char **argv) {
     /* start kashif changes */
     dstree_knn_query_multiple_binary_files(queries, qset_num,
                                     min_qset_size, 
-                                    max_qset_size, top, index,
+                                    max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,
                                     k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, dlsize, warping);
@@ -584,7 +588,7 @@ int main(int argc, char **argv) {
 
       if (!dstree_knn_query_multiple_binary_files(queries, qset_num,
                                     min_qset_size, 
-                                    max_qset_size, top, index,
+                                    max_qset_size, num_top, index,
                                     minimum_distance, epsilon, delta,
                                     k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, dlsize, warping)) {

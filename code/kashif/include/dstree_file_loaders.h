@@ -40,7 +40,7 @@ enum response dstree_index_multiple_binary_files(const char * bin_files_director
 
 enum response dstree_knn_query_multiple_binary_files(
     const char *bin_files_directory, unsigned int qset_num,
-    unsigned int min_qset_size, unsigned int max_qset_size, unsigned int x,
+    unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top,
     struct dstree_index *index, float minimum_distance, ts_type epsilon,
     ts_type r_delta, unsigned int k, boolean track_bsf, boolean track_pruning,
     boolean all_mindists, boolean max_policy, unsigned int nprobes,

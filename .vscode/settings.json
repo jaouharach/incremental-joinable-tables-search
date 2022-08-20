@@ -3,6 +3,7 @@
         "kashif_utils.h": "c",
         "types.h": "c",
         "typeinfo": "c",
-        "ts.h": "c"
+        "ts.h": "c",
+        "string.h": "c"
     }
 }

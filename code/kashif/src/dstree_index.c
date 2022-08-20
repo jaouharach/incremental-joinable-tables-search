@@ -2260,13 +2260,13 @@ struct dstree_node *dstree_node_read(struct dstree_index *index, FILE *file)
       if(index->settings->track_file_pos)
       {
         fread(&(node->fp_pos), sizeof(unsigned int), 1, file);
-        fread(&(node->fp), sizeof(unsigned int), node->node_size, index->fp_file);
       }
 
       if(index->settings->track_vector)
       {
         fread(&(node->vid_pos), sizeof(unsigned int), 1, file);
-        fread(&(node->vid), sizeof(struct vid), node->node_size, index->vid_file);
+        // vids are read to vid_cache
+        // fread(&(node->vid), sizeof(struct vid), node->node_size, index->vid_file);
       }
 
       index->stats->leaves_heights[index->stats->leaves_counter] =
