@@ -670,15 +670,15 @@ void calculate_node_knn_distance(
         // object_result.vector_id->set_id = 0;
         object_result.vector_id->table_id = index->vid_cache[(node->vid_pos) + idx].table_id;
         object_result.vector_id->set_id = index->vid_cache[(node->vid_pos) + idx].set_id;
+        object_result.vector_id->pos = index->vid_cache[(node->vid_pos) + idx].pos;
       }
 
       queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
       update_snapshots = true;
       
       if (index->settings->track_vector)
-      {
         free(object_result.vector_id);
-      }
+      
     }
   }
   // only print the snapshots after finished visiting leaf
@@ -688,22 +688,27 @@ void calculate_node_knn_distance(
     gettimeofday(&current_time_bsf, NULL);
     tS_bsf = partial_time_start.tv_sec * 1000000 + (partial_time_start.tv_usec);
     tE_bsf = current_time_bsf.tv_sec * 1000000 + (current_time_bsf.tv_usec);
+    
     for (int j = 0; j < k; ++j) {
       bsf_snapshots[j][*cur_bsf_snapshot].distance = knn_results[j].distance;
       bsf_snapshots[j][*cur_bsf_snapshot].time = tE_bsf - tS_bsf;
       bsf_snapshots[j][*cur_bsf_snapshot].checked_nodes = checked_nodes_count;
+
       if (index->settings->classify)
         bsf_snapshots[j][*cur_bsf_snapshot].label = knn_results[j].label;
+
       if (index->settings->track_file_pos) {
         bsf_snapshots[j][*cur_bsf_snapshot].file_pos = knn_results[j].file_pos;
         // bsf_snapshots[j][*cur_bsf_snapshot].series = calloc (1,
         // ts_byte_size);
         // mempcpy(bsf_snapshots[j][*cur_bsf_snapshot].series,knn_results[j].series,ts_byte_size);
       }
+
       if(index->settings->track_vector)
       {
         bsf_snapshots[j][*cur_bsf_snapshot].vector_id->table_id = knn_results[j].vector_id->table_id;
         bsf_snapshots[j][*cur_bsf_snapshot].vector_id->set_id = knn_results[j].vector_id->set_id;
+        bsf_snapshots[j][*cur_bsf_snapshot].vector_id->pos = knn_results[j].vector_id->pos;
       }
     }
     ++(*cur_bsf_snapshot);

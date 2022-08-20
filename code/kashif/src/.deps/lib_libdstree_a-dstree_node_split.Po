@@ -1,6 +1,7 @@
 src/lib_libdstree_a-dstree_node_split.o: src/dstree_node_split.c \
- /usr/include/stdc-predef.h src/../config.h src/../globals.h \
- src/../config.h /usr/include/stdlib.h \
+ /usr/include/stdc-predef.h src/../include/dstree_node_split.h \
+ src/../include/../config.h src/../include/../globals.h \
+ src/../include/../config.h /usr/include/stdlib.h \
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -54,7 +55,9 @@ src/lib_libdstree_a-dstree_node_split.o: src/dstree_node_split.c \
  /usr/include/x86_64-linux-gnu/bits/time.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h \
  /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h \
- /usr/include/x86_64-linux-gnu/sys/time.h /usr/include/stdio.h \
+ /usr/include/x86_64-linux-gnu/sys/time.h src/../include/dstree_index.h \
+ src/../include/calc_utils.h src/../include/dstree_file_buffer_manager.h \
+ src/../include/ts.h /usr/include/stdio.h \
  /usr/include/x86_64-linux-gnu/bits/types/__FILE.h \
  /usr/include/x86_64-linux-gnu/bits/types/FILE.h \
  /usr/include/x86_64-linux-gnu/bits/libio.h \
@@ -63,22 +66,21 @@ src/lib_libdstree_a-dstree_node_split.o: src/dstree_node_split.c \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdarg.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
  /usr/include/x86_64-linux-gnu/bits/sys_errlist.h \
- src/../include/dstree_node.h src/../include/../config.h \
- src/../include/../globals.h src/../include/dstree_node_split.h \
- src/../include/dstree_index.h src/../include/calc_utils.h \
- src/../include/dstree_file_buffer_manager.h src/../include/ts.h \
  src/../include/dstree_file_buffer.h src/../include/dstree_node.h \
- src/../include/pqueue.h src/../include/dstree_query_engine.h \
- src/../include/dstree_index.h src/../include/dstree_node_split.h \
- src/../include/calc_utils.h
+ src/../include/dstree_node_split.h src/../include/pqueue.h \
+ src/../include/dstree_query_engine.h src/../config.h src/../globals.h \
+ src/../include/calc_utils.h src/../include/dstree_index.h \
+ src/../include/dstree_node.h
 
 /usr/include/stdc-predef.h:
 
-src/../config.h:
+src/../include/dstree_node_split.h:
 
-src/../globals.h:
+src/../include/../config.h:
 
-src/../config.h:
+src/../include/../globals.h:
+
+src/../include/../config.h:
 
 /usr/include/stdlib.h:
 
@@ -208,6 +210,14 @@ src/../config.h:
 
 /usr/include/x86_64-linux-gnu/sys/time.h:
 
+src/../include/dstree_index.h:
+
+src/../include/calc_utils.h:
+
+src/../include/dstree_file_buffer_manager.h:
+
+src/../include/ts.h:
+
 /usr/include/stdio.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
@@ -226,32 +236,22 @@ src/../config.h:
 
 /usr/include/x86_64-linux-gnu/bits/sys_errlist.h:
 
-src/../include/dstree_node.h:
-
-src/../include/../config.h:
-
-src/../include/../globals.h:
-
-src/../include/dstree_node_split.h:
-
-src/../include/dstree_index.h:
-
-src/../include/calc_utils.h:
-
-src/../include/dstree_file_buffer_manager.h:
-
-src/../include/ts.h:
-
 src/../include/dstree_file_buffer.h:
 
 src/../include/dstree_node.h:
+
+src/../include/dstree_node_split.h:
 
 src/../include/pqueue.h:
 
 src/../include/dstree_query_engine.h:
 
-src/../include/dstree_index.h:
+src/../config.h:
 
-src/../include/dstree_node_split.h:
+src/../globals.h:
 
 src/../include/calc_utils.h:
+
+src/../include/dstree_index.h:
+
+src/../include/dstree_node.h:

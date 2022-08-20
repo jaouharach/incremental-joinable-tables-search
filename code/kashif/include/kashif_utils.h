@@ -24,7 +24,7 @@ typedef struct vector
 char * make_file_path(char * result_dir, unsigned int qtable_id, unsigned int qset_id, unsigned int qsize, unsigned int l, unsigned int dlsize, unsigned int vector_length, float runtime, unsigned int total_checked_vec);
 
 // save query results to csv file
-void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned int qset_id, int num_knns, struct query_result * knn_results);
+enum response save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned int qset_id, int num_knns, struct query_result * knn_results);
 
 // create experiment results dir
 char * make_result_directory(char * result_dir, unsigned int total_data_files, unsigned int nq, unsigned int min_qset_size, unsigned int max_qset_size);
@@ -222,7 +222,7 @@ char * make_file_path(char * result_dir, unsigned int qtable_id, unsigned int qs
 }
 
 // save query results to csv file
-void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned int qset_id, int num_knns, struct query_result * knn_results)
+enum response save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned int qset_id, int num_knns, struct query_result * knn_results)
 {	
   FILE *fp;
 	int i,j;
@@ -244,6 +244,8 @@ void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned
     fprintf(fp,"%u:%u, %u:%u, 0, 0, [], [], %.3f", qtable_id, qset_id, knn_results[i].vector_id->table_id, knn_results[i].vector_id->set_id, knn_results[i].distance);
   }
 	fclose(fp);
+
+  return SUCCESS;
 }
 
 // create results dir

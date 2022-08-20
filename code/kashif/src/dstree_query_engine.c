@@ -85,7 +85,7 @@ void approximate_knn_search(ts_type *query_ts, ts_type *query_ts_reordered,
                                 offset, bsf, k, knn_results, bsf_snapshots,
                                 cur_bsf_snapshot, curr_size, warping);
   } else {
-    printf("Error: index is empty \n");
+    printf("Error in dstree_query_engine: null pointer to node.\n");
   }
 }
 
