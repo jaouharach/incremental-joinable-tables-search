@@ -537,6 +537,7 @@ enum response dstree_knn_query_multiple_binary_files(
                   bsf_snapshots[b][f].vector_id->table_id = -1;
                   bsf_snapshots[b][f].vector_id->set_id = -1;
                   bsf_snapshots[b][f].vector_id->pos = -1;
+                  strcpy(bsf_snapshots[b][f].vector_id->raw_data_file, "");
                 }
               }
             }
@@ -551,12 +552,13 @@ enum response dstree_knn_query_multiple_binary_files(
 
             // copy new knn(s) to knn_results array
             for (int t = 0; t < k; t++) {
-              all_knn_results[knn_array_idx].vector_id->table_id =
-                  curr_knn[t].vector_id->table_id;
-              all_knn_results[knn_array_idx].vector_id->set_id =
-                  curr_knn[t].vector_id->set_id;
-              all_knn_results[knn_array_idx].vector_id->pos =
-                  curr_knn[t].vector_id->pos;
+              all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
+              all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
+              all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
+              strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file, curr_knn[t].vector_id->raw_data_file);
+              
+              printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
+
               all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
 
               knn_array_idx++;
@@ -616,6 +618,7 @@ enum response dstree_knn_query_multiple_binary_files(
                   bsf_snapshots[b][f].vector_id->table_id = -1;
                   bsf_snapshots[b][f].vector_id->set_id = -1;
                   bsf_snapshots[b][f].vector_id->pos = -1;
+                  strcpy(bsf_snapshots[b][f].vector_id->raw_data_file, "");
                 }
               }
             }
@@ -633,8 +636,11 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
               all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
               all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
-              all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
+              strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file,  curr_knn[t].vector_id->raw_data_file);
+              
+              printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
 
+              all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
               knn_array_idx++;
             }
 
@@ -1402,7 +1408,7 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
             j = 0;
             /*Index v in dstree */
             if (!dstree_index_insert_vector(index, v.values, v.table_id,
-                                            v.set_id, v.pos, sc_file)) {
+                                            v.set_id, v.pos, dfile->d_name, sc_file)) {
               fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add "
                               "the time series to the index.\n");
               return FAILURE;
@@ -1435,7 +1441,7 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
           if (i == (unsigned int)nvec * vector_length) {
             /*Index v in dstree */
             if (!dstree_index_insert_vector(index, v.values, v.table_id,
-                                            v.set_id, v.pos, sc_file)) {
+                                            v.set_id, v.pos, dfile->d_name, sc_file)) {
               fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add "
                               "the time series to the index.\n");
               return FAILURE;

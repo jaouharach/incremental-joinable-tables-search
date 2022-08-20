@@ -671,6 +671,7 @@ void calculate_node_knn_distance(
         object_result.vector_id->table_id = index->vid_cache[(node->vid_pos) + idx].table_id;
         object_result.vector_id->set_id = index->vid_cache[(node->vid_pos) + idx].set_id;
         object_result.vector_id->pos = index->vid_cache[(node->vid_pos) + idx].pos;
+        strcpy(object_result.vector_id->raw_data_file, index->vid_cache[(node->vid_pos) + idx].raw_data_file);
       }
 
       queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
@@ -688,7 +689,7 @@ void calculate_node_knn_distance(
     gettimeofday(&current_time_bsf, NULL);
     tS_bsf = partial_time_start.tv_sec * 1000000 + (partial_time_start.tv_usec);
     tE_bsf = current_time_bsf.tv_sec * 1000000 + (current_time_bsf.tv_usec);
-    
+
     for (int j = 0; j < k; ++j) {
       bsf_snapshots[j][*cur_bsf_snapshot].distance = knn_results[j].distance;
       bsf_snapshots[j][*cur_bsf_snapshot].time = tE_bsf - tS_bsf;
@@ -709,6 +710,8 @@ void calculate_node_knn_distance(
         bsf_snapshots[j][*cur_bsf_snapshot].vector_id->table_id = knn_results[j].vector_id->table_id;
         bsf_snapshots[j][*cur_bsf_snapshot].vector_id->set_id = knn_results[j].vector_id->set_id;
         bsf_snapshots[j][*cur_bsf_snapshot].vector_id->pos = knn_results[j].vector_id->pos;
+        strcpy(bsf_snapshots[j][*cur_bsf_snapshot].vector_id->raw_data_file, 
+              knn_results[j].vector_id->raw_data_file);
       }
     }
     ++(*cur_bsf_snapshot);
@@ -975,6 +978,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[k - 1].vector_id->table_id = d.vector_id->table_id;
       q[k - 1].vector_id->set_id = d.vector_id->set_id;
       q[k - 1].vector_id->pos = d.vector_id->pos;
+      strcpy(q[k - 1].vector_id->raw_data_file, d.vector_id->raw_data_file);
     }
     else
     {
@@ -985,6 +989,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[*cur_size].vector_id->table_id = d.vector_id->table_id;
       q[*cur_size].vector_id->set_id = d.vector_id->set_id;
       q[*cur_size].vector_id->pos = d.vector_id->pos;
+      strcpy(q[*cur_size].vector_id->raw_data_file, d.vector_id->raw_data_file);
+
       ++(*cur_size);
     }
 
@@ -1008,6 +1014,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
         q[j - 1].vector_id->table_id = temp.vector_id->table_id;
         q[j - 1].vector_id->set_id = temp.vector_id->set_id;
         q[j - 1].vector_id->pos = temp.vector_id->pos;
+        strcpy(q[j - 1].vector_id->raw_data_file, temp.vector_id->raw_data_file);
         --j;
       }
       ++idx;
@@ -1022,7 +1029,8 @@ enum response append_vector_to_node(struct dstree_index *index,
                                     struct dstree_node *node, ts_type *vector,
                                     unsigned int table_id,
                                     unsigned int set_id,
-                                    unsigned int pos, FILE * sc_file)
+                                    unsigned int pos, 
+                                    char * raw_data_file, FILE * sc_file)
 {
   if (!get_file_buffer(index, node)) {
     fprintf(stderr, "Error in dstree_index.c:  Could not get the \
@@ -1072,7 +1080,7 @@ enum response append_vector_to_node(struct dstree_index *index,
     node->vid[node->node_size - 1].table_id = table_id;
     node->vid[node->node_size - 1].set_id = set_id;
     node->vid[node->node_size - 1].pos = pos;
-    fprintf(sc_file, "(%u, %u, %u)", table_id, set_id, pos);
+    strcpy(node->vid[node->node_size - 1].raw_data_file, raw_data_file);
   }
 
 
@@ -1084,7 +1092,7 @@ enum response append_vector_to_node(struct dstree_index *index,
 
 enum response append_vector_to_child_node(struct dstree_index *index,
               struct dstree_node *node, ts_type *vector, unsigned int table_id, 
-              unsigned int set_id, unsigned int pos)
+              unsigned int set_id, unsigned int pos, char * raw_data_file)
 {
   // fprintf(stderr, "IN APPEND TS TO CHILD NODE.\n");
   if (!get_file_buffer(index, node)) {
@@ -1136,6 +1144,7 @@ enum response append_vector_to_child_node(struct dstree_index *index,
     node->vid[node->node_size - 1].table_id = table_id;
     node->vid[node->node_size - 1].set_id = set_id;
     node->vid[node->node_size - 1].pos = pos;
+    strcpy(node->vid[node->node_size - 1].raw_data_file, raw_data_file);
   }
 
   ++node->file_buffer->buffered_list_size;

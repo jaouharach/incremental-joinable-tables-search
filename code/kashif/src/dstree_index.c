@@ -2339,8 +2339,8 @@ struct dstree_node *dstree_node_read(struct dstree_index *index, FILE *file)
 /* start kashif changes */
 enum response dstree_index_insert_vector(struct dstree_index *index,
                                   ts_type *vector, unsigned int table_id, 
-                                  unsigned int set_id, 
-                                  unsigned int pos, FILE * sc_file) 
+                                  unsigned int set_id, unsigned int pos, 
+                                  char * raw_data_file, FILE * sc_file) 
 {
   // traverse the index tree to find the appropriate node
   struct dstree_node *node = index->first_node;
@@ -2389,7 +2389,7 @@ enum response dstree_index_insert_vector(struct dstree_index *index,
       return FAILURE;
     }
 
-    if (!append_vector_to_node(index, node, vector, table_id, set_id, pos, sc_file)) {
+    if (!append_vector_to_node(index, node, vector, table_id, set_id, pos, raw_data_file, sc_file)) {
       fprintf(stderr, "Error in dstree_index.c: could not append \
                         time series to node %s\n",
               node->filename);
@@ -2738,7 +2738,7 @@ enum response dstree_index_insert_vector(struct dstree_index *index,
           }
 
           if (!append_vector_to_child_node(index, node->left_child, ts_list[idx],
-                  node->vid[idx].table_id, node->vid[idx].set_id, node->vid[idx].pos)) {
+                  node->vid[idx].table_id, node->vid[idx].set_id, node->vid[idx].pos, node->vid[idx].raw_data_file)) {
             fprintf(stderr, "Error in dstree_index.c: could not append \
                            time series to left child of \
                            node %s\n",
@@ -2756,7 +2756,7 @@ enum response dstree_index_insert_vector(struct dstree_index *index,
           }
 
           if (!append_vector_to_child_node(index, node->right_child,ts_list[idx],
-                  node->vid[idx].table_id, node->vid[idx].set_id, node->vid[idx].pos)) {
+                  node->vid[idx].table_id, node->vid[idx].set_id, node->vid[idx].pos, node->vid[idx].raw_data_file)) {
             fprintf(stderr, "Error in dstree_index.c: could not append \
                            time series to right child of \
                            node %s\n",
