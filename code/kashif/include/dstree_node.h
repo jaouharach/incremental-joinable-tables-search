@@ -27,7 +27,7 @@ struct vid {
   unsigned int table_id;
   unsigned int set_id;
   unsigned int pos;
-  char raw_data_file[100]; // name of the raw (json) file where vector is store
+  char raw_data_file[256]; // name of the raw (json) file where vector is store (max file name size in linux is 255 characters)
 };
 /* end kashif changes */
 struct dstree_node {

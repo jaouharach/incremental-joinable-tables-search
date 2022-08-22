@@ -2128,13 +2128,13 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         // print_query_stats(index, q_id, found_knn, qfilename);
 
 
-        printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+        // printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
 
-        print_perk_progressive_bsf_snapshots(
-            index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
-            bsf_result.distance, dataset_file, series_file, series);
+        // print_perk_progressive_bsf_snapshots(
+        //     index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
+        //     bsf_result.distance, dataset_file, series_file, series);
 
-        printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+        // printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
 
         // print_perk_progressive_bsf_snapshots(index,
         // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
@@ -2229,13 +2229,13 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn, qfilename);
 
-    printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+    // printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
 
-    print_perk_progressive_bsf_snapshots(
-        index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
-        bsf_result.distance, dataset_file, series_file, series);
+    // print_perk_progressive_bsf_snapshots(
+    //     index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
+    //     bsf_result.distance, dataset_file, series_file, series);
     
-    printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+    // printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
     // print_perk_progressive_bsf_snapshots(index,
     // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
     // bsf_result.distance, NULL, NULL); report all results for found_knn -

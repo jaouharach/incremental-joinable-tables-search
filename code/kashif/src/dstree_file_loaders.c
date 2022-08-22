@@ -345,7 +345,7 @@ enum response dstree_knn_query_multiple_binary_files(
   FILE *dataset_file = NULL;
 
   if (track_bsf) {
-    max_bsf_snapshots = 100;
+    max_bsf_snapshots = 10000;
     cur_bsf_snapshot = 0;
 
     bsf_snapshots = calloc(k, sizeof(struct bsf_snapshot *));
@@ -393,8 +393,7 @@ enum response dstree_knn_query_multiple_binary_files(
     return FAILURE;
 
   /* Start experiment  - create experiment result directory */
-  char *results_dir = make_result_directory(
-      result_dir, total_data_files, qset_num, min_qset_size, max_qset_size);
+  char *results_dir = make_result_directory(result_dir, total_data_files, qset_num, min_qset_size, max_qset_size);
 
   // initialize list of all knn results (from all query vectors in query set)
   struct query_result *all_knn_results = NULL;
