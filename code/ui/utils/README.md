@@ -1,0 +1,2 @@
+code to clean ambed and convert user query to a binary file. The user submits a csv file and a column id (starting from 0)
+the query column is extracted, cleaned (to only keep text data, remove special characters and numbers) and converted into embeddings. the result file is saved in uploads/bins. the query file is always names tOc1 (table id = 0 total column = 1). thus the uploads/bins foloder only contains 1 file for the last executed query.

@@ -2,6 +2,7 @@ import os
 from flask import Flask, flash, render_template, request, redirect
 import pandas as pd
 import subprocess
+import shutil
 
 import sys
 sys.path.append('./utils/clean')
@@ -23,6 +24,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# convert query file into a binary file in the format [total_vectors_in column][vector_1][vector_2]...
+# every [value] is stored in 4 bytes
 def create_bin_query_file(tmp_query_file, glove_file):
     embedding_process = subprocess.Popen(['python3', './utils/embed/embed_2.py', TMP_FOLDER, JSON_FOLDER,  GLOVE_PATH, str(EMBEDDING_DIM)],
                                 stdout=subprocess.PIPE)
@@ -34,8 +37,7 @@ def create_bin_query_file(tmp_query_file, glove_file):
     
     return stdout
     
-
-
+# create temp file for the query column
 def create_temp_query_file(query_file , column_idx):
     df = pd.read_csv(query_file)
     print(f"shape = {df.shape}")
@@ -52,6 +54,15 @@ def create_temp_query_file(query_file , column_idx):
         else:
             return query_file
 
+def clear_folders(upload_folders):
+    for folder in upload_folders:
+        with os.scandir(folder) as entries:
+            for entry in entries:
+                if entry.is_dir() and not entry.is_symlink():
+                    shutil.rmtree(entry.path)
+                else:
+                    os.remove(entry.path)
+    return True
 
 @app.route('/')
 def home():
@@ -71,11 +82,14 @@ def process_query():
         top = int(request.form['top'])
         approx_error = float(request.form['approx_error'])
 
-        print(f"idx = {column_idx}")
-        # empty file without a filename.
+        # file without a filename.
         if input_file.filename == '':
             flash('No selected file')
             return redirect(request.url)
+
+        # empty upload files
+        if(clear_folders([TMP_FOLDER, JSON_FOLDER, BIN_FOLDER]) != True):
+            return render_template("index.html", data="Could't clear upload folders")
 
         # upload query column to server
         tmp_query_file = create_temp_query_file(request.files.get('query_file'), column_idx)
