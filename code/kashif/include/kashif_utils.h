@@ -126,7 +126,7 @@ unsigned int get_total_data_vectors(char *bindir,
   unsigned int total_datasize = 0;
   unsigned int datasize;
   if (!dir) {
-    printf("Unable to open directory stream!");
+    printf("Unable to open directory stream! %s", bindir);
     exit(1);
   }
 
@@ -153,7 +153,7 @@ unsigned int get_dlsize(char *dl_dir, unsigned int total_data_files) {
   FILE *fp;
 
   if (!dir) {
-    printf("Unable to open directory stream!");
+    printf("Unable to open directory stream! %s", dl_dir);
     exit(1);
   }
 

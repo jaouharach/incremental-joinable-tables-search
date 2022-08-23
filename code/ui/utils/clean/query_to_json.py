@@ -40,6 +40,7 @@ def query_to_json(query_array, target_dir):
     if not new_array or len(new_array) == 0:
         return -1 # query column is a numerical column!
     else:
+        query_size = len(new_array)
         data = {'id': 0, 'ncols':  1, 'cols': [new_array]}
 
         
@@ -48,7 +49,7 @@ def query_to_json(query_array, target_dir):
             # save table to temp folder
             file = save_file(data, target_dir)
             print(f'Success! output file has been created, file name : {file}\n')
-            return file
+            return file, query_size
         else:
             print("Error query_to_json.py: couldn't clear target directory.")
 

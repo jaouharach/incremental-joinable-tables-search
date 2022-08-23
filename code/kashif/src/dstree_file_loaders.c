@@ -372,7 +372,7 @@ enum response dstree_knn_query_multiple_binary_files(
   DIR *dir = opendir(bin_files_directory);
 
   if (!dir) {
-    printf("Unable to open directory stream!");
+    printf("Unable to open directory stream! %s", bin_files_directory);
     exit(1);
   }
 

@@ -35,10 +35,8 @@ int main(int argc, char **argv) {
   COUNT_TOTAL_TIME_START
 
   static char *dataset = "/home/karima/myDisk/data/Cgenerator/data_current.txt";
-  static char *queries =
-      "/home/karima/myDisk/data/Cgenerator/query_current.txt";
-  static char *dataset_hists =
-      "/home/karima/myDisk/data/Cgenerator/data_current_hists.txt";
+  static char *queries = "/home/karima/myDisk/data/Cgenerator/query_current.txt";
+  static char *dataset_hists = "/home/karima/myDisk/data/Cgenerator/data_current_hists.txt";
 
   static char *index_path = "out/";
   static unsigned int dataset_size = 1000;
@@ -71,8 +69,8 @@ int main(int argc, char **argv) {
   static unsigned int total_data_files = 100; // number of datasets to be indexed
   unsigned char track_vector = 0;
   unsigned int qset_num = 3;
-  unsigned int min_qset_size = 5;
-  unsigned int max_qset_size = 10;
+  unsigned int min_qset_size = 0;
+  unsigned int max_qset_size = 10000;
   unsigned int num_top = 3;           // number top sets to be returned
   static unsigned int dlsize = 0; // datalake size in GB
   /* end kashif changes */
@@ -320,6 +318,7 @@ int main(int argc, char **argv) {
   }
 
   /* start kashif changes */
+  printf("\n%s\n", index_path);
   dataset_size = get_total_data_vectors(dataset, total_data_files); // get total number of vectors in data repository
   dlsize = get_dlsize(dataset, total_data_files);
   printf("Start Experiment...\nData Lake size: \nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", dataset_size, dlsize);
