@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="keywords"
+      content="wrappixel, admin dashboard, html css dashboard, web dashboard, bootstrap 5 admin, bootstrap 5, css3 dashboard, bootstrap 5 dashboard, Matrix lite admin bootstrap 5 dashboard, frontend, responsive bootstrap 5 admin template, Matrix admin lite design, Matrix admin lite dashboard bootstrap 5 dashboard template"
+    />
+    <meta
+      name="description"
+      content="Matrix Admin Lite Free Version is powerful and clean admin dashboard template, inpired from Bootstrap Framework"
+    />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>---</title>
+    <!-- Favicon icon -->
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="../assets/images/favicon.png"
+    />
+    <!-- Custom CSS -->
+    <link href="../dist/css/style.min.css" rel="stylesheet" />
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <style>
+      .input-group-btn.input-space {
+        padding-left: 20px;
+        padding-right: 20px;
+        /* padding-top: 10px; */
+      }
+      .space-20 {
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+
+        /* padding-top: 10px; */
+      }
+      .navbar-form {
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+      .dropdown-menu {
+        min-width: 250px;
+        /* min-height: 150px; */
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ============================================================== -->
+    <!-- Preloader - style you can find in spinners.css -->
+    <!-- ============================================================== -->
+    <div class="preloader">
+      <div class="lds-ripple">
+        <div class="lds-pos"></div>
+        <div class="lds-pos"></div>
+      </div>
+    </div>
+    <!-- ============================================================== -->
+    <!-- Main wrapper - style you can find in pages.scss -->
+    <!-- ============================================================== -->
+    <div
+      id="main-wrapper"
+      data-layout="vertical"
+      data-navbarbg="skin5"
+      data-sidebartype="full"
+      data-sidebar-position="absolute"
+      data-header-position="absolute"
+      data-boxed-layout="full"
+    >
+      <!-- ============================================================== -->
+      <!-- Topbar header - style you can find in pages.scss -->
+      <!-- ============================================================== -->
+      <header class="topbar" data-navbarbg="skin5">
+        <nav class="navbar top-navbar navbar-expand-md navbar-dark">
+    
+          <div class="navbar-collapse collapse" id="navbarSupportedContent" data-navbarbg="skin5">
+            <!-- ============================================================== -->
+            <!-- toggle and nav items -->
+            <!-- ============================================================== -->
+            <ul class="navbar-nav float-start me-auto">
+              <li class="nav-item d-none d-sm-block">
+                <a
+                  class="nav-link sidebartoggler waves-effect waves-light"
+                  href="javascript:void(0)"
+                  data-sidebartype="mini-sidebar"
+                  ><i class="mdi mdi-menu font-24"></i
+                ></a>
+              </li>
+            </ul>
+              <form action="../actions/update_input.php">
+                <div class="navbar-nav input-group">
+                 <span class="nav-link dropdown-toggle">
+                    Upload a dataset
+                  </span>
+                  <input type="file" class="form-control form-control-sm"  aria-label="Recipient's username" aria-describedby="basic-addon2">
+                  <span class="input-space nav-link">Query column </span>
+                  <input type="number" class="form-control form-control-sm"   min="0" width="8" placeholder="1">
+                  <span class="nav-link dropdown-toggle">
+                    Approx. Error
+                  </span>
+                  <input type="number" class="form-control form-control-sm" min="0.0" max="0.9" placeholder="0.1" step="0.1" aria-describedby="basic-addon2">
+                  <span class="nav-link dropdown-toggle">
+                    Top-
+                  </span>
+                  <input type="number" class="form-control form-control-sm" min="0" placeholder="10" aria-describedby="basic-addon2">
+                  
+                  <span class="input-group-btn input-space">
+                  <button class="btn btn-primary btn-sm" type="submit">Search</button>
+                  </span>
+                </div>
+              </form>
+          </div>
+        </nav>
+      </header>
+      <!-- ============================================================== -->
+      <!-- End Topbar header -->
+      <!-- ============================================================== -->
+      <!-- ============================================================== -->
+      <!-- Left Sidebar - style you can find in sidebar.scss  -->
+      <!-- ============================================================== -->
+      <aside class="left-sidebar" data-sidebarbg="skin5">
+        <!-- Sidebar scroll-->
+          <!-- Sidebar navigation-->
+          <nav class="sidebar-nav">
+            <ul id="sidebarnav" class="pt-2">
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link dropdown-toggle"
+                  href="#"
+                  id="ndv"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  ><i class="mdi mdi-settings"></i
+                  ><span class="hide-menu">Settings</span></a>
+                  
+                  <ul class="dropdown-menu row" aria-labelledby="nvd" style="background-color: white;">
+                    <div class="dropdown-divider"></div>
+                    <form>
+                      <div class="form-group row">
+                        <label for="staticEmail" class="col-sm-6 col-form-label">Top-</label>
+                        <div class="col-sm-6">
+                          <input type="number" min="0" class="form-control form-control-sm" placeholder="10" id="top-">
+                        </div>
+                      </div>
+                      <div class="dropdown-divider"></div>
+                      <div class="form-group row">
+                        <label for="inputPassword" class="col-sm-6 col-form-label">Approx. Error</label>
+                        <div class="col-sm-6">
+                          <input type="number" step="0.1" max="0.9" class="form-control form-control-sm" id="approx_error" placeholder="0.0">
+                        </div>
+                      </div>
+                    </form>
+                  </ul>
+              </li>
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                  href="#"
+                  ><i class="mdi mdi-folder-multiple-outline"></i
+                  ><span class="hide-menu">Results</span></a>
+              </li>
+              <li class="sidebar-item">
+                <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                  href="#"
+                  ><i class="mdi mdi-help-circle"></i
+                  ><span class="hide-menu">Help</span></a>
+              </li>
+            </ul>
+          </nav>
+          <!-- End Sidebar navigation -->
+        <!-- End Sidebar scroll-->
+      </aside>
+      <!-- ============================================================== -->
+      <!-- End Left Sidebar - style you can find in sidebar.scss  -->
+      <!-- ============================================================== -->
+      <!-- ============================================================== -->
+      <!-- Page wrapper  -->
+      <!-- ============================================================== -->
+      <div class="page-wrapper">
+        <!-- ============================================================== -->
+        <!-- Bread crumb and right sidebar toggle -->
+        <!-- ============================================================== -->
+        <div class="page-breadcrumb">
+          <div class="row">
+            <div class="col-12 d-flex no-block align-items-center">
+              <h4 class="page-title">Results</h4>
+              <div class="ms-auto text-end">
+                <nav aria-label="breadcrumb">
+                  <!-- <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#">Hide stats</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                      Got to results repository
+                    </li>
+                  </ol> -->
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Bread crumb and right sidebar toggle -->
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- Container fluid  -->
+        <!-- ============================================================== -->
+        <div class="container-fluid">
+          <!-- ============================================================== -->
+          <!-- Start Page Content -->
+          <!-- ============================================================== -->
+          <div class="row">
+            <div class="col-8">
+              <div class="card">
+                <ul class="list-style-none">
+                  <li class="d-flex no-block card-body">
+                    <i class="mdi mdi-check-circle fs-4 w-30px mt-1"></i>
+                    <div>
+                      <a href="#" class="mb-0 font-medium p-0"
+                        >Lorem ipsum dolor sit amet, consectetur adipiscing
+                        elit.</a
+                      >
+                      <span class="text-muted"
+                        >dolor sit amet, consectetur adipiscing</span
+                      >
+                    </div>
+                    <div class="ms-auto">
+                      <div class="tetx-right">
+                        <h5 class="text-muted mb-0">20</h5>
+                        <span class="text-muted font-16">Jan</span>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="d-flex no-block card-body border-top">
+                    <i class="mdi mdi-gift fs-4 w-30px mt-1"></i>
+                    <div>
+                      <a href="#" class="mb-0 font-medium p-0"
+                        >Congratulation Maruti, Happy Birthday</a
+                      >
+                      <span class="text-muted"
+                        >many many happy returns of the day</span
+                      >
+                    </div>
+                    <div class="ms-auto">
+                      <div class="tetx-right">
+                        <h5 class="text-muted mb-0">11</h5>
+                        <span class="text-muted font-16">Jan</span>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="d-flex no-block card-body border-top">
+                    <i class="mdi mdi-plus fs-4 w-30px mt-1"></i>
+                    <div>
+                      <a href="#" class="mb-0 font-medium p-0"
+                        >Maruti is a Responsive Admin theme</a
+                      >
+                      <span class="text-muted"
+                        >But already everything was solved. It will ...</span
+                      >
+                    </div>
+                    <div class="ms-auto">
+                      <div class="tetx-right">
+                        <h5 class="text-muted mb-0">19</h5>
+                        <span class="text-muted font-16">Jan</span>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="d-flex no-block card-body border-top">
+                    <i class="mdi mdi-leaf fs-4 w-30px mt-1"></i>
+                    <div>
+                      <a href="#" class="mb-0 font-medium p-0"
+                        >Envato approved Maruti Admin template</a
+                      >
+                      <span class="text-muted"
+                        >i am very happy to approved by TF</span
+                      >
+                    </div>
+                    <div class="ms-auto">
+                      <div class="tetx-right">
+                        <h5 class="text-muted mb-0">20</h5>
+                        <span class="text-muted font-16">Jan</span>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="d-flex no-block card-body border-top">
+                    <i
+                      class="mdi mdi-comment-question-outline fs-4 w-30px mt-1"
+                    ></i>
+                    <div>
+                      <a href="#" class="mb-0 font-medium p-0">
+                        I am alwayse here if you have any question</a
+                      >
+                      <span class="text-muted"
+                        >we glad that you choose our template</span
+                      >
+                    </div>
+                    <div class="ms-auto">
+                      <div class="tetx-right">
+                        <h5 class="text-muted mb-0">15</h5>
+                        <span class="text-muted font-16">Jan</span>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="card">
+                <div class="card-body">
+                  <h4 class="card-title">Statistics</h4>
+                  <div class="mt-3">
+                    <div class="d-flex no-block align-items-center">
+                      <span>81% Clicks</span>
+                      <div class="ms-auto">
+                        <span>125</span>
+                      </div>
+                    </div>
+                    <div class="progress">
+                      <div
+                        class="progress-bar progress-bar-striped"
+                        role="progressbar"
+                        style="width: 81%"
+                        aria-valuenow="10"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      ></div>
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <div class="d-flex no-block align-items-center mt-3">
+                      <span>72% Uniquie Clicks</span>
+                      <div class="ms-auto">
+                        <span>120</span>
+                      </div>
+                    </div>
+                    <div class="progress">
+                      <div
+                        class="progress-bar progress-bar-striped bg-success"
+                        role="progressbar"
+                        style="width: 72%"
+                        aria-valuenow="25"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      ></div>
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <div class="d-flex no-block align-items-center mt-3">
+                      <span>53% Impressions</span>
+                      <div class="ms-auto">
+                        <span>785</span>
+                      </div>
+                    </div>
+                    <div class="progress">
+                      <div
+                        class="progress-bar progress-bar-striped bg-info"
+                        role="progressbar"
+                        style="width: 53%"
+                        aria-valuenow="50"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      ></div>
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <div class="d-flex no-block align-items-center mt-3">
+                      <span>3% Online Users</span>
+                      <div class="ms-auto">
+                        <span>8</span>
+                      </div>
+                    </div>
+                    <div class="progress">
+                      <div
+                        class="progress-bar progress-bar-striped bg-danger"
+                        role="progressbar"
+                        style="width: 3%"
+                        aria-valuenow="75"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title mb-0">More Statistics</h5>
+                </div>
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Browser</th>
+                      <th scope="col">Visits</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Chrome</td>
+                      <td>8850</td>
+                    </tr>
+                    <tr>
+                      <td>Firefox</td>
+                      <td>1200</td>
+                    </tr>
+                    <tr>
+                      <td>Internet Explorer</td>
+                      <td>1540</td>
+                    </tr>
+                    <tr>
+                      <td>Opera</td>
+                      <td>1230</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <!-- ============================================================== -->
+          <!-- End PAge Content -->
+          <!-- ============================================================== -->
+          <!-- ============================================================== -->
+          <!-- Right sidebar -->
+          <!-- ============================================================== -->
+          <!-- .right-sidebar -->
+          <!-- ============================================================== -->
+          <!-- End Right sidebar -->
+          <!-- ============================================================== -->
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Container fluid  -->
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- footer -->
+        <!-- ============================================================== -->
+        <footer class="footer text-center">
+          All Rights Reserved by Matrix-admin. Designed and Developed by
+          <a href="https://www.wrappixel.com">WrapPixel</a>.
+        </footer>
+        <!-- ============================================================== -->
+        <!-- End footer -->
+        <!-- ============================================================== -->
+      </div>
+      <!-- ============================================================== -->
+      <!-- End Page wrapper  -->
+      <!-- ============================================================== -->
+    </div>
+    <!-- ============================================================== -->
+    <!-- End Wrapper -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- All Jquery -->
+    <!-- ============================================================== -->
+    <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
+    <!-- Bootstrap tether Core JavaScript -->
+    <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- slimscrollbar scrollbar JavaScript -->
+    <script src="../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+    <script src="../assets/extra-libs/sparkline/sparkline.js"></script>
+    <!--Wave Effects -->
+    <script src="../dist/js/waves.js"></script>
+    <!--Menu sidebar -->
+    <script src="../dist/js/sidebarmenu.js"></script>
+    <!--Custom JavaScript -->
+    <script src="../dist/js/custom.min.js"></script>
+  </body>
+</html>
