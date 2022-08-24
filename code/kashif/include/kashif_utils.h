@@ -281,7 +281,7 @@ char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
   sprintf(result_dir_name, "%s/kashif_l%u_%uq_min%u_max%u", result_dir, l, nq,
           min_qset_size, max_qset_size);
 
-  printf("result directory name: %s\n", result_dir_name);
+  printf(">>> Result directory name: %s\n", result_dir_name);
   DIR *dir = opendir(result_dir_name);
   if (dir) {
     delete_directory(result_dir_name);

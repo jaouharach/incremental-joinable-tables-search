@@ -1981,7 +1981,6 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
 
   if (index->settings->track_vector)
   {
-    printf("index tracks vectors.\n");
     // open vid.idx
     const char *vid_filename = malloc(sizeof(char) * (strlen(index->settings->root_directory) + 8));
     strcpy(vid_filename, index->settings->root_directory);

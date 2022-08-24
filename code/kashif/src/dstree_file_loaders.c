@@ -667,11 +667,10 @@ enum response dstree_knn_query_multiple_binary_files(
               exit(1);
             }
 
-            fprintf(stderr, "num_top = %d\n", num_top);
             struct vid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
             for(int m = 0; m < num_top; m++)
             {
-              fprintf(stderr, "(+) match %d:(%u, %u) file: %s\n", m, top[m].table_id, top[m].set_id, top[m].raw_data_file);
+              printf("+(%u, %u)@@%s$\n", top[m].table_id, top[m].set_id, top[m].raw_data_file);
             }
 
             // free memory

@@ -334,7 +334,6 @@ int main(int argc, char **argv) {
   
   if (data_gb_size == 0)
   {
-    fprintf(stderr, "0 gb size\n");
     data_gb_size = get_data_gb_size(dataset, total_data_files);
   }
   printf("Start Experiment...\nData Lake size: \nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", dataset_size, data_gb_size);

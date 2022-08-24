@@ -1,7 +1,7 @@
 from flask import Flask, flash, render_template, request, redirect
 import pandas as pd
 import subprocess, os, signal
-import shutil
+import shutil, re
 
 
 import sys
@@ -56,6 +56,7 @@ def create_temp_query_file(query_file , column_idx):
         else:
             return query_file, query_size
 
+# empty folder content
 def clear_folders(upload_folders):
     for folder in upload_folders:
         with os.scandir(folder) as entries:
@@ -67,8 +68,7 @@ def clear_folders(upload_folders):
     return True
 
 def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, dataset_folder, embedding_size, top_k, approx_error): 
-
-    pro = subprocess.check_call([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
+    query = subprocess.check_output([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
     '--nq', '1', '--queries-size',  str(query_size), 
     '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
     '--dataset', dataset_folder, '--total-data-files', '100', 
@@ -81,11 +81,8 @@ def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, datas
     '--track-vector', '1'
     ])
     
-    # stdout, stderr = pro.communicate(input=None, timeout=None)
-
-    # return "process returned :" + stdout.decode('utf-8')
-
-    
+    # stdout, stderr = query.communicate()
+    return query.decode('utf-8')
     
 @app.route('/')
 def home():
@@ -121,10 +118,14 @@ def process_query():
         create_bin_query_file(tmp_query_file, GLOVE_PATH)
 
         kashif_output = run_kashif(KASHIF_BIN, KASHIF_IDX, BIN_FOLDER, query_size, RESULTS_FOLDER, BIN_FOLDER,  EMBEDDING_DIM, top, approx_error)
-        print(kashif_output)
+        # print("prog output:")
+        # print(f"**{kashif_output}**")
 
+        results = set(re.findall(r'@@(.*?)\$', kashif_output)) # get file names without duplicates
+        print("result:\n")
+        print(results)
 
-        return render_template("index.html")
+        return render_template("index.html", data=results)
         
 if __name__ == '__main__':
    app.run(debug = True)
