@@ -89,8 +89,12 @@ def encode_tables(source_dir, target_dir, path_to_glove_file, embedding_dim):
                 new_table['ncols'] += 1
                 new_table['cols'].append(vectors_col)
 
-        # save new table, each table is saved in a separate json file
-        save_table(new_table, target_dir)
+        # no columns in table
+        if(new_table['ncols'] == 0):
+            return -1
+        else:
+            # save new table, each table is saved in a separate json file
+            save_table(new_table, target_dir)
 
 
 if len(sys.argv) >= 5:

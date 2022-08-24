@@ -381,6 +381,6 @@ enum response dstree_index_classify_insert(struct dstree_index *index,
 enum response dstree_index_insert_vector(struct dstree_index *index, 
                     ts_type *vector, unsigned int table_id, 
                     unsigned int set_id, unsigned int pos, 
-                    char * raw_data_file, FILE * sc_file);
+                    char * raw_data_file);
 /* end kashif changes */
 #endif

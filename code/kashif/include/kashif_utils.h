@@ -126,7 +126,7 @@ unsigned int get_total_data_vectors(char *bindir,
   unsigned int total_datasize = 0;
   unsigned int datasize;
   if (!dir) {
-    printf("Unable to open directory stream! %s", bindir);
+    fprintf("Error in kashif_utils.c: Unable to open directory stream! %s", bindir);
     exit(1);
   }
 
@@ -146,14 +146,14 @@ unsigned int get_total_data_vectors(char *bindir,
 }
 
 // get data lake size in GB
-unsigned int get_dlsize(char *dl_dir, unsigned int total_data_files) {
+unsigned int get_data_gb_size(char *dl_dir, unsigned int total_data_files) {
   struct dirent *dfile;
   DIR *dir = opendir(dl_dir);
   float total_dlsize = 0.0;
   FILE *fp;
 
   if (!dir) {
-    printf("Unable to open directory stream! %s", dl_dir);
+    fprintf("Error in kashif_utils.c: Unable to open directory stream! %s", dl_dir);
     exit(1);
   }
 

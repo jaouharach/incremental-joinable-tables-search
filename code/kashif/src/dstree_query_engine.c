@@ -2266,6 +2266,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   *total_checked_ts += index->stats->query_filter_checked_ts_count;
   free(series);
 
+  printf("total_query_set_time = %f\n", total_query_set_time);
+
   // save results to later find top-k matches
   return knn_results;
 }
@@ -3321,3 +3323,4 @@ void exact_incr_knn_search(ts_type *query_ts, ts_type *query_ts_reordered,
   pqueue_free(pq);
   free(knn_results);
 }
+

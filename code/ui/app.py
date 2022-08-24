@@ -1,8 +1,8 @@
-import os
 from flask import Flask, flash, render_template, request, redirect
 import pandas as pd
-import subprocess
+import subprocess, os, signal
 import shutil
+
 
 import sys
 sys.path.append('./utils/clean')
@@ -66,18 +66,22 @@ def clear_folders(upload_folders):
                     os.remove(entry.path)
     return True
 
-def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, dataset_folder, embedding_size, top_k, approx_error):
-    
-    query_process = subprocess.call([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
+def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, dataset_folder, embedding_size, top_k, approx_error): 
+
+    pro = subprocess.check_call([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
     '--nq', '1', '--queries-size',  str(query_size), 
-    ' --min-qset-size', str(query_size), '--max-qset-size', str(query_size),
-    '--dataset', dataset_folder, '--total-data-files', '100',
+    '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
+    '--dataset', dataset_folder, '--total-data-files', '100', '--dataset-GB-size', '0',
     '--result-dir', result_dir, '--k', '100', '--top',  str(top_k), ' --delta', '1',
     '--epsilon',  str(approx_error), '--timeseries-size', str(embedding_size),
     '--track-bsf', '--incremental', '--leaf-size', '100',
+    '--buffer-size', '100',
     '--mode', '1',  '--warping', '0.0', '--ascii-input', '0'
     ])
-    # query_process.communicate()
+    
+    # stdout, stderr = pro.communicate(input=None, timeout=None)
+
+    # return "process returned :" + stdout.decode('utf-8')
 
     
     

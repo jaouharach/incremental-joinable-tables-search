@@ -48,3 +48,4 @@ enum response dstree_knn_query_multiple_binary_files(
     unsigned int dlsize, float warping);
 /* end kashif changes */
 #endif
+

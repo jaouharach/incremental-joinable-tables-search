@@ -2002,15 +2002,14 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
     index->vid_cache = malloc(sizeof(struct vid) * dataset_size);
     fread(index->vid_cache, sizeof(struct vid), dataset_size, index->vid_file);
 
-
-    FILE * sc_file;
-    sc_file = fopen("sanity_check_2.txt", "a+");
-    for(int i = 0; i < dataset_size; i++){
-      fprintf(sc_file, "(%u, %u, %u)", index->vid_cache[i].table_id, 
-          index->vid_cache[i].set_id, 
-          index->vid_cache[i].pos);
-    }
-    fclose(sc_file);
+    // FILE * sc_file;
+    // sc_file = fopen("sanity_check_2.txt", "a+");
+    // for(int i = 0; i < dataset_size; i++){
+    //   fprintf(sc_file, "(%u, %u, %u)", index->vid_cache[i].table_id, 
+    //       index->vid_cache[i].set_id, 
+    //       index->vid_cache[i].pos);
+    // }
+    // fclose(sc_file);
   }
 
 
@@ -2340,7 +2339,7 @@ struct dstree_node *dstree_node_read(struct dstree_index *index, FILE *file)
 enum response dstree_index_insert_vector(struct dstree_index *index,
                                   ts_type *vector, unsigned int table_id, 
                                   unsigned int set_id, unsigned int pos, 
-                                  char * raw_data_file, FILE * sc_file) 
+                                  char * raw_data_file) 
 {
   // traverse the index tree to find the appropriate node
   struct dstree_node *node = index->first_node;
@@ -2389,7 +2388,7 @@ enum response dstree_index_insert_vector(struct dstree_index *index,
       return FAILURE;
     }
 
-    if (!append_vector_to_node(index, node, vector, table_id, set_id, pos, raw_data_file, sc_file)) {
+    if (!append_vector_to_node(index, node, vector, table_id, set_id, pos, raw_data_file)) {
       fprintf(stderr, "Error in dstree_index.c: could not append \
                         time series to node %s\n",
               node->filename);
@@ -2811,3 +2810,4 @@ sizeof(label_type), index->first_node->node_size, index->gt_file);
     COUNT_INPUT_TIME_END
 }
 */
+

@@ -1035,7 +1035,7 @@ enum response append_vector_to_node(struct dstree_index *index,
                                     unsigned int table_id,
                                     unsigned int set_id,
                                     unsigned int pos, 
-                                    char * raw_data_file, FILE * sc_file)
+                                    char * raw_data_file)
 {
   if (!get_file_buffer(index, node)) {
     fprintf(stderr, "Error in dstree_index.c:  Could not get the \

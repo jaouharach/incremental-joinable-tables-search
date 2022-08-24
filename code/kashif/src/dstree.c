@@ -35,11 +35,13 @@ int main(int argc, char **argv) {
   COUNT_TOTAL_TIME_START
 
   static char *dataset = "/home/karima/myDisk/data/Cgenerator/data_current.txt";
-  static char *queries = "/home/karima/myDisk/data/Cgenerator/query_current.txt";
-  static char *dataset_hists = "/home/karima/myDisk/data/Cgenerator/data_current_hists.txt";
+  static char *queries =
+      "/home/karima/myDisk/data/Cgenerator/query_current.txt";
+  static char *dataset_hists =
+      "/home/karima/myDisk/data/Cgenerator/data_current_hists.txt";
 
   static char *index_path = "out/";
-  static unsigned int dataset_size = 1000;
+  static unsigned int dataset_size = 0;
   static unsigned int queries_size = 5;
   static unsigned int time_series_size = 256;
   static unsigned int init_segments = 1;
@@ -69,10 +71,10 @@ int main(int argc, char **argv) {
   static unsigned int total_data_files = 100; // number of datasets to be indexed
   unsigned char track_vector = 0;
   unsigned int qset_num = 3;
-  unsigned int min_qset_size = 0;
-  unsigned int max_qset_size = 10000;
+  unsigned int min_qset_size = 5;
+  unsigned int max_qset_size = 10;
   unsigned int num_top = 3;           // number top sets to be returned
-  static unsigned int dlsize = 0; // datalake size in GB
+  static unsigned int data_gb_size = 0; // datalake size in GB
   /* end kashif changes */
 
   // printf("new code\n");
@@ -108,6 +110,7 @@ int main(int argc, char **argv) {
         /* start kashif changes */
         {"result-dir", required_argument, 0, '>'},
         {"raw-data-dir", required_argument, 0, '^'},
+        {"dataset-GB-size", required_argument, 0, ']'},
         {"total-data-files", required_argument, 0,
          '|'}, // number of datasets to be indexed (tables)
         {"nq", required_argument, 0, '%'}, // number of query sets
@@ -310,23 +313,35 @@ int main(int argc, char **argv) {
     case '*':
       track_vector = 1;
       break;
+
+    case ']':
+      data_gb_size = atoi(optarg);
+      break;
     /* end kashif changes */
     default:
       exit(-1);
       break;
     }
   }
-
+  
   /* start kashif changes */
-  printf("\n%s\n", index_path);
-  dataset_size = get_total_data_vectors(dataset, total_data_files); // get total number of vectors in data repository
-  dlsize = get_dlsize(dataset, total_data_files);
-  printf("Start Experiment...\nData Lake size: \nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", dataset_size, dlsize);
   if (dataset_size < 1) {
     fprintf(stderr,"Current datasize is less that 1!. Please change dataset directory.\n");
     exit(-1);
   }
+  if (dataset_size == 0)
+    dataset_size = get_total_data_vectors(dataset, total_data_files); // get total number of vectors in data repository
+  
+  if (data_gb_size == 0)
+  {
+    fprintf(stderr, "0 gb size\n");
+    data_gb_size = get_data_gb_size(dataset, total_data_files);
+  }
+  printf("Start Experiment...\nData Lake size: \nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", dataset_size, data_gb_size);
+  
   /* end kashif changes */
+
+  
 
   minimum_distance = FLT_MAX;
   if (mode == 0) // only build and store the index
@@ -451,29 +466,30 @@ int main(int argc, char **argv) {
     COUNT_PARTIAL_TIME_START
     is_index_new = 0;
     index = dstree_index_read(index_path);
+    fprintf(stderr, ">>> Index read successfully\n");
     index->settings->dataset = dataset;
     if (!classify) {
       index->settings->classify = 0;
-      if (index->gt_filename != NULL)
-        free(index->gt_filename);
-      if (index->gt_cache != NULL)
-        free(index->gt_cache);
+      // if (index->gt_filename != NULL)
+      //   free(index->gt_filename);
+      // if (index->gt_cache != NULL)
+      //   free(index->gt_cache);
     }
     if (!track_file_pos){
       index->settings->track_file_pos = 0;
-      if (index->fp_filename != NULL)
-        free(index->fp_filename);
-      if (index->fp_cache != NULL)
-        free(index->fp_cache);
+      // if (index->fp_filename != NULL)
+      //   free(index->fp_filename);
+      // if (index->fp_cache != NULL)
+      //   free(index->fp_cache);
     }
     /* start kashif changes */
     if (!track_vector)
     {
       index->settings->track_vector = 0;
-      if (index->vid_filename != NULL)
-        free(index->vid_filename);
-      if (index->vid_cache != NULL)
-        free(index->vid_cache);
+      // if (index->vid_filename != NULL)
+      //   free(index->vid_filename);
+      // if (index->vid_cache != NULL)
+      //   free(index->vid_cache);
     }
     /* end kashif changes */
     if (index == NULL) {
@@ -492,12 +508,12 @@ int main(int argc, char **argv) {
     index->stats->idx_reading_rand_input_count = partial_rand_input_count;
     index->stats->idx_reading_rand_output_count = partial_rand_output_count;
 
-    dstree_get_index_stats(index);
+    // dstree_get_index_stats(index);
     dstree_print_index_stats(index, dataset);
     // COUNT_TOTAL_TIME_START
 
     fprintf(stderr, ">>> Index loaded successfully from: %s\n", index_path);
-    
+
     // calculate r_delta
     ts_type r_delta = FLT_MAX;
 
@@ -535,7 +551,7 @@ int main(int argc, char **argv) {
                                     max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,
                                     k, track_bsf, track_pruning, all_mindists,
-                                    max_policy, nprobes, incremental, result_dir, total_data_files, dlsize, warping);
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping);
     /* end kashif changes */
   } 
   else if (mode == 2) // build the index, execute queries and store the index
@@ -590,7 +606,7 @@ int main(int argc, char **argv) {
                                     max_qset_size, num_top, index,
                                     minimum_distance, epsilon, delta,
                                     k, track_bsf, track_pruning, all_mindists,
-                                    max_policy, nprobes, incremental, result_dir, total_data_files, dlsize, warping)) {
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping)) {
         fprintf(stderr, "Error main.c:  Could not execute the query.\n");
         return -1;
       }
@@ -655,3 +671,5 @@ int main(int argc, char **argv) {
   // malloc_stats_print(NULL, NULL, NULL);
   return 0;
 }
+
+

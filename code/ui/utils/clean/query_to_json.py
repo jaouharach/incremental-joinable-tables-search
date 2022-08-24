@@ -14,7 +14,7 @@ def clear_folder(folder_path):
 
 def clean_array(array):
     # remove digit values
-    no_digit = [re.sub('\W+',' ', str(x)) for x in array if not (str(x) == "" or str(x) =="nan" or str(x).isdigit() or str(x)[0] == '-' and str(x[1:]).isdigit())]
+    no_digit = [re.sub('\W+',' ', str(x).lower()) for x in array if not (str(x) == "" or str(x) =="nan" or str(x).isdigit() or str(x)[0] == '-' and str(x[1:]).isdigit())]
     # remove duplicates
     distinct_values = list(set(no_digit))
     return distinct_values

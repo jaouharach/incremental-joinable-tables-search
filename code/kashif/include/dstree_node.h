@@ -27,7 +27,7 @@ struct vid {
   unsigned int table_id;
   unsigned int set_id;
   unsigned int pos;
-  char raw_data_file[256]; // name of the raw (json) file where vector is store (max file name size in linux is 255 characters)
+  char raw_data_file[300]; // name of the raw (json) file where vector is store
 };
 /* end kashif changes */
 struct dstree_node {
@@ -120,7 +120,7 @@ enum response append_ts_gt_to_node(struct dstree_index * index,
 /* start kashif changes */
 enum response append_vector_to_node(struct dstree_index * index, struct dstree_node * node, 
             ts_type * vector, unsigned int table_id, unsigned int set_id, 
-            unsigned int pos, char * raw_data_file, FILE * sc_file);
+            unsigned int pos, char * raw_data_file);
 
 enum response append_vector_to_child_node(struct dstree_index *index,
               struct dstree_node *node, ts_type *vector, unsigned int table_id, 
@@ -138,3 +138,4 @@ enum response append_ts_gt_to_child_node(struct dstree_index * index,
 */
 
 #endif
+

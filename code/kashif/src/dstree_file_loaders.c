@@ -372,7 +372,7 @@ enum response dstree_knn_query_multiple_binary_files(
   DIR *dir = opendir(bin_files_directory);
 
   if (!dir) {
-    printf("Unable to open directory stream! %s", bin_files_directory);
+    fprintf("Error in dstree_file_loaders.c: Unable to open directory stream! %s", bin_files_directory);
     exit(1);
   }
 
@@ -393,7 +393,9 @@ enum response dstree_knn_query_multiple_binary_files(
     return FAILURE;
 
   /* Start experiment  - create experiment result directory */
-  char *results_dir = make_result_directory(result_dir, total_data_files, qset_num, min_qset_size, max_qset_size);
+  char *results_dir = make_result_directory(
+      result_dir, total_data_files, qset_num, min_qset_size, max_qset_size);
+  
 
   // initialize list of all knn results (from all query vectors in query set)
   struct query_result *all_knn_results = NULL;
@@ -467,7 +469,7 @@ enum response dstree_knn_query_multiple_binary_files(
           // read first integer to check how many vactors in current set
           fread(&nvec, sizeof(nvec), 1, bin_file);
           total_bytes--;
-
+          fprintf(stderr, "num vectors = %u\n", nvec);
           // query set does not fit requirments move to next set
           if ((unsigned int)nvec < min_qset_size ||
               (unsigned int)nvec > max_qset_size) {
@@ -513,6 +515,7 @@ enum response dstree_knn_query_multiple_binary_files(
             if (track_bsf) {
               cur_bsf_snapshot = 0;
               if (incremental) {
+                fprintf(stderr, "m vector\n");
                 curr_knn = exact_de_incr_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
@@ -520,6 +523,7 @@ enum response dstree_knn_query_multiple_binary_files(
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
                     warping, dataset_file, series_file);
               } else {
+                fprintf(stderr, "m vector de prog\n");
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
@@ -542,6 +546,7 @@ enum response dstree_knn_query_multiple_binary_files(
             }
             // without incremental answering
             else {
+              fprintf(stderr, "m vector exact\n");
               curr_knn = exact_de_knn_search_2(
                   query_vector.values, query_vector_reordered, query_order,
                   offset, index, minimum_distance, epsilon, r_delta, k,
@@ -564,7 +569,7 @@ enum response dstree_knn_query_multiple_binary_files(
             }
 
             if (knn_array_idx > (k * nvec)) {
-              printf("Error in dstree_file_loaders.c: Storing more results "
+              fprintf(stderr, "Error in dstree_file_loaders.c: Storing more results "
                      "that expected!");
               exit(1);
             }
@@ -594,6 +599,7 @@ enum response dstree_knn_query_multiple_binary_files(
             if (track_bsf) {
               cur_bsf_snapshot = 0;
               if (incremental) {
+                fprintf(stderr, "end vector\n");
                 curr_knn = exact_de_incr_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
@@ -601,6 +607,7 @@ enum response dstree_knn_query_multiple_binary_files(
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
                     warping, dataset_file, series_file);
               } else {
+                fprintf(stderr, "end vector de prog\n");
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
@@ -623,6 +630,7 @@ enum response dstree_knn_query_multiple_binary_files(
             }
             // without incremental answering
             else {
+              fprintf(stderr, "end vector exact\n");
               curr_knn = exact_de_knn_search_2(
                   query_vector.values, query_vector_reordered, query_order,
                   offset, index, minimum_distance, epsilon, r_delta, k,
@@ -648,7 +656,7 @@ enum response dstree_knn_query_multiple_binary_files(
             free(curr_knn);
             
             if (knn_array_idx > (k * nvec)) {
-              printf("Error in dstree_file_loaders.c: Storing more results "
+              fprintf(stderr, "Error in dstree_file_loaders.c: Storing more results "
                      "that expected!");
               exit(1);
             }
@@ -662,14 +670,15 @@ enum response dstree_knn_query_multiple_binary_files(
             if(!save_to_query_result_file(query_result_file, table_id, query_vector.set_id,
                                     k * nvec, all_knn_results))
             {
-              printf("Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
+              fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
               exit(1);
             }
 
+            fprintf(stderr, "num_top = %d\n", num_top);
             struct vid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
             for(int m = 0; m < num_top; m++)
             {
-              printf("(+) match %d:(%u, %u) file: %s\n", m, top[m].table_id, top[m].set_id, top[m].raw_data_file);
+              fprintf(stderr, "(+) match %d:(%u, %u) file: %s\n", m, top[m].table_id, top[m].set_id, top[m].raw_data_file);
             }
 
             // free memory
@@ -1329,12 +1338,6 @@ enum response
 dstree_index_multiple_binary_files(const char *bin_files_directory,
                                    unsigned int total_data_files,
                                    struct dstree_index *index) {
-  FILE *sc_file;
-  sc_file = fopen("stored_vectors.txt", "w+");
-  if (sc_file == NULL) {
-    perror("Failed to open the file");
-    exit(-1);
-  }
   int vector_length = index->settings->timeseries_size;
   int opened_files = 0;
 
@@ -1413,7 +1416,7 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
             j = 0;
             /*Index v in dstree */
             if (!dstree_index_insert_vector(index, v.values, v.table_id,
-                                            v.set_id, v.pos, dfile->d_name, sc_file)) {
+                                            v.set_id, v.pos, dfile->d_name)) {
               fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add "
                               "the time series to the index.\n");
               return FAILURE;
@@ -1446,7 +1449,7 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
           if (i == (unsigned int)nvec * vector_length) {
             /*Index v in dstree */
             if (!dstree_index_insert_vector(index, v.values, v.table_id,
-                                            v.set_id, v.pos, dfile->d_name, sc_file)) {
+                                            v.set_id, v.pos, dfile->d_name)) {
               fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add "
                               "the time series to the index.\n");
               return FAILURE;
@@ -1500,7 +1503,6 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
       COUNT_PARTIAL_TIME_START
     }
   }
-  fclose(sc_file);
 
   closedir(dir);
   free(v.values);
