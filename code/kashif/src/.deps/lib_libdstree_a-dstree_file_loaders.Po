@@ -83,7 +83,9 @@ src/lib_libdstree_a-dstree_file_loaders.o: src/dstree_file_loaders.c \
  /usr/include/dirent.h /usr/include/x86_64-linux-gnu/bits/dirent.h \
  /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
  /usr/include/x86_64-linux-gnu/bits/local_lim.h \
- /usr/include/linux/limits.h /usr/include/libgen.h /usr/include/unistd.h \
+ /usr/include/linux/limits.h /usr/include/libgen.h \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
+ /usr/include/x86_64-linux-gnu/bits/stat.h /usr/include/unistd.h \
  /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h \
@@ -300,6 +302,10 @@ src/../include/kashif_utils.h:
 /usr/include/linux/limits.h:
 
 /usr/include/libgen.h:
+
+/usr/include/x86_64-linux-gnu/sys/stat.h:
+
+/usr/include/x86_64-linux-gnu/bits/stat.h:
 
 /usr/include/unistd.h:
 

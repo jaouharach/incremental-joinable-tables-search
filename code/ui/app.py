@@ -71,12 +71,14 @@ def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, datas
     pro = subprocess.check_call([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
     '--nq', '1', '--queries-size',  str(query_size), 
     '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
-    '--dataset', dataset_folder, '--total-data-files', '100', '--dataset-GB-size', '0',
+    '--dataset', dataset_folder, '--total-data-files', '100', 
+    '--dataset-GB-size', '1', '--dataset-size', '120',
     '--result-dir', result_dir, '--k', '100', '--top',  str(top_k), ' --delta', '1',
     '--epsilon',  str(approx_error), '--timeseries-size', str(embedding_size),
     '--track-bsf', '--incremental', '--leaf-size', '100',
     '--buffer-size', '100',
-    '--mode', '1',  '--warping', '0.0', '--ascii-input', '0'
+    '--mode', '1',  '--warping', '0.0', '--ascii-input', '0',
+    '--track-vector', '1'
     ])
     
     # stdout, stderr = pro.communicate(input=None, timeout=None)

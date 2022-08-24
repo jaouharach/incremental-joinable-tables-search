@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define NBITS 64
 typedef float ts_type;
@@ -256,6 +258,17 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   return SUCCESS;
 }
 
+// delete non empty direcory
+int delete_directory(char * dir_path)
+{
+    int ret = 0;
+    ret = rmdir(dir_path);
+
+    if (ret == 0)
+        return 0;
+    return -1;
+}
+
 // create results dir
 char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
                             unsigned int min_qset_size,
@@ -271,11 +284,12 @@ char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
   printf("result directory name: %s\n", result_dir_name);
   DIR *dir = opendir(result_dir_name);
   if (dir) {
-    fprintf(stderr,
-            "WARNING! Results directory already exists. Please delete "
-            "directory : %s.\n",
-            result_dir_name);
-    exit(-1);
+    delete_directory(result_dir_name);
+    // fprintf(stderr,
+    //         "WARNING! Results directory already exists. Please delete "
+    //         "directory : %s.\n",
+    //         result_dir_name);
+    // exit(-1);
   }
   mkdir(result_dir_name, 0777);
 

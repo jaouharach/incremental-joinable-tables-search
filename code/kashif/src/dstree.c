@@ -508,8 +508,8 @@ int main(int argc, char **argv) {
     index->stats->idx_reading_rand_input_count = partial_rand_input_count;
     index->stats->idx_reading_rand_output_count = partial_rand_output_count;
 
-    // dstree_get_index_stats(index);
-    dstree_print_index_stats(index, dataset);
+    dstree_get_index_stats(index);
+    // dstree_print_index_stats(index, dataset);
     // COUNT_TOTAL_TIME_START
 
     fprintf(stderr, ">>> Index loaded successfully from: %s\n", index_path);
