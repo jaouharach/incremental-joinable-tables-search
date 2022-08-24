@@ -469,7 +469,6 @@ enum response dstree_knn_query_multiple_binary_files(
           // read first integer to check how many vactors in current set
           fread(&nvec, sizeof(nvec), 1, bin_file);
           total_bytes--;
-          fprintf(stderr, "num vectors = %u\n", nvec);
           // query set does not fit requirments move to next set
           if ((unsigned int)nvec < min_qset_size ||
               (unsigned int)nvec > max_qset_size) {
@@ -515,7 +514,6 @@ enum response dstree_knn_query_multiple_binary_files(
             if (track_bsf) {
               cur_bsf_snapshot = 0;
               if (incremental) {
-                fprintf(stderr, "m vector\n");
                 curr_knn = exact_de_incr_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
@@ -523,7 +521,6 @@ enum response dstree_knn_query_multiple_binary_files(
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
                     warping, dataset_file, series_file);
               } else {
-                fprintf(stderr, "m vector de prog\n");
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
@@ -546,7 +543,6 @@ enum response dstree_knn_query_multiple_binary_files(
             }
             // without incremental answering
             else {
-              fprintf(stderr, "m vector exact\n");
               curr_knn = exact_de_knn_search_2(
                   query_vector.values, query_vector_reordered, query_order,
                   offset, index, minimum_distance, epsilon, r_delta, k,
@@ -599,7 +595,6 @@ enum response dstree_knn_query_multiple_binary_files(
             if (track_bsf) {
               cur_bsf_snapshot = 0;
               if (incremental) {
-                fprintf(stderr, "end vector\n");
                 curr_knn = exact_de_incr_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
@@ -607,7 +602,6 @@ enum response dstree_knn_query_multiple_binary_files(
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
                     warping, dataset_file, series_file);
               } else {
-                fprintf(stderr, "end vector de prog\n");
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
@@ -630,7 +624,6 @@ enum response dstree_knn_query_multiple_binary_files(
             }
             // without incremental answering
             else {
-              fprintf(stderr, "end vector exact\n");
               curr_knn = exact_de_knn_search_2(
                   query_vector.values, query_vector_reordered, query_order,
                   offset, index, minimum_distance, epsilon, r_delta, k,
