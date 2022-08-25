@@ -67,13 +67,14 @@ def clear_folders(upload_folders):
                     os.remove(entry.path)
     return True
 
-def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, dataset_folder, embedding_size, top_k, approx_error): 
+def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, dataset_folder, embedding_size, num_top, k, approx_error): 
     query = subprocess.check_output([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
     '--nq', '1', '--queries-size',  str(query_size), 
     '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
     '--dataset', dataset_folder, '--total-data-files', '100', 
     '--dataset-GB-size', '1', '--dataset-size', '120',
-    '--result-dir', result_dir, '--k', '100', '--top',  str(top_k), ' --delta', '1',
+    '--result-dir', result_dir, '--k', str(k),
+    '--top',  str(num_top), ' --delta', '1',
     '--epsilon',  str(approx_error), '--timeseries-size', str(embedding_size),
     '--track-bsf', '--incremental', '--leaf-size', '100',
     '--buffer-size', '100',
@@ -101,6 +102,7 @@ def process_query():
         column_idx = int(request.form['column_idx'])
         top = int(request.form['top'])
         approx_error = float(request.form['approx_error'])
+        k = int(request.form['k'])
 
         # file without a filename.
         if input_file.filename == '':
@@ -117,7 +119,7 @@ def process_query():
         # process the query and save it to a binary file
         create_bin_query_file(tmp_query_file, GLOVE_PATH)
 
-        kashif_output = run_kashif(KASHIF_BIN, KASHIF_IDX, BIN_FOLDER, query_size, RESULTS_FOLDER, BIN_FOLDER,  EMBEDDING_DIM, top, approx_error)
+        kashif_output = run_kashif(KASHIF_BIN, KASHIF_IDX, BIN_FOLDER, query_size, RESULTS_FOLDER, BIN_FOLDER,  EMBEDDING_DIM, top, k, approx_error)
         # print("prog output:")
         # print(f"**{kashif_output}**")
 
@@ -126,6 +128,10 @@ def process_query():
         print(results)
 
         return render_template("index.html", data=results)
-        
+
+@app.route('/view-dataset', methods=['GET'])
+def view_dataset():
+   return render_template('view-dataset.html')
+
 if __name__ == '__main__':
    app.run(debug = True)

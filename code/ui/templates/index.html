@@ -97,25 +97,32 @@
                 ></a>
               </li>
             </ul>
-              <form id="query_form"  action="http://localhost:5000/query" method="post" enctype="multipart/form-data" class="navbar-nav input-group"  style="padding-left: 200px;">
-                 <span class="nav-link">
-                    Upload a dataset
-                  </span>
-                  <input class="form-control form-control-sm" id="query_file" name="query_file" type="file" required/>
-                  <span class="input-space nav-link">Query column </span>
-                  <input type="number" name="column_idx" class="form-control form-control-sm" value="1" required  min="0" width="8" placeholder="1">
-                  <span class="nav-link">
-                    Top-
-                  </span>
-                  <input type="number" name="top" class="form-control form-control-sm" value="10" required min="0" placeholder="10" aria-describedby="basic-addon2">
-                  <span class="nav-link">
-                    Approx. Error
-                  </span>
-                  <input type="number"  name="approx_error" class="form-control form-control-sm" value="0.0" required min="0.0" max="0.9" placeholder="0.1" step="0.0" aria-describedby="basic-addon2">
-                  <span class="input-group-btn input-space">
-                  <button id="query_submit_btn" class="btn btn-primary btn-sm" type="submit">Search</button>
-                  </span>
-              </form>
+            <form id="query_form" class="navbar-nav form-inline" action="http://localhost:5000/query"  style="margin: 15px;" method="post" enctype="multipart/form-data">
+                <span class="nav-link">
+                  Dataset
+                </span>
+                <div class="col-2">
+                  <input class="form-control form-control-sm mr-sm-2" id="query_file" name="query_file" type="file" required/>
+                </div>                
+                <span class="nav-link">Column </span>
+                <input type="number" name="column_idx" class="form-control form-control-sm" value="1" required  min="0" width="8" placeholder="1">
+                <span class="nav-link">
+                  Top-
+                </span>
+                <input type="number" name="top" class="form-control form-control-sm" value="10" required min="0" placeholder="10" aria-describedby="basic-addon2">
+                <span class="nav-link">
+                  Error
+                </span>
+                <input type="number"  name="approx_error" class="form-control form-control-sm" value="0.0" required min="0.0" max="0.9" placeholder="0.1" step="0.0" aria-describedby="basic-addon2">
+                <span class="nav-link">
+                  k
+                </span>
+                <input type="number"  name="k" class="form-control form-control-sm" value="10" required min="3" max="9999" placeholder="10" step="1" aria-describedby="basic-addon2">
+                
+                <span class="input-group-btn input-space">
+                <button id="query_submit_btn" class="btn btn-success btn-sm text-white" type="submit">Search</button>
+                </span>
+            </form>
           </div>
         </nav>
       </header>
@@ -181,10 +188,10 @@
               <div class="ms-auto text-end">
                 <nav aria-label="breadcrumb">
                   <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="#">Settings</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">
+                    <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    <!-- <li class="breadcrumb-item active" aria-current="page">
                       Help
-                    </li>
+                    </li> -->
                   </ol>
                 </nav>
               </div>
@@ -207,10 +214,10 @@
                   <ul class="list-style-none">
                     {% if data %}
                     {% for file in data %}
-                    <li class="d-flex no-block card-body">
-                      <i class="mdi mdi-check-circle fs-4 w-30px mt-1"></i>
+                    <li class="d-flex no-block card-body border-top">
+                      <!-- <i class="mdi mdi-check-circle fs-4 w-30px mt-1"></i> -->
                       <div>
-                        <a href="#" class="mb-0 font-medium p-0"
+                        <a href="/view-dataset" class="mb-0 font-medium p-0"
                           >{{ file }}</a>
                         <span class="text-muted"
                           >dolor sit amet, consectetur adipiscing</span
@@ -223,6 +230,7 @@
                         </div>
                       </div>
                     </li>
+                    
                     {% endfor %}
                     {% endif %}
                   </ul>
