@@ -330,7 +330,7 @@ int main(int argc, char **argv) {
     exit(-1);
   }
   if (dataset_size == 0)
-    dataset_size = get_total_data_vectors(dataset, total_data_files); // get total number of vectors in data repository
+    dataset_size = (unsigned int) get_total_data_vectors(dataset, total_data_files); // get total number of vectors in data repository
   
   if (data_gb_size == 0)
   {

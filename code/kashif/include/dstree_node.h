@@ -29,6 +29,15 @@ struct vid {
   unsigned int pos;
   char raw_data_file[300]; // name of the raw (json) file where vector is store
 };
+
+// result set id
+struct result_sid { 
+  unsigned int table_id;
+  unsigned int set_id;
+  char raw_data_file[300]; // name of the raw (json) file where set is store
+  unsigned int overlap_size;
+};
+
 /* end kashif changes */
 struct dstree_node {
 

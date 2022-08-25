@@ -121,11 +121,11 @@ int get_num_vec(FILE *f, int start, int nbits) {
 }
 
 // read datasize from diffrent files and get total datasize of a datalake
-unsigned int get_total_data_vectors(char *bindir,
+unsigned long get_total_data_vectors(char *bindir,
                                     unsigned int total_data_files) {
   struct dirent *dfile;
   DIR *dir = opendir(bindir);
-  unsigned int total_datasize = 0;
+  unsigned long total_vectors = 0;
   unsigned int datasize;
   if (!dir) {
     fprintf("Error in kashif_utils.c: Unable to open directory stream! %s", bindir);
@@ -140,11 +140,11 @@ unsigned int get_total_data_vectors(char *bindir,
       total_data_files--;
       // ** get binary table info
       sscanf(dfile->d_name, "data_size%d%*[^0123456789]", &datasize);
-      total_datasize += datasize;
+      total_vectors += datasize;
     }
   }
   closedir(dir);
-  return total_datasize;
+  return total_vectors;
 }
 
 // get data lake size in GB
@@ -306,7 +306,7 @@ struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results,
 
   // array of top x sets and
   int *max_freqs = (int *)malloc(num_top * sizeof(int));
-  struct vid *top = (struct vid *)calloc(num_top, sizeof(struct vid));
+  struct result_sid *top = (struct result_sid *)calloc(num_top, sizeof(struct result_sid));
 
   for (i = 0; i < num_knn_results; i++)
     frequency_array[i] = -1;
@@ -325,13 +325,18 @@ struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results,
         if ((knn_results[i].vector_id->set_id ==
              knn_results[j].vector_id->set_id))
         {
-          count++;
-          frequency_array[j] = 0;
+          // if ((knn_results[i].vector_id->pos ==
+          //    knn_results[j].vector_id->pos))
+          // {
+            count++;
+            frequency_array[j] = 0;
+          // }
         }
       }
     }
     if (frequency_array[i] != 0) {
       frequency_array[i] = count;
+      
     }
   }
 
@@ -346,18 +351,19 @@ struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results,
           max_freqs[k] = max_freqs[k - 1];
           top[k].table_id = top[k - 1].table_id;
           top[k].set_id = top[k - 1].set_id;
+          top[k].overlap_size = max_freqs[k];
           strcpy(top[k].raw_data_file, top[k - 1].raw_data_file);
         }
         // replace curr top k
         max_freqs[j] = frequency_array[i];
         top[j].table_id = knn_results[i].vector_id->table_id;
         top[j].set_id = knn_results[i].vector_id->set_id;
+        top[j].overlap_size = max_freqs[j];
         strcpy(top[j].raw_data_file, knn_results[i].vector_id->raw_data_file);
         break;
       }
     }
   }
-
   free(frequency_array);
   free(max_freqs);
   return top;

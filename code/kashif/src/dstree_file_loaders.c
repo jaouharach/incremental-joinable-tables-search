@@ -667,11 +667,13 @@ enum response dstree_knn_query_multiple_binary_files(
               exit(1);
             }
 
-            struct vid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
+            // don't change these lines to allaow ui to fetch results
+            struct result_sid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
             for(int m = 0; m < num_top; m++)
             {
-              printf("+(%u, %u)@@%s$\n", top[m].table_id, top[m].set_id, top[m].raw_data_file);
+              printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
             }
+            // don't change these lines to allaow ui to fetch results
 
             // free memory
             for (int knn = 0; knn < (k * nvec); knn++)

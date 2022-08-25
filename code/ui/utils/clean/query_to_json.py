@@ -38,7 +38,7 @@ def query_to_json(query_array, target_dir):
     new_array = clean_array(query_array)
      # skip empty tables
     if not new_array or len(new_array) == 0:
-        return -1 # query column is a numerical column!
+        return -1, -1 # query column is a numerical column!
     else:
         query_size = len(new_array)
         data = {'id': 0, 'ncols':  1, 'cols': [new_array]}
