@@ -496,7 +496,7 @@ enum response dstree_knn_query_multiple_binary_files(
           // set new set id
           query_vector.table_id = table_id;
           query_vector.set_id = set_id;
-
+          query_vector.pos = 0;
           set_id += 1;
           i++;
           j = 0;
@@ -519,13 +519,13 @@ enum response dstree_knn_query_multiple_binary_files(
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
-                    warping, dataset_file, series_file);
+                    warping, dataset_file, series_file, query_vector.pos);
               } else {
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
-                    &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot);
+                    &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot, query_vector.pos);
               }
               for (unsigned int b = 0; b < k; ++b) {
                 for (unsigned int f = 0; f < max_bsf_snapshots; ++f) {
@@ -547,7 +547,7 @@ enum response dstree_knn_query_multiple_binary_files(
                   query_vector.values, query_vector_reordered, query_order,
                   offset, index, minimum_distance, epsilon, r_delta, k,
                   qvectors_loaded, bin_file_path, &query_time,
-                  &total_checked_ts);
+                  &total_checked_ts, query_vector.pos);
             }
 
             // copy new knn(s) to knn_results array
@@ -555,6 +555,7 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
               all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
               all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
+              all_knn_results[knn_array_idx].query_vector_pos = curr_knn[t].query_vector_pos;
               strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file, curr_knn[t].vector_id->raw_data_file);
               
               // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
@@ -563,6 +564,7 @@ enum response dstree_knn_query_multiple_binary_files(
 
               knn_array_idx++;
             }
+            query_vector.pos += 1;
 
             if (knn_array_idx > (k * nvec)) {
               fprintf(stderr, "Error in dstree_file_loaders.c: Storing more results "
@@ -600,13 +602,13 @@ enum response dstree_knn_query_multiple_binary_files(
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
-                    warping, dataset_file, series_file);
+                    warping, dataset_file, series_file, query_vector.pos);
               } else {
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
-                    &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot);
+                    &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot, query_vector.pos);
               }
               for (unsigned int b = 0; b < k; ++b) {
                 for (unsigned int f = 0; f < max_bsf_snapshots; ++f) {
@@ -628,7 +630,7 @@ enum response dstree_knn_query_multiple_binary_files(
                   query_vector.values, query_vector_reordered, query_order,
                   offset, index, minimum_distance, epsilon, r_delta, k,
                   qvectors_loaded, bin_file_path, &query_time,
-                  &total_checked_ts);
+                  &total_checked_ts, query_vector.pos);
             }
 
             // append new knn(s) to knn_results array
@@ -636,6 +638,7 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
               all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
               all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
+              all_knn_results[knn_array_idx].query_vector_pos = curr_knn[t].query_vector_pos;
               strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file,  curr_knn[t].vector_id->raw_data_file);
               
               // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
@@ -643,6 +646,7 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
               knn_array_idx++;
             }
+            query_vector.pos = 0;
 
             for (int t = 0; t < k; t++)
               free(curr_knn[t].vector_id);

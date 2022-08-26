@@ -30,6 +30,7 @@ typedef struct query_result {
   // ts_type *raw_series;
 
   /* start kashif changes */
+  unsigned int query_vector_pos; // position of the query vector in the query set 
   struct vid *vector_id;
   /* end kashif changes */
 };
@@ -194,7 +195,7 @@ struct query_result * exact_de_knn_search_2(ts_type *query_ts, ts_type *query_ts
                          struct dstree_index *index, ts_type minimum_distance,
                          ts_type epsilon, ts_type r_delta, unsigned int k,
                          unsigned int q_id, char *qfilename, double *total_query_set_time,
-						 unsigned int *total_checked_ts);
+						 unsigned int *total_checked_ts, unsigned int query_vector_pos);
              
 struct query_result * exact_de_incr_progressive_knn_search_2(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,
@@ -202,7 +203,7 @@ struct query_result * exact_de_incr_progressive_knn_search_2(
     ts_type epsilon, ts_type r_delta, unsigned int k, unsigned int q_id,
     char *qfilename, double *total_query_set_time, unsigned int *total_checked_ts,
 	  struct bsf_snapshot ** bsf_snapshots,
-    unsigned int *cur_bsf_snapshot, float warping, FILE *, FILE *);
+    unsigned int *cur_bsf_snapshot, float warping, FILE *, FILE *, unsigned int query_vector_pos);
 
 struct query_result * exact_de_progressive_knn_search_2(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,
@@ -210,7 +211,7 @@ struct query_result * exact_de_progressive_knn_search_2(
     ts_type epsilon, ts_type r_delta, unsigned int k, unsigned int q_id,
     char *qfilename, double *total_query_set_time, unsigned int *total_checked_ts,
     struct bsf_snapshot **bsf_snapshots,
-    unsigned int *cur_bsf_snapshot);
+    unsigned int *cur_bsf_snapshot, unsigned int query_vector_pos);
 /* end kashif changes */
 
 #endif

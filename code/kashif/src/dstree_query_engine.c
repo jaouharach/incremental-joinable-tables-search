@@ -2021,7 +2021,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     char *qfilename, double *total_query_set_time,
     unsigned int *total_checked_ts, struct bsf_snapshot **bsf_snapshots,
     unsigned int *cur_bsf_snapshot, float warping, FILE *dataset_file,
-    FILE *series_file)
+    FILE *series_file, unsigned int query_vector_pos)
 {
 
   unsigned int curr_size = 0;
@@ -2040,6 +2040,10 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     knn_results[idx].node = NULL;
     knn_results[idx].distance = FLT_MAX;
     knn_results[idx].vector_id = malloc(sizeof(struct vid));
+    knn_results[idx].vector_id->table_id = 1000000000000;
+    knn_results[idx].vector_id->set_id = 1000000000000;
+    knn_results[idx].vector_id->pos = 1000000000000;
+    knn_results[idx].query_vector_pos = query_vector_pos;
   }
 
   // return k approximate results
@@ -2275,7 +2279,7 @@ struct query_result *exact_de_knn_search_2(
     unsigned int offset, struct dstree_index *index, ts_type minimum_distance,
     ts_type epsilon, ts_type r_delta, unsigned int k, unsigned int q_id,
     char *qfilename, double *total_query_set_time,
-    unsigned int *total_checked_ts)
+    unsigned int *total_checked_ts, unsigned int query_vector_pos)
 {
 
   unsigned int curr_size = 0;
@@ -2292,6 +2296,10 @@ struct query_result *exact_de_knn_search_2(
     knn_results[idx].node = NULL;
     knn_results[idx].distance = FLT_MAX;
     knn_results[idx].vector_id = malloc(sizeof(struct vid));
+    knn_results[idx].vector_id->table_id = 1000000000000;
+    knn_results[idx].vector_id->set_id = 1000000000000;
+    knn_results[idx].vector_id->pos = 1000000000000;
+    knn_results[idx].query_vector_pos = query_vector_pos;
   }
 
   // return k approximate results
@@ -2508,7 +2516,7 @@ struct query_result *exact_de_progressive_knn_search_2(
     ts_type epsilon, ts_type r_delta, unsigned int k, unsigned int q_id,
     char *qfilename, double *total_query_set_time, unsigned int *total_checked_ts,
     struct bsf_snapshot **bsf_snapshots,
-    unsigned int *cur_bsf_snapshot) {
+    unsigned int *cur_bsf_snapshot, unsigned int query_vector_pos) {
 
   unsigned int curr_size = 0;
   ts_type bsf = FLT_MAX;
@@ -2524,6 +2532,10 @@ struct query_result *exact_de_progressive_knn_search_2(
     knn_results[idx].node = NULL;
     knn_results[idx].distance = FLT_MAX;
     knn_results[idx].vector_id = malloc(sizeof(struct vid));
+    knn_results[idx].vector_id->table_id = 1000000000000;
+    knn_results[idx].vector_id->set_id = 1000000000000;
+    knn_results[idx].vector_id->pos = 1000000000000;
+    knn_results[idx].query_vector_pos = query_vector_pos;
   }
 
   // return k approximate results

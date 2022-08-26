@@ -86,8 +86,8 @@ def process_query():
             return render_template("index.html", error=msg)
         
         kashif_output = run_kashif(KASHIF_BIN, KASHIF_IDX, BIN_FOLDER, query_size, RESULTS_FOLDER, BIN_FOLDER,  EMBEDDING_DIM, top, k, approx_error)
-        # print("prog output:")
-        # print(f"**{kashif_output}**")
+        print("prog output:")
+        print(f"**{kashif_output}**")
 
         files = list(re.findall(r'@@(.*?)\$', kashif_output)) # get file names without duplicates
         column_pos = list(re.findall(r'column-(.*?)\-', kashif_output))

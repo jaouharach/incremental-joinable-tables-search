@@ -59,6 +59,11 @@ def query_to_bin(query_array, text_target_dir, bin_target_dir, path_to_glove_fil
         else:
             return -1, "Failed to clear target folders."
 
+
+    print(f"\nquery size = {query_size}")
+    print(query_data)
+    print("\n")
+    
      # 2- embed
     query_embeddings = embed.embed_query(query_data, path_to_glove_file, embedding_dim)
     if query_embeddings == -1:

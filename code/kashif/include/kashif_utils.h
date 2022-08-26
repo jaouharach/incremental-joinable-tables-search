@@ -249,9 +249,10 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   // write results
   for (int i = 0; i < num_knns; i++) {
     fprintf(fp, "\n");
-    fprintf(fp, "%u:%u, %u:%u, 0, 0, [], [], %.3f", qtable_id, qset_id,
-            knn_results[i].vector_id->table_id,
-            knn_results[i].vector_id->set_id, knn_results[i].distance);
+    fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f", qtable_id, qset_id,
+            knn_results[i].vector_id->table_id, knn_results[i].vector_id->set_id,
+            knn_results[i].query_vector_pos, knn_results[i].vector_id->pos,
+            knn_results[i].distance);
   }
   fclose(fp);
 
