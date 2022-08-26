@@ -1,12 +1,11 @@
-from flask import Flask, flash, render_template, request, redirect, url_for
+from flask import Flask, flash, render_template, request, redirect
 import pandas as pd
-import subprocess, os, signal
-import shutil, re
+import subprocess, re
 
 
 import sys
-sys.path.append('./utils/clean')
-from query_to_json import *
+sys.path.append('./utils')
+from query_to_bin import *
 
 RESULTS_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/query_results/"
 UPLOAD_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/uploads/"
@@ -21,56 +20,18 @@ KASHIF_IDX = "../kashif_idx/"
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# convert query file into a binary file in the format [total_vectors_in column][vector_1][vector_2]...
-# every [value] is stored in 4 bytes
-def create_bin_query_file():
-    embedding_process = subprocess.Popen(['python3', './utils/embed/embed_2.py', TMP_FOLDER, JSON_FOLDER,  GLOVE_PATH, str(EMBEDDING_DIM)],
-                                stdout=subprocess.PIPE)
-    stdout = embedding_process.communicate()
-    
-    tobin_process = subprocess.Popen(['python3', './utils/tobin/tobin.py', JSON_FOLDER, BIN_FOLDER, str(EMBEDDING_DIM)],
-                                stdout=subprocess.PIPE)
-    stdout = tobin_process.communicate()
-    
-    bin_dir = os.listdir(BIN_FOLDER)
-    json_dir = os.listdir(JSON_FOLDER)
-
-    if len(bin_dir) == 0 or len(json_dir) == 0:
-        return -1
-    return 0
     
 # create temp file for the query column
-def create_temp_query_file(query_file , column_idx):
+def create_query_bin_file(query_file , column_idx):
     df = pd.read_csv(query_file)
-    print(f"col idx = {column_idx}")
-    print(query_file)
     if column_idx < 0 or column_idx > df.shape[1] - 1:
-        return -1, df.shape[1]
+        return -1, f"Wrong value for column idx. file only contains {df.shape[1]} columns"
     else:
         query_column = df.iloc[:, column_idx].values
-        print(f"col = {query_column}")
+        query_size, msg = query_to_bin(query_column, TMP_FOLDER, BIN_FOLDER, GLOVE_PATH, EMBEDDING_DIM)
+        
+        return query_size, msg
 
-        query_file, query_size = query_to_json(query_column, TMP_FOLDER)
-        if(query_file == -1):
-            return -2, ""
-        else:
-            return query_file, query_size
-
-# empty folder content
-def clear_folders(upload_folders):
-    for folder in upload_folders:
-        with os.scandir(folder) as entries:
-            for entry in entries:
-                if entry.is_dir() and not entry.is_symlink():
-                    shutil.rmtree(entry.path)
-                else:
-                    os.remove(entry.path)
-    return True
 
 def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, dataset_folder, embedding_size, num_top, k, approx_error): 
     query = subprocess.check_output([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
@@ -119,28 +80,14 @@ def process_query():
             flash('No selected file')
             return redirect(request.url)
 
-        # empty upload files
-        if(clear_folders([TMP_FOLDER, JSON_FOLDER, BIN_FOLDER]) != True):
-            return render_template("index.html", error="Could't clear upload folders")
-
         # upload query column to server
-        _, size = create_temp_query_file(request.files.get('query_file'), column_idx)
-        if _ == -1:
-            return render_template("index.html", error=f"Wrong value for column idx. file only contains {size} columns")
-        elif _ == -2:
-            return render_template("index.html", error="Please choose a column with text data.")
+        query_size, msg= create_query_bin_file(request.files.get('query_file'), column_idx)
+        if msg:
+            return render_template("index.html", error=msg)
         
-        # if upload query column to server succeeded
-        query_size = size
-
-        # process the query and save it to a binary file, if binary file not created then the chosen column had no text data
-        if create_bin_query_file() == -1:
-            return render_template("index.html", error="Please choose a column with text data.")
-
-
         kashif_output = run_kashif(KASHIF_BIN, KASHIF_IDX, BIN_FOLDER, query_size, RESULTS_FOLDER, BIN_FOLDER,  EMBEDDING_DIM, top, k, approx_error)
         # print("prog output:")
-        print(f"**{kashif_output}**")
+        # print(f"**{kashif_output}**")
 
         files = list(re.findall(r'@@(.*?)\$', kashif_output)) # get file names without duplicates
         column_pos = list(re.findall(r'column-(.*?)\-', kashif_output))
@@ -159,21 +106,6 @@ def process_query():
             
         # sort results by overlap 
         results.sort(key=lambda x:x[2], reverse=True)
-
-        # print("files:")
-        # print(files)
-        # print("\n")
-        # print("column postions:")
-        # print(column_pos)
-        # print("\n")
-        # print("overlaps:")
-        # print(overlaps)
-        # print("\n")
-        # print("results:")
-        # print(results)
-        # print("\n")
-
-
         return render_template("index.html", results=results)
 
 @app.route('/view-dataset', methods=['GET'])

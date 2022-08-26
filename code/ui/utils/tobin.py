@@ -2,7 +2,6 @@
 # Binary conversion: little indian.
 import struct
 import json
-import os, sys, glob
 
 # read table from json file
 def get_json_table(file):
@@ -18,6 +17,7 @@ def save_to_file(target_dir, tableid, bin_table, totalvec, ncols, embedding_dim)
     f = open(file_name, "wb")
     f.write(bin_table)
     f.close()
+    return 1
 
 def float_to_bytes(num):  # For testing.
     return  struct.pack('<f', num)
@@ -48,38 +48,13 @@ def table_to_bin(table):
 
     return bin_table, table['ncols'], totalvec
 
-def encode_all(source_dir, target_dir, embedding_dim):
-    table_count = 0
+def encode_query(query_embeddings, target_dir, embedding_dim):
+    query_id = query_embeddings['id']
+    # convert table to binary format
+    bin_query, ncols, totalvec = table_to_bin(query_embeddings)
+    # Save to file
+    if not save_to_file(target_dir, query_id, bin_query, totalvec, ncols, embedding_dim):
+        return False
+    return True
 
-    for input_file in glob.glob(os.path.join(source_dir, '*.json')):
-        # print(f"> Processing file: {input_file}")
-        table = get_json_table(input_file)
-        table_id = table['id']
-
-        # convert table to binary format
-        bin_table, ncols, totalvec = table_to_bin(table)
-        # print(f'total vectors = {totalvec}')
-        # Save to file
-        save_to_file(target_dir, table_id, bin_table, totalvec, ncols, embedding_dim)
-        table_count = table_count + 1
-
-        # print(f"< File {input_file} has been processed.\n")
-
-    return table_count
-
-if len(sys.argv) >= 4:
-    source_dir = sys.argv[1] # file where embeddings data was stored
-    target_dir = sys.argv[2] # directory to store binary files
-    embedding_dim = sys.argv[3] # dimension of embeddings
-
-    # create target directory if doesn't exist
-    if not os.path.exists(target_dir):
-        os.mkdir(target_dir)
-
-    num_tables = encode_all(source_dir, target_dir, embedding_dim)
-
-    exit(0)
-
-else:
-    print('Please provide source directory, target directory and embbeding dimension as args!')
-
+ 
