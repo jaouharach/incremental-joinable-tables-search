@@ -358,6 +358,7 @@ enum response dstree_knn_query_multiple_binary_files(
         bsf_snapshots[i][j].checked_nodes = -1;
         bsf_snapshots[i][j].label = 0;
         bsf_snapshots[i][j].vector_id = malloc(sizeof(struct vid));
+        bsf_snapshots[i][j].query_vector_pos = -1;
       }
     }
   }
@@ -537,6 +538,7 @@ enum response dstree_knn_query_multiple_binary_files(
                   bsf_snapshots[b][f].vector_id->table_id = -1;
                   bsf_snapshots[b][f].vector_id->set_id = -1;
                   bsf_snapshots[b][f].vector_id->pos = -1;
+                  bsf_snapshots[b][f].query_vector_pos = -1;
                   strcpy(bsf_snapshots[b][f].vector_id->raw_data_file, "");
                 }
               }
@@ -620,6 +622,7 @@ enum response dstree_knn_query_multiple_binary_files(
                   bsf_snapshots[b][f].vector_id->table_id = -1;
                   bsf_snapshots[b][f].vector_id->set_id = -1;
                   bsf_snapshots[b][f].vector_id->pos = -1;
+                  bsf_snapshots[b][f].query_vector_pos = -1;
                   strcpy(bsf_snapshots[b][f].vector_id->raw_data_file, "");
                 }
               }
@@ -673,6 +676,7 @@ enum response dstree_knn_query_multiple_binary_files(
 
             // don't change these lines to allaow ui to fetch results
             struct result_sid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
+            unsigned int actual_num_top = (unsigned int) sizeof(top)/sizeof(top[0]);
             for(int m = 0; m < num_top; m++)
             {
               printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);

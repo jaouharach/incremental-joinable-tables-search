@@ -303,69 +303,103 @@ struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results,
 {
   // frequency = number of matching vectors with the query set vectors
   int i, j, k;
-  int *frequency_array = (int *)malloc(num_knn_results * sizeof(int));
 
-  // array of top x sets and
-  int *max_freqs = (int *)malloc(num_top * sizeof(int));
   struct result_sid *top = (struct result_sid *)calloc(num_top, sizeof(struct result_sid));
+  struct result_sid * distinct_sets = NULL;
 
-  for (i = 0; i < num_knn_results; i++)
-    frequency_array[i] = -1;
 
-  for (i = 0; i < num_top; i++)
-    max_freqs[i] = -__INT_MAX__;
+  unsigned int num_distinct_sets = 0;
+  int found = 0;
 
-  // count occurence of each (table_id, set_id)
-  for (i = 0; i < num_knn_results; i++) {
-    int count = 1;
+  num_distinct_sets += 1;
+  distinct_sets = realloc(distinct_sets, sizeof(struct result_sid));
+  distinct_sets[0].table_id = knn_results[0].vector_id->table_id;
+  distinct_sets[0].set_id = knn_results[0].vector_id->set_id;
+  distinct_sets[0].overlap_size = 0;
+  strcpy(distinct_sets[0].raw_data_file, knn_results[0].vector_id->raw_data_file);
 
-    for (j = i + 1; j < num_knn_results; j++) {
-      if (knn_results[i].vector_id->table_id ==
-          knn_results[j].vector_id->table_id) 
-      {
-        if ((knn_results[i].vector_id->set_id ==
-             knn_results[j].vector_id->set_id))
+  // get distinct sets
+  for ( i = 1; i < num_knn_results; i++)
+  {
+    found = 0;
+    for(j = num_distinct_sets - 1; j >= 0; j--)
+    {
+      if(distinct_sets[j].table_id == knn_results[i].vector_id->table_id)
+        if(distinct_sets[j].set_id == knn_results[i].vector_id->set_id)
         {
-          // if ((knn_results[i].vector_id->pos ==
-          //    knn_results[j].vector_id->pos))
-          // {
-            count++;
-            frequency_array[j] = 0;
-          // }
+          found = 1;
+          break;
         }
-      }
     }
-    if (frequency_array[i] != 0) {
-      frequency_array[i] = count;
-      
+    if(found == 0)
+    {
+      num_distinct_sets += 1;
+      distinct_sets = realloc(distinct_sets, (sizeof(struct result_sid) * num_distinct_sets));
+      distinct_sets[num_distinct_sets - 1].table_id = knn_results[i].vector_id->table_id;
+      distinct_sets[num_distinct_sets - 1].set_id = knn_results[i].vector_id->set_id;
+      distinct_sets[num_distinct_sets - 1].overlap_size = 0;
+      strcpy(distinct_sets[num_distinct_sets - 1].raw_data_file, knn_results[i].vector_id->raw_data_file);
     }
   }
 
-  // use frequency array to find  top x most frequent ids
-  for (i = 0; i < num_knn_results; i++) {
-    for (j = 0; j < num_top; j++) {
-      if (frequency_array[i] > max_freqs[j])
-      {
-        // move curr top k to be top k+1
-        for (k = (num_top - 1); k > j; k--)
+  struct vid * distinct_match_vectors = NULL;
+  unsigned int num_distinct_vectors = 0;
+  
+  num_distinct_vectors += 1;
+  distinct_match_vectors = realloc(distinct_match_vectors, sizeof(struct vid));
+  distinct_match_vectors[0].table_id = knn_results[0].vector_id->table_id;
+  distinct_match_vectors[0].set_id = knn_results[0].vector_id->set_id;
+  distinct_match_vectors[0].pos = knn_results[0].vector_id->pos;
+
+  // get distinct vectors
+  for ( i = 1; i < num_knn_results; i++)
+  {
+    found = 0;
+    for(j = num_distinct_vectors - 1; j >= 0; j--)
+    {
+      if(distinct_match_vectors[j].table_id == knn_results[i].vector_id->table_id)
+        if(distinct_match_vectors[j].set_id == knn_results[i].vector_id->set_id)
+        if(distinct_match_vectors[j].pos == knn_results[i].vector_id->pos)
         {
-          max_freqs[k] = max_freqs[k - 1];
-          top[k].table_id = top[k - 1].table_id;
-          top[k].set_id = top[k - 1].set_id;
-          top[k].overlap_size = max_freqs[k];
-          strcpy(top[k].raw_data_file, top[k - 1].raw_data_file);
+          found = 1;
+          break;
         }
-        // replace curr top k
-        max_freqs[j] = frequency_array[i];
-        top[j].table_id = knn_results[i].vector_id->table_id;
-        top[j].set_id = knn_results[i].vector_id->set_id;
-        top[j].overlap_size = max_freqs[j];
-        strcpy(top[j].raw_data_file, knn_results[i].vector_id->raw_data_file);
-        break;
-      }
+    }
+    if(found == 0)
+    {
+      num_distinct_vectors += 1;
+      distinct_match_vectors = realloc(distinct_match_vectors, (sizeof(struct vid) * num_distinct_vectors));
+      distinct_match_vectors[num_distinct_vectors - 1].table_id = knn_results[i].vector_id->table_id;
+      distinct_match_vectors[num_distinct_vectors - 1].set_id = knn_results[i].vector_id->set_id;
+      distinct_match_vectors[num_distinct_vectors - 1].pos = knn_results[i].vector_id->pos;
     }
   }
-  free(frequency_array);
-  free(max_freqs);
-  return top;
+
+  for(i = num_distinct_sets - 1; i >= 0; i--)
+  {
+    for(j = num_distinct_vectors - 1; j >= 0; j--)
+    {
+      if(distinct_sets[i].table_id == distinct_match_vectors[j].table_id)
+        if(distinct_sets[i].set_id == distinct_match_vectors[j].set_id)
+        {
+          distinct_sets[i].overlap_size += 1;
+        }
+    }
+  }
+
+  // fill the rest withe the last elemet
+  if(num_distinct_sets < num_top)
+  {
+    struct result_sid * last = &distinct_sets[num_distinct_sets - 1];
+    
+    distinct_sets = realloc(distinct_sets, (sizeof(struct result_sid) * num_top));
+    for(i = num_distinct_sets; i < num_top; i++)
+    {
+      distinct_sets[i].table_id = last->table_id;
+      distinct_sets[i].set_id = last->set_id;
+      distinct_sets[i].overlap_size = last->overlap_size;
+      strcpy(distinct_sets[i].raw_data_file, last->raw_data_file);
+    }
+  }
+  return distinct_sets;
 }

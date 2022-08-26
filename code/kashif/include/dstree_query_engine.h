@@ -47,6 +47,7 @@ typedef struct bsf_snapshot {
   ////ts_type *raw_series;
 
   /* start kashif changes */
+  unsigned int query_vector_pos;
   struct vid * vector_id;
   /* end kashif changes */
 };

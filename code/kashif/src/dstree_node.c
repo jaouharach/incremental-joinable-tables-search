@@ -710,6 +710,7 @@ void calculate_node_knn_distance(
         bsf_snapshots[j][*cur_bsf_snapshot].vector_id->table_id = knn_results[j].vector_id->table_id;
         bsf_snapshots[j][*cur_bsf_snapshot].vector_id->set_id = knn_results[j].vector_id->set_id;
         bsf_snapshots[j][*cur_bsf_snapshot].vector_id->pos = knn_results[j].vector_id->pos;
+        bsf_snapshots[j][*cur_bsf_snapshot].query_vector_pos = knn_results[j].query_vector_pos;
         strcpy(bsf_snapshots[j][*cur_bsf_snapshot].vector_id->raw_data_file, 
               knn_results[j].vector_id->raw_data_file);
       }
