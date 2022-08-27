@@ -663,6 +663,7 @@ enum response dstree_knn_query_multiple_binary_files(
 
             // End of Query set
             /* Save query results to csv file */
+            query_time /= 1000000;
             char *query_result_file = make_file_path(results_dir, table_id, query_vector.set_id, nvec,
                                       total_data_files, dlsize, vector_length,
                                       query_time, total_checked_ts);
@@ -676,11 +677,11 @@ enum response dstree_knn_query_multiple_binary_files(
 
             // don't change these lines to allaow ui to fetch results
             struct result_sid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
-            unsigned int actual_num_top = (unsigned int) sizeof(top)/sizeof(top[0]);
             for(int m = 0; m < num_top; m++)
             {
               printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
             }
+            printf("\nquery_time=%fsec\n", query_time);
             // don't change these lines to allaow ui to fetch results
 
             // free memory

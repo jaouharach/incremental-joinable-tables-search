@@ -304,8 +304,8 @@ struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results,
   // frequency = number of matching vectors with the query set vectors
   int i, j, k;
 
-  struct result_sid *top = (struct result_sid *)calloc(num_top, sizeof(struct result_sid));
   struct result_sid * distinct_sets = NULL;
+  struct vid * distinct_match_vectors = NULL;
 
 
   unsigned int num_distinct_sets = 0;
@@ -342,7 +342,6 @@ struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results,
     }
   }
 
-  struct vid * distinct_match_vectors = NULL;
   unsigned int num_distinct_vectors = 0;
   
   num_distinct_vectors += 1;
@@ -401,5 +400,8 @@ struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results,
       strcpy(distinct_sets[i].raw_data_file, last->raw_data_file);
     }
   }
+
+  free(distinct_match_vectors);
+
   return distinct_sets;
 }

@@ -2083,7 +2083,9 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   }
 
   // RESET_QUERY_COUNTERS()
-  // RESET_PARTIAL_COUNTERS()
+  /* start kashif changes */
+  RESET_PARTIAL_COUNTERS()
+  /* end kashif changes */
   COUNT_PARTIAL_TIME_START
 
   struct query_result bsf_result = approximate_result;
@@ -2128,6 +2130,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         COUNT_PARTIAL_TIME_END
 
         update_query_stats(index, q_id, found_knn, bsf_result);
+        *total_query_set_time += index->stats->query_total_time;
+
         // get_query_stats(index, found_knn);
         // print_query_stats(index, q_id, found_knn, qfilename);
 
@@ -2149,7 +2153,9 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         }
 
         // RESET_QUERY_COUNTERS()
-        // RESET_PARTIAL_COUNTERS()
+      /* start kashif changes */
+      RESET_PARTIAL_COUNTERS()
+      /* end kashif changes */
         COUNT_PARTIAL_TIME_START
       }
     }
@@ -2230,6 +2236,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     found_knn = pos + 1;
     COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
+    *total_query_set_time += index->stats->query_total_time;
+
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn, qfilename);
 
@@ -2244,7 +2252,10 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
     // bsf_result.distance, NULL, NULL); report all results for found_knn -
     // last_found_knn or print their results RESET_QUERY_COUNTERS()
-    // RESET_PARTIAL_COUNTERS()
+    
+    /* start kashif changes */
+    RESET_PARTIAL_COUNTERS()
+    /* end kashif changes */
     COUNT_PARTIAL_TIME_START
   }
   /*
@@ -2266,7 +2277,6 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
   
   // add  query_vector time to total query_set time
-  *total_query_set_time += index->stats->query_filter_total_time / 1000000;
   *total_checked_ts += index->stats->query_filter_checked_ts_count;
   free(series);
 
@@ -2494,6 +2504,8 @@ struct query_result *exact_de_knn_search_2(
     found_knn = pos + 1;
     COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
+    *total_query_set_time += index->stats->query_total_time;
+
     get_query_stats(index, found_knn);
     print_query_stats(index, q_id, found_knn, qfilename);
     // report all results for found_knn - last_found_knn or print their results
@@ -2503,7 +2515,6 @@ struct query_result *exact_de_knn_search_2(
   }
 
   // add  query_vector time to total query_set time
-  *total_query_set_time += index->stats->query_filter_total_time / 1000000;
   *total_checked_ts += index->stats->query_filter_checked_ts_count;
 
   // save results to later find top-k matches
@@ -2575,7 +2586,9 @@ struct query_result *exact_de_progressive_knn_search_2(
   }
 
   // RESET_QUERY_COUNTERS()
-  // RESET_PARTIAL_COUNTERS()
+  /* start kashif changes */
+  RESET_PARTIAL_COUNTERS()
+  /* end kashif changes */
   COUNT_PARTIAL_TIME_START
 
   struct query_result bsf_result = approximate_result;
@@ -2687,6 +2700,8 @@ struct query_result *exact_de_progressive_knn_search_2(
     found_knn = pos + 1;
     // COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
+    *total_query_set_time += index->stats->query_total_time;
+
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn, qfilename);
     print_perk_progressive_bsf_snapshots(index, q_id, found_knn, qfilename,
@@ -2710,7 +2725,6 @@ struct query_result *exact_de_progressive_knn_search_2(
   // *cur_bsf_snapshot);
 
   // add  query_vector time to total query_set time
-  *total_query_set_time += index->stats->query_filter_total_time / 1000000;
   *total_checked_ts += index->stats->query_filter_checked_ts_count;
 
   // save results to later find top-k matches

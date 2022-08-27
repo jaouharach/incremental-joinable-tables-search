@@ -1,6 +1,7 @@
 from flask import Flask, flash, render_template, request, redirect
 import pandas as pd
 import subprocess, re
+import time
 
 
 import sys
@@ -81,7 +82,11 @@ def process_query():
             return redirect(request.url)
 
         # upload query column to server
+        start = time.time()
         query_size, msg= create_query_bin_file(request.files.get('query_file'), column_idx)
+        end = time.time()
+        query_cleaning_time =  "{:.2f}".format(end - start)
+
         if msg:
             return render_template("index.html", error=msg)
         
@@ -92,7 +97,9 @@ def process_query():
         files = list(re.findall(r'@@(.*?)\$', kashif_output)) # get file names without duplicates
         column_pos = list(re.findall(r'column-(.*?)\-', kashif_output))
         overlaps = list(re.findall(r'overlap=(.*?)\§', kashif_output))
+        query_time = "{:.2f}".format(float(re.search(r'query_time=(.*?)sec', kashif_output).group(1)))
 
+        print(f"Query time = {query_time} sec\n")
         temp = set(list(zip(files, column_pos, overlaps)))
         visited = set()
         results = list()
@@ -106,7 +113,7 @@ def process_query():
             
         # sort results by overlap 
         results.sort(key=lambda x:x[2], reverse=True)
-        return render_template("index.html", results=results)
+        return render_template("index.html", results=results, query_cleaning_time=query_cleaning_time, query_time=query_time)
 
 @app.route('/view-dataset', methods=['GET'])
 def view_dataset():

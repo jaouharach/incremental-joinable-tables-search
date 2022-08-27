@@ -210,7 +210,7 @@
             <!-- ============================================================== -->
             <div class="row">
               <div class="col-8">
-                {% if error %}
+                {% if error %} 
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                   <strong>Error: </strong>{{ error }}
                   <!-- <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a> -->
@@ -231,7 +231,7 @@
                         >
                       </div>
                       <div class="ms-auto">
-                        <div class="tetx-right">
+                        <div class="text-right">
                           <!-- <h5 class="text-muted mb-0">Found</h5> -->
                           <span class="text-muted font-16">{{ results[2] }} matches</span>
                         </div>
@@ -239,15 +239,65 @@
                     </li>
                     {% endif %}
                     {% endfor %}
-                    {% endif %}
+                    
                   </ul>
-                  
+                  <li class="d-flex no-block card-body justify-content-end p-3">
+                      <ul class="pagination">
+                        <li class="page-item">
+                          <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                            <span class="sr-only">Previous</span>
+                          </a>
+                        </li>
+                        <li class="page-item"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                          <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                            <span class="sr-only">Next</span>
+                          </a>
+                        </li>
+                      </ul>
+                  </li>
+                  {% endif %}
                 </div>
               </div>
               <div class="col-4">
                 <div class="card">
                   <div class="card-body">
-                    <h4 class="card-title">Statistics</h4>
+                    <h5 class="card-title mb-0">Statistics</h5>
+                  </div>
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Query time</th>
+                        <th scope="col">seconds</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Cleaning time</td>
+                        {% if query_cleaning_time %} 
+                        <td>{{ query_cleaning_time }}</td>
+                        {% else %}
+                        <td>0.00</td>
+                        {% endif %}
+                      </tr>
+                      <tr>
+                        <td>Processing time</td>
+                        {% if query_time %} 
+                        <td>{{ query_time }}</td>
+                        {% else %}
+                        <td>0.00</td>
+                        {% endif %}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="card">
+                  <div class="card-body">
+                    <h4 class="card-title">More statistics</h4>
                     <div class="mt-3">
                       <div class="d-flex no-block align-items-center">
                         <span>81% Clicks</span>
@@ -321,37 +371,6 @@
                       </div>
                     </div>
                   </div>
-                </div>
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title mb-0">More Statistics</h5>
-                  </div>
-                  <table class="table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Browser</th>
-                        <th scope="col">Visits</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>Chrome</td>
-                        <td>8850</td>
-                      </tr>
-                      <tr>
-                        <td>Firefox</td>
-                        <td>1200</td>
-                      </tr>
-                      <tr>
-                        <td>Internet Explorer</td>
-                        <td>1540</td>
-                      </tr>
-                      <tr>
-                        <td>Opera</td>
-                        <td>1230</td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </div>
