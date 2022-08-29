@@ -1,7 +1,7 @@
 from flask import Flask, flash, render_template, request, redirect
 import pandas as pd
 import subprocess, re
-import time
+import time, json
 
 
 import sys
@@ -18,10 +18,61 @@ GLOVE_PATH = "./glove/glove.6B.50d.txt"
 EMBEDDING_DIM = 50
 KASHIF_BIN = "../kashif/bin/dstree"
 KASHIF_IDX = "../kashif_idx/"
+RAW_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/raw-tables/"
+METADATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-    
+
+# read raw file into pandas data frame
+def read_raw_file(binary_filename, source_dir):
+    # raw files are named t[table_id]_c[column_pos].json, mus extract table id and colun pos from binary raw filename
+    table_id = int(re.search(r'_t(.*)c', binary_filename).group(1))
+    column_pos = int(re.search(fr'_t{table_id}c(.*?)_', binary_filename).group(1))
+    filename = f"t{table_id}_c{column_pos}.json"
+
+    data = None
+    filepath = source_dir + '/' + filename
+
+    try:
+        f = open(filepath, 'r')
+        data = f.read()
+        table = json.loads(data)
+        f.close()
+
+        cols = table['cols']
+        ncols = table['ncols']
+        num_rows = [len(col) for col in cols]
+        max_num_rows = max(num_rows)
+
+        print(f"\n\n\n max rows = {max_num_rows}\n\n\n")
+        # df = pd.DataFrame(table['cols'])
+        return ncols, cols, max_num_rows,  ""
+
+    except OSError:
+        return -1, -1, -1, "Couldn't open raw data file."
+
+# read raw file into pandas data frame
+def read_metadata_file(binary_filename, metadata_dir):
+    # raw files are named t[table_id]_c[column_pos].json, mus extract table id and colun pos from binary raw filename
+    table_id = int(re.search(r'_t(.*)c', binary_filename).group(1))
+    column_pos = int(re.search(fr'_t{table_id}c(.*?)_', binary_filename).group(1))
+    filename = f"t{table_id}_c{column_pos}.json"
+
+    data = None
+    filepath = metadata_dir + '/' + filename
+
+    try:
+        f = open(filepath, 'r')
+        data = f.read()
+        metadata = json.loads(data)
+        f.close()
+
+        return metadata, ""
+
+    except OSError:
+        return -1, "Couldn't open metadata data file."
+
 # create temp file for the query column
 def create_query_bin_file(query_file , column_idx):
     df = pd.read_csv(query_file)
@@ -130,9 +181,28 @@ def process_query():
         results.sort(key=lambda x:x[2], reverse=True)
         return render_template("index.html", results=results, query_cleaning_time=query_cleaning_time, query_time=query_time)
 
-@app.route('/view-dataset', methods=['GET'])
+@app.route('/view-dataset', methods=['GET', 'POST'])
 def view_dataset():
-   return render_template('view-dataset.html')
+    if request.method == 'POST':
+        filename = request.form['file_name']
+        column_idx = request.form['column_idx']
+
+        if not filename or not column_idx:
+            return render_template('404.html')
+
+        else:
+            ncols, cols, max_num_rows, msg = read_raw_file(filename, RAW_DATA_FOLDER)
+            if ncols == -1:
+                return render_template('view-dataset.html', error=msg)
+            
+            metadata, msg = read_metadata_file(filename, METADATA_FOLDER)
+            if metadata == -1:
+                return render_template('view-dataset.html', error=msg)
+            
+            print(metadata)
+            
+            return render_template('view-dataset.html', metadata=metadata, file_name=request.form['file_name'], match_col=column_idx, cols=cols, ncols=ncols, max_num_rows=max_num_rows)
+
 
 if __name__ == '__main__':
    app.run(debug = True)
