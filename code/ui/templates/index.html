@@ -219,23 +219,29 @@
                 <div class="card">
                   <ul class="list-style-none">
                     {% if results %}
-                    {% for results in results %}
-                    {% if results[0] %}
+                    {% for result in results %}
+                    {% if result[0][0] %}
                     <li class="d-flex no-block card-body border-top">
                       <!-- <i class="mdi mdi-check-circle fs-4 w-30px mt-1"></i> -->
                       <div>
-                        <form id="view_dataset_form_{{ results[0] }}" action="http://localhost:5000/view-dataset" method="post">
-                          <input type="hidden" name="file_name" value="{{ results[0] }}"/>
-                          <input type="hidden" name="column_idx" value="{{ results[1] }}"/>
-                        <a href="#" onclick='document.getElementById("view_dataset_form_{{ results[0] }}").submit();'' class="mb-0 font-medium p-0"
-                          >{{ results[0] }}</a>
+                        <form id="view_dataset_form_{{ result[0][0] }}" action="http://localhost:5000/view-dataset" method="post">
+                          <input type="hidden" name="file_name" value="{{ result[0][0] }}"/>
+                          <input type="hidden" name="column_idx" value="{{ result[0][1] }}"/>
+                        <a href="#" onclick='document.getElementById("view_dataset_form_{{ result[0][0] }}").submit();'' class="mb-0 font-medium p-0"
+                          >{{ result[1]["page_title"] }}</a>
                         </form>
-                        <span class="text-muted">In column {{ results[1] }}. </span>
+                        {% if result[1]["text_before_table"] %}
+                        <span class="text-muted">{{ result[1]["text_before_table"]|truncate(100, True, '...') }} </span>
+                        {% else %}
+                        <span class="text-muted">{{ result[1]["text_after_table"]|truncate(100, True, '...') }} </span>
+                        {% endif %}
+                        <br>
+                        <span class="text-muted">Raw binary file {{ result[0][0] }}, Found matches in column {{ result[0][1] }}. </span>
                       </div>
                       <div class="ms-auto">
                         <div class="text-right">
                           <!-- <h5 class="text-muted mb-0">Found</h5> -->
-                          <span class="text-muted font-16">{{ results[2] }} matches</span>
+                          <span class="text-muted font-16">{{ result[0][2] }} matches</span>
                         </div>
                       </div>
                     </li>

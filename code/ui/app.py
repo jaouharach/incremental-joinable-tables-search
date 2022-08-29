@@ -71,7 +71,7 @@ def read_metadata_file(binary_filename, metadata_dir):
         return metadata, ""
 
     except OSError:
-        return -1, "Couldn't open metadata data file."
+        return -1, f"Couldn't open metadata file for binary file {binary_filename}."
 
 # create temp file for the query column
 def create_query_bin_file(query_file , column_idx):
@@ -179,7 +179,16 @@ def process_query():
             
         # sort results by overlap 
         results.sort(key=lambda x:x[2], reverse=True)
-        return render_template("index.html", results=results, query_cleaning_time=query_cleaning_time, query_time=query_time)
+        metadata = list()
+        for result in results:
+            metad, msg = read_metadata_file(result[0], METADATA_FOLDER)
+            if metad == -1:
+                return render_template('index.html', error=msg)
+            else:
+                metadata.append(metad)
+        
+        results = list(zip(results, metadata))
+        return render_template("index.html", results=results, metadata=metadata, query_cleaning_time=query_cleaning_time, query_time=query_time)
 
 @app.route('/view-dataset', methods=['GET', 'POST'])
 def view_dataset():
