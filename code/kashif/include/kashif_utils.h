@@ -293,7 +293,8 @@ char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
     // exit(-1);
   }
   mkdir(result_dir_name, 0777);
-
+  closedir(dir);
+  
   return result_dir_name;
 }
 

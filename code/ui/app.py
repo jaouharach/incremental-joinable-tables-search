@@ -48,7 +48,22 @@ def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, datas
     '--mode', '1',  '--warping', '0.0', '--ascii-input', '0',
     '--track-vector', '1'
     ])
-    
+
+    # for the index storing 500k tables
+    # query = subprocess.check_output([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
+    # '--nq', '1', '--queries-size',  str(query_size), 
+    # '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
+    # '--dataset', dataset_folder, '--total-data-files', '500000', 
+    # '--dataset-GB-size', '3', '--dataset-size', '14574511',
+    # '--result-dir', result_dir, '--k', str(k),
+    # '--top',  str(num_top), ' --delta', '1',
+    # '--epsilon',  str(approx_error), '--timeseries-size', str(embedding_size),
+    # '--track-bsf', '--incremental', '--leaf-size', '100',
+    # '--buffer-size', '500000',
+    # '--mode', '1',  '--warping', '0.0', '--ascii-input', '0',
+    # '--track-vector', '1'
+    # ])
+
     # stdout, stderr = query.communicate()
     return query.decode('utf-8')
 
