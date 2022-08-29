@@ -4,11 +4,21 @@ valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset /home/j
 
 
 500k index
-
+---------------------
 valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/bins --total-data-files 500000 --buffer-size 10000 --index-path /home/jaouhara.chanchaf/projects/iqa/results/500k-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100000
+-------------------
+
 
 
 *query index
+
+
+
+500k 
+------------
+valgrind  --leak-check=full --undef-value-errors=no bin/dstree --queries /home/jaouhara.chanchaf/projects/iqa/results/queries/ --nq 1 --queries-size 2 --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/bins --total-data-files 500000 --result-dir /home/jaouhara.chanchaf/projects/iqa/results/m2/ --buffer-size 500000 --index-path /home/jaouhara.chanchaf/projects/iqa-demo/code/500k-idx/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --min-qset-size 7 --max-qset-size 10 --leaf-size 100 --top 3
+------------
+
 
 valgrind  --leak-check=full --undef-value-errors=no bin/dstree --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/bins --nq 1 --queries-size 10 --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/bins --total-data-files 100 --result-dir /home/jaouhara.chanchaf/projects/iqa/results/m2/ --buffer-size 100 --index-path /home/jaouhara.chanchaf/projects/iqa/results/idx0/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --min-qset-size 7 --max-qset-size 10 --leaf-size 100 --top 3
 

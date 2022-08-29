@@ -389,9 +389,9 @@ struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results,
   // fill the rest withe the last elemet
   if(num_distinct_sets < num_top)
   {
-    struct result_sid * last = &distinct_sets[num_distinct_sets - 1];
-    
     distinct_sets = realloc(distinct_sets, (sizeof(struct result_sid) * num_top));
+    struct result_sid * last = &distinct_sets[num_distinct_sets - 1];
+
     for(i = num_distinct_sets; i < num_top; i++)
     {
       distinct_sets[i].table_id = last->table_id;
