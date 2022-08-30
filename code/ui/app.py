@@ -8,21 +8,24 @@ import sys
 sys.path.append('./utils')
 from query_to_bin import *
 
+ALLOWED_EXTENSIONS = {'csv'}
+
 RESULTS_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/query_results/"
 UPLOAD_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/uploads/"
 TMP_FOLDER = UPLOAD_FOLDER + "tmp/"
 BIN_FOLDER = UPLOAD_FOLDER + "bins/"
-JSON_FOLDER = UPLOAD_FOLDER + "json/"
-ALLOWED_EXTENSIONS = {'csv', 'json'}
+
 EMBEDDING_DIM = 50
 KASHIF_BIN = "../kashif/bin/dstree"
-# KASHIF_IDX = "../kashif_idx/"
-KASHIF_IDX = "../100-idx/"
+
+KASHIF_IDX = "../100-idx/" # storing 100 tables
 RAW_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/raw-tables/"
 METADATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
+
 # EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
 # PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/glove/glove.6B.50d.txt"
-EMBEDDING_MODEL = 'fasttext' # 'fasttext' or 'glove'
+
+EMBEDDING_MODEL = 'fasttext' 
 PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/fasttext/cc.en.300.bin"
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -53,7 +56,7 @@ def read_raw_file(binary_filename, source_dir):
         return ncols, cols, max_num_rows,  ""
 
     except OSError:
-        return -1, -1, -1, "Couldn't open raw data file."
+        return -1, -1, -1, f"Couldn't open raw data file {filepath}."
 
 # read raw file into pandas data frame
 def read_metadata_file(binary_filename, metadata_dir):
