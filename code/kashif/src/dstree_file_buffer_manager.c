@@ -51,6 +51,8 @@ enum response set_buffered_memory_size(struct dstree_index *index) {
     unsigned long num_bytes =
         index->settings->buffered_memory_size * 1024 * 1024;
 
+    printf("buffered memory size = %d bytes", num_bytes);
+    
     index->buffer_manager->max_buffered_size =
         (long)(index->settings->buffered_memory_size * 1024 * 1024 /
                sizeof(ts_type));

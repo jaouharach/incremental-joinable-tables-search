@@ -59,6 +59,7 @@ struct dstree_index_settings *dstree_index_settings_init(
   settings->timeseries_size = timeseries_size;
   settings->init_segments = init_segments;
   settings->max_leaf_size = max_leaf_size;
+  printf("buffered memory = %f MB\n", buffered_memory_size);
   settings->buffered_memory_size = buffered_memory_size;
 
   settings->dataset = dataset;

@@ -336,8 +336,9 @@ int main(int argc, char **argv) {
   {
     data_gb_size = get_data_gb_size(dataset, total_data_files);
   }
-  printf("Start Experiment...\nData Lake size: \nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", dataset_size, data_gb_size);
-  
+  printf("Start Experiment...\n\nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", dataset_size, data_gb_size);
+  printf("buffered memory = %f MB\n", buffered_memory_size);
+
   /* end kashif changes */
 
   
