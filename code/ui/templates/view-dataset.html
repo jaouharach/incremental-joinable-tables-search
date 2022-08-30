@@ -238,11 +238,11 @@
                 <!-- <h5 class="card-title">Basic Datatable</h5> -->
                 <div class="table-responsive">
                   <table id="zero_config" class="table table-striped table-bordered">
-                    {% if header %}
+                    {% if metadata['header'] %}
                     <thead>
                       <tr>
                         {% for i in range(ncols) %}
-                        <th>{{ header[i]}}</th>
+                        <th>{{ metadata['header'][i]}}</th>
                         {% endfor %}
                       </tr>
                     </thead>

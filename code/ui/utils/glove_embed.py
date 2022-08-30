@@ -15,7 +15,7 @@ def embed_query(query, path_to_glove_file, embedding_dim):
 
     # no columns in table
     if(new_query['ncols'] == 0):
-        return False
+        return -1
     else:
         return new_query
         
@@ -30,7 +30,7 @@ def load_embeddings_index(path_to_glove_file):
             embeddings_index[word] = coefs
     return embeddings_index
 
-def encode_col(col, embeddings_index, embedding_dim=50):
+def encode_col(col, embeddings_index, embedding_dim=100):
     col_embeddings = list()
     # compute the average vector (embedding) for each token, don't count words for which there is no embedding in glove index
     for token in col:

@@ -2,7 +2,8 @@
 import json
 import os, re
 import shutil
-import embed, tobin
+import glove_embed
+import fasttext_embed, tobin
 
 def clear_folder(folder_path):
     with os.scandir(folder_path) as entries:
@@ -35,7 +36,7 @@ def save_bin_file(target_dir, tableid, bin_table, totalvec, ncols, embedding_dim
     f.write(bin_table)
     f.close()
 
-def query_to_bin(query_array, text_target_dir, bin_target_dir, path_to_glove_file, embedding_dim):
+def query_to_bin(query_array, text_target_dir, bin_target_dir, path_to_glove_file, embedding_model, embedding_dim):
     # check if target dir exists
     if not os.path.exists(text_target_dir) or not os.path.exists(bin_target_dir):
         return -1, "Target directory doesn't exist"
@@ -65,10 +66,16 @@ def query_to_bin(query_array, text_target_dir, bin_target_dir, path_to_glove_fil
     print("\n")
     
      # 2- embed
-    query_embeddings = embed.embed_query(query_data, path_to_glove_file, embedding_dim)
+    if embedding_model == 'glove':
+        query_embeddings = glove_embed.embed_query(query_data, path_to_glove_file, embedding_dim)
+    elif embedding_model == 'fasttext':
+        query_embeddings = fasttext_embed.embed_query(query_data, path_to_glove_file, embedding_dim)
+    else:
+        return -1, "Unknown embedding model, please choose 'glove' or 'fastext' as an embedding model."
+
     if query_embeddings == -1:
         return -1, "Faild to generate query embeddings."
-
+    
     # 3- create binary file
     _ = tobin.encode_query(query_embeddings, bin_target_dir, embedding_dim)
     if not _:
