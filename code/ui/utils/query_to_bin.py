@@ -36,7 +36,7 @@ def save_bin_file(target_dir, tableid, bin_table, totalvec, ncols, embedding_dim
     f.write(bin_table)
     f.close()
 
-def query_to_bin(query_array, text_target_dir, bin_target_dir, path_to_glove_file, embedding_model, embedding_dim):
+def query_to_bin(query_array, text_target_dir, bin_target_dir, embedding_model, path_to_embedding_model, embedding_dim):
     # check if target dir exists
     if not os.path.exists(text_target_dir) or not os.path.exists(bin_target_dir):
         return -1, "Target directory doesn't exist"
@@ -67,9 +67,9 @@ def query_to_bin(query_array, text_target_dir, bin_target_dir, path_to_glove_fil
     
      # 2- embed
     if embedding_model == 'glove':
-        query_embeddings = glove_embed.embed_query(query_data, path_to_glove_file, embedding_dim)
+        query_embeddings = glove_embed.embed_query(query_data, path_to_embedding_model, embedding_dim)
     elif embedding_model == 'fasttext':
-        query_embeddings = fasttext_embed.embed_query(query_data, path_to_glove_file, embedding_dim)
+        query_embeddings = fasttext_embed.embed_query(query_data, path_to_embedding_model, embedding_dim)
     else:
         return -1, "Unknown embedding model, please choose 'glove' or 'fastext' as an embedding model."
 

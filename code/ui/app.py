@@ -21,6 +21,7 @@ KASHIF_IDX = "../kashif_idx/"
 RAW_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/raw-tables/"
 METADATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
 EMBEDDING_MODEL = 'glove' # 'fasttext'
+PATH_TO_MODEL = "./glove/glove.6B.50d.txt" # "./fasttext/cc.en.300.bin"
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -81,7 +82,7 @@ def create_query_bin_file(query_file , column_idx):
         return -1, f"Wrong value for column idx. file only contains {df.shape[1]} columns"
     else:
         query_column = df.iloc[:, column_idx].values
-        query_size, msg = query_to_bin(query_column, TMP_FOLDER, BIN_FOLDER, GLOVE_PATH, EMBEDDING_MODEL, EMBEDDING_DIM)
+        query_size, msg = query_to_bin(query_column, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL, EMBEDDING_DIM)
         
         return query_size, msg
 
