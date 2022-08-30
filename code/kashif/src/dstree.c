@@ -325,10 +325,10 @@ int main(int argc, char **argv) {
   }
   
   /* start kashif changes */
-  if (dataset_size < 1) {
-    fprintf(stderr,"Current datasize is less that 1!. Please change dataset directory.\n");
-    exit(-1);
-  }
+  // if (dataset_size < 1) {
+  //   fprintf(stderr,"Current datasize is less that 1!. Please change dataset directory.\n");
+  //   exit(-1);
+  // }
   if (dataset_size == 0)
     dataset_size = (unsigned int) get_total_data_vectors(dataset, total_data_files); // get total number of vectors in data repository
   

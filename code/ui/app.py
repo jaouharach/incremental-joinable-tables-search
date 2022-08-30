@@ -14,15 +14,16 @@ TMP_FOLDER = UPLOAD_FOLDER + "tmp/"
 BIN_FOLDER = UPLOAD_FOLDER + "bins/"
 JSON_FOLDER = UPLOAD_FOLDER + "json/"
 ALLOWED_EXTENSIONS = {'csv', 'json'}
-GLOVE_PATH = "./glove/glove.6B.50d.txt"
 EMBEDDING_DIM = 50
 KASHIF_BIN = "../kashif/bin/dstree"
-KASHIF_IDX = "../kashif_idx/"
+# KASHIF_IDX = "../kashif_idx/"
+KASHIF_IDX = "../100-idx/"
 RAW_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/raw-tables/"
 METADATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
-EMBEDDING_MODEL = 'glove' # 'fasttext'
-PATH_TO_MODEL = "./glove/glove.6B.50d.txt" # "./fasttext/cc.en.300.bin"
-
+# EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
+# PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/glove/glove.6B.50d.txt"
+EMBEDDING_MODEL = 'fasttext' # 'fasttext' or 'glove'
+PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/fasttext/cc.en.300.bin"
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -92,11 +93,11 @@ def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, datas
     '--nq', '1', '--queries-size',  str(query_size), 
     '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
     '--dataset', dataset_folder, '--total-data-files', '100', 
-    '--dataset-GB-size', '1', '--dataset-size', '120',
+    '--dataset-GB-size', '1', '--dataset-size', '5866',
     '--result-dir', result_dir, '--k', str(k),
     '--top',  str(num_top), ' --delta', '1',
     '--epsilon',  str(approx_error), '--timeseries-size', str(embedding_size),
-    '--track-bsf', '--incremental', '--leaf-size', '100',
+    '--track-bsf', '--incremental', '--leaf-size', '1000',
     '--buffer-size', '100',
     '--mode', '1',  '--warping', '0.0', '--ascii-input', '0',
     '--track-vector', '1'
