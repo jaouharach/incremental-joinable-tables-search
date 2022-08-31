@@ -1337,12 +1337,17 @@ int znorm_comp(const void *a, const void *b) {
 }
 
 /* start kashif changes */
-enum response
-dstree_index_multiple_binary_files(const char *bin_files_directory,
+enum response dstree_index_multiple_binary_files(const char *bin_files_directory,
                                    unsigned int total_data_files,
                                    struct dstree_index *index) {
+
+  printf("\n+ must read %dfiles\n", total_data_files);
+
   int vector_length = index->settings->timeseries_size;
   int opened_files = 0;
+  unsigned int total_vectors  = 0;
+  unsigned int total_datasize  = 0;
+  unsigned int total_read_files = 0;
 
   // allocate memory for vector
   struct vector v;
@@ -1373,7 +1378,7 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
       int datasize, table_id, nsets, vector_length_in_filename;
       sscanf(dfile->d_name, "data_size%d_t%dc%d_len%d_noznorm.bin", &datasize,
              &table_id, &nsets, &vector_length_in_filename);
-
+      total_datasize += datasize;
       // check if vector length in file name matches vector length passed as
       // argument
       if (vector_length_in_filename != vector_length) {
@@ -1388,6 +1393,7 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
       COUNT_PARTIAL_RAND_INPUT
       COUNT_PARTIAL_INPUT_TIME_START
       FILE *bin_file = fopen(bin_file_path, "rb");
+      total_read_files += 1;
       COUNT_PARTIAL_INPUT_TIME_END
 
       if (bin_file == NULL) {
@@ -1424,6 +1430,7 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
                               "the time series to the index.\n");
               return FAILURE;
             }
+            total_vectors += 1;
             // next vector position in set (/column)
             v.pos += 1;
 
@@ -1457,7 +1464,7 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
                               "the time series to the index.\n");
               return FAILURE;
             }
-
+            total_vectors += 1;
             // first vector position in next set (/column)
             v.pos = 0;
 
@@ -1516,6 +1523,10 @@ dstree_index_multiple_binary_files(const char *bin_files_directory,
             bin_files_directory);
     return FAILURE;
   }
+
+  printf("\ntotal_read_files = %d\n", total_read_files);
+  printf("total_vectors = %d\n", total_vectors);
+  printf("total_datasize = %d\n", total_datasize);
   return SUCCESS;
 }
 /* end kashif changes */

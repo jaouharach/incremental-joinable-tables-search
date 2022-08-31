@@ -336,7 +336,7 @@ int main(int argc, char **argv) {
   {
     data_gb_size = get_data_gb_size(dataset, total_data_files);
   }
-  printf("Start Experiment...\n\nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", dataset_size, data_gb_size);
+  printf("Start Experiment...\n\nTotal files: %d\n\nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", total_data_files, dataset_size, data_gb_size);
   printf("buffered memory = %f MB\n", buffered_memory_size);
 
   /* end kashif changes */
@@ -378,7 +378,7 @@ int main(int argc, char **argv) {
       } 
       else 
       {
-        dstree_index_multiple_binary_files(dataset, dataset_size, index);
+        dstree_index_multiple_binary_files(dataset, total_data_files, index);
         // dstree_index_binary_file(dataset, dataset_size, index);
       }
       /* end kashif changes */
@@ -579,7 +579,7 @@ int main(int argc, char **argv) {
       index->settings->track_vector = track_vector;
 
       /* start kashif changes */
-      if (!dstree_index_multiple_binary_files(dataset, dataset_size, index))
+      if (!dstree_index_multiple_binary_files(dataset, total_data_files, index))
       {
         fprintf(stderr, "Error main.c:  Could not build the index.\n");
         return -1;

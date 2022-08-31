@@ -2053,6 +2053,7 @@ enum response dstree_update_index_stats(struct dstree_index *index,
   index->stats->sum_height += height;
   index->stats->sum_squares_height += pow(height, 2);
 
+  // printf("node size = %d\n", node_size);
   COUNT_TOTAL_TS(node_size)
 }
 

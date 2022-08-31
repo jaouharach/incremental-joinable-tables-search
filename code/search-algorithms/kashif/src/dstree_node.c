@@ -1066,7 +1066,6 @@ enum response append_vector_to_node(struct dstree_index *index,
     }
   }
 
-  printf("at idx = %d\n", idx);
   node->file_buffer->buffered_list[idx] =
       (ts_type *)index->buffer_manager->current_record;
   index->buffer_manager->current_record += sizeof(ts_type) * vector_length;
