@@ -256,6 +256,15 @@
                     </thead>
                     {% endif %}
                     <tbody name="data_table">
+                      {% if metadata['header'] %}
+                      {% for r in range(1, max_num_rows) %}
+                      <tr>
+                        {% for c in range(ncols) %}
+                        <td>{{ cols[c][r] }}</td>
+                        {% endfor %}
+                      </tr>
+                      {% endfor %}
+                      {% else %}
                       {% for r in range(max_num_rows) %}
                       <tr>
                         {% for c in range(ncols) %}
@@ -263,6 +272,8 @@
                         {% endfor %}
                       </tr>
                       {% endfor %}
+                      {% endif %}
+                      
                     </tbody>
                     <!-- <tfoot>
                                     <tr>
