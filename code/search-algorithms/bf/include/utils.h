@@ -42,7 +42,7 @@ char * make_result_directory(char* algorithm, char * result_dir, unsigned int to
 struct query_result * brute_force_knn_search(char * bin_files_dir, unsigned int total_data_files, unsigned int vector_length, struct vector q, unsigned int k, double * query_time, unsigned int *total_checked_ts, struct query_result *knn_results);
 ts_type euclidian_distance(ts_type *q, ts_type *v, unsigned int len);
 struct result_sid * get_top_sets(struct query_result * knn_results, int num_knn_results, unsigned int num_top);
-struct query_result * brute_force_knn_search_optimized(char * bin_files_dir, unsigned int total_data_files, unsigned int vector_length, struct vector * qset, unsigned int qnvec, unsigned int k, double * query_time, unsigned int *total_checked_vec);
+struct query_result * brute_force_knn_search_optimized(char * bin_files_dir, unsigned int total_data_files, unsigned int vector_length, struct vector * qset, unsigned int qnvec, unsigned int k, unsigned int *total_checked_vec);
 ts_type cosine_distance(ts_type *q, ts_type *v, unsigned int len);
 ts_type euclidian_distance_with_early_abandoning(ts_type *q, ts_type *v, unsigned int len, ts_type bsf);
 void bf_sequential_search_with_threshold(char * bin_files_directory, unsigned int vector_length, unsigned int qset_num,

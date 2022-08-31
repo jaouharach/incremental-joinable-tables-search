@@ -125,11 +125,13 @@ char * make_file_path(char * result_dir, unsigned int qtable_id, unsigned int qs
 		printf("WARNING! Experiment direstory '%s' does not exist!", result_dir);
 		exit(1);
 	}
-    char * filepath = malloc(get_ndigits(qtable_id) + get_ndigits(qset_id) + get_ndigits(l)
+  closedir(dir);
+    
+  char * filepath = malloc(get_ndigits(qtable_id) + get_ndigits(qset_id) + get_ndigits(l)
 							 + get_ndigits(dlsize) + get_ndigits(vector_length) + get_ndigits((unsigned int) runtime) + get_ndigits(total_checked_vec)
 							 + get_ndigits(qsize) + strlen("TQ_Q_qsize_l_dlsize_len_runtime_ndistcalc_dataaccess.csv")
 							 + strlen(result_dir)
-							 + 6 // float decimal precision for dlsize and runtime (.00)
+							 + 20 // float decimal precision for dlsize and runtime (.00)
 							 + 1);
 
 	sprintf(filepath, "%s/TQ%u_Q%u_qsize%u_l%u_dlsize%u_len%u_runtime%.4f_ndistcalc_dataaccess%u.csv"
@@ -155,7 +157,7 @@ char * make_result_directory(char* algorithm, char * result_dir, unsigned int l,
   }
   mkdir(result_dir_name, 0777);
   closedir(dir);
-  
+
   return result_dir_name;
 }
 

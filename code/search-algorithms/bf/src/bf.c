@@ -233,7 +233,7 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                 else if(i <= (unsigned int)nvec*vector_length)
                 {
                     // end of vector but still in current set
-                    if(j > vector_length){
+                    if(j > vector_length - 1){
                         j = 0; 
                         
                         // Append vector to query set
@@ -256,7 +256,7 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         /*run query set */
                         // Perform brute force knn search for all query vectors
                         COUNT_QUERY_TIME_START
-                        all_knn_results =  brute_force_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, k, &query_time, &total_checked_vec);
+                        all_knn_results =  brute_force_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, k, &total_checked_vec);
                         COUNT_QUERY_TIME_END
 
                         /* End of Query set */
@@ -271,6 +271,13 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         }
                         printf("\nquery_time=%fsec\n", query_time/1000000);
                         
+
+                        for (int knn = 0; knn < (k*nvec); knn++)
+                            free(all_knn_results[knn].vector_id);
+                        free(all_knn_results);
+                        free(top);
+                        free(query_result_file);
+
                         i = 0; j = 0;
                         nvec = 0u;
                         query_vector.pos = 0;
@@ -282,13 +289,16 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
             }
         }
     }
-    free(all_knn_results);
+    closedir(dir);
+    free(query_set);
+    free(query_vector.values);
+    free(results_dir);
 }
 
 
 
 struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned int total_data_files, unsigned int vector_length, 
-    struct vector * qset, unsigned int qnvec, unsigned int k, double * query_time, unsigned int *total_checked_vec)
+    struct vector * qset, unsigned int qnvec, unsigned int k, unsigned int *total_checked_vec)
 {
     ts_type * bsf = (ts_type *) malloc(sizeof(ts_type) * qnvec);
     unsigned int * next_knn = (unsigned int *) malloc(sizeof(unsigned int) * qnvec);
@@ -506,8 +516,9 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
         fclose(bin_file);
         }
     }
-    *query_time += (double)query_vec_time/CLOCKS_PER_SEC;
+    closedir(dir);
     free(bsf);
+    free(v.values);
     free(next_knn);
     return curr_knn;
 }
