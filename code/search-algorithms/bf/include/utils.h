@@ -49,4 +49,4 @@ void bf_sequential_search_with_threshold(char * bin_files_directory, unsigned in
     unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top,
     char * result_dir, unsigned int total_data_files, //total num tables indexed in dstree
     unsigned int dataset_gb_size, unsigned int k, float theta);
-struct query_result * brute_force_knn_search_optimized_with_sim_threshold(char * bin_files_dir, unsigned int total_data_files, unsigned int vector_length, struct vector * qset, unsigned int qnvec, unsigned int k, double * query_time, unsigned int *total_checked_vec, float theta);
+struct query_result * brute_force_knn_search_optimized_with_sim_threshold(char * bin_files_dir, unsigned int total_data_files, unsigned int vector_length, struct vector * qset,unsigned int qnvec, unsigned int k, double * query_time, unsigned int *total_checked_vec, float theta);

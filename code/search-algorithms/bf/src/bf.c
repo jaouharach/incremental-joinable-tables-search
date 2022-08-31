@@ -239,7 +239,7 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         
                         // Append vector to query set
                         query_set[next_vec] = query_vector;
-                        query_vector.pos +=1;
+                        query_vector.pos += 1;
                         next_vec += 1;
                     }
 
@@ -274,6 +274,7 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         
                         i = 0; j = 0;
                         nvec = 0u;
+                        query_vector.pos = 0;
                         continue;
                     }
                     i++;
@@ -312,8 +313,11 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
         curr_knn[j].vector_id = malloc(sizeof(struct vid));
         if(curr_knn[j].vector_id == NULL)
             exit(1);
-        curr_knn[j].vector_id->set_id = 0;
-        curr_knn[j].vector_id->table_id = 0;
+        curr_knn[j].vector_id->set_id = -1;
+        curr_knn[j].vector_id->table_id = -1;
+        curr_knn[j].vector_id->pos = -1;
+        curr_knn[j].query_vector_pos = -1;
+        strcpy(curr_knn[j].vector_id->raw_data_file, "");
         curr_knn[j].distance = FLT_MAX;
     }
 
@@ -410,13 +414,16 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                                     curr_knn[h*k+m].distance = curr_knn[(h*k+m)-1].distance;
                                     curr_knn[h*k+m].vector_id->set_id = curr_knn[(h*k+m)-1].vector_id->set_id;
                                     curr_knn[h*k+m].vector_id->table_id = curr_knn[(h*k+m)-1].vector_id->table_id;
+                                    curr_knn[h*k+m].vector_id->pos = curr_knn[(h*k+m)-1].vector_id->pos;
+                                    curr_knn[h*k+m].query_vector_pos = curr_knn[(h*k+m)-1].query_vector_pos;
                                     strcpy(curr_knn[h*k+m].vector_id->raw_data_file, curr_knn[(h*k+m)-1].vector_id->raw_data_file);
-
                                 }
 
                                 curr_knn[h*k].distance = bsf[h];
                                 curr_knn[h*k].vector_id->set_id = v.set_id;
                                 curr_knn[h*k].vector_id->table_id = v.table_id;
+                                curr_knn[h*k].vector_id->pos = v.pos;
+                                curr_knn[h*k].query_vector_pos = qset[h].pos;
                                 strcpy(curr_knn[h*k].vector_id->raw_data_file, raw_file_name);
                                 
                                 next_knn[h] = 1;
@@ -429,6 +436,8 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                                 curr_knn[(h*k)+next_knn[h]].distance = bsf[h];
                                 curr_knn[(h*k)+next_knn[h]].vector_id->set_id = v.set_id;
                                 curr_knn[(h*k)+next_knn[h]].vector_id->table_id = v.table_id;
+                                curr_knn[(h*k)+next_knn[h]].vector_id->pos = v.pos;
+                                curr_knn[(h*k)+next_knn[h]].query_vector_pos = qset[h].pos;
                                 strcpy(curr_knn[(h*k)+next_knn[h]].vector_id->raw_data_file, raw_file_name);
                                 next_knn[h] = next_knn[h] + 1;
                             }
@@ -456,12 +465,16 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                                     curr_knn[h*k+m].distance = curr_knn[(h*k+m)-1].distance;
                                     curr_knn[h*k+m].vector_id->set_id = curr_knn[(h*k+m)-1].vector_id->set_id;
                                     curr_knn[h*k+m].vector_id->table_id = curr_knn[(h*k+m)-1].vector_id->table_id;
+                                    curr_knn[h*k+m].vector_id->pos = curr_knn[(h*k+m)-1].vector_id->pos;
+                                    curr_knn[h*k+m].query_vector_pos = curr_knn[(h*k+m)-1].query_vector_pos;
                                     strcpy(curr_knn[h*k+m].vector_id->raw_data_file, curr_knn[(h*k+m)-1].vector_id->raw_data_file);
                                 }
 
                                 curr_knn[h*k].distance = bsf[h];
                                 curr_knn[h*k].vector_id->set_id = v.set_id;
                                 curr_knn[h*k].vector_id->table_id = v.table_id;
+                                curr_knn[h*k].vector_id->pos = v.pos;
+                                curr_knn[h*k].query_vector_pos = qset[h].pos;
                                 strcpy(curr_knn[h*k].vector_id->raw_data_file, raw_file_name);
                                 next_knn[h] = 1;
 
@@ -473,6 +486,8 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                                 curr_knn[(h*k)+next_knn[h]].distance = bsf[h];
                                 curr_knn[(h*k)+next_knn[h]].vector_id->set_id = v.set_id;
                                 curr_knn[(h*k)+next_knn[h]].vector_id->table_id = v.table_id;
+                                curr_knn[(h*k)+next_knn[h]].vector_id->pos = v.pos;
+                                curr_knn[(h*k)+next_knn[h]].query_vector_pos = qset[h].pos;
                                 strcpy(curr_knn[(h*k)+next_knn[h]].vector_id->raw_data_file, raw_file_name);
                                 next_knn[h] = next_knn[h] + 1;
                             }
