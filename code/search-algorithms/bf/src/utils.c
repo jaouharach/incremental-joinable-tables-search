@@ -118,6 +118,7 @@ void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned
 // new function make result file name and path.
 char * make_file_path(char * result_dir, unsigned int qtable_id, unsigned int qset_id, unsigned int qsize, unsigned int l, unsigned int dlsize, unsigned int vector_length, float runtime, unsigned int total_checked_vec)
 {
+  runtime /= 1000000;
 	DIR* dir = opendir(result_dir);
 	if (!dir)
     {

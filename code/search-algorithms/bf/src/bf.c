@@ -109,7 +109,7 @@ int main(int argc, char const *argv[])
         }
     }
     data_gb_size = get_data_gb_size(dataset, total_data_files);
-    printf("Ttotal data size in gb = %u\n", data_gb_size);    
+    printf("Total data size in gb = %u\n", data_gb_size);    
 
     bf_sequential_search(dataset, vector_length, qset_num, min_qset_size, max_qset_size,
                             top, result_dir, total_data_files, data_gb_size, k);
@@ -215,7 +215,6 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                     }
                     found_query = true;
                     query_set = (struct vector *) realloc(query_set, sizeof(struct vector) * nvec);
-                    printf("\n----------------------------------------------------------------\n");
                     printf("Query %u/%u.\n\n", (total_queries-qset_num)+1, total_queries);
                     
                     RESET_QUERY_TIME()
