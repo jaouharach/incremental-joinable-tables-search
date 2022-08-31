@@ -286,11 +286,6 @@ char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
   DIR *dir = opendir(result_dir_name);
   if (dir) {
     delete_directory(result_dir_name);
-    // fprintf(stderr,
-    //         "WARNING! Results directory already exists. Please delete "
-    //         "directory : %s.\n",
-    //         result_dir_name);
-    // exit(-1);
   }
   mkdir(result_dir_name, 0777);
   closedir(dir);
@@ -299,7 +294,7 @@ char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
 }
 
 // get sets with the the largest number of matching vectors with the query.
-struct vid *get_top_sets(struct query_result *knn_results, int num_knn_results, 
+struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_results, 
                          unsigned int num_top)
 {
   // frequency = number of matching vectors with the query set vectors
