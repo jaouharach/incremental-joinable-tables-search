@@ -2130,7 +2130,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         COUNT_PARTIAL_TIME_END
 
         update_query_stats(index, q_id, found_knn, bsf_result);
-        *total_query_set_time += index->stats->query_total_time;
+        *total_query_set_time += index->stats->query_total_cpu_time;
 
         // get_query_stats(index, found_knn);
         // print_query_stats(index, q_id, found_knn, qfilename);
@@ -2236,7 +2236,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     found_knn = pos + 1;
     COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
-    *total_query_set_time += index->stats->query_total_time;
+    *total_query_set_time += index->stats->query_total_cpu_time;
 
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn, qfilename);
@@ -2504,7 +2504,7 @@ struct query_result *exact_de_knn_search_2(
     found_knn = pos + 1;
     COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
-    *total_query_set_time += index->stats->query_total_time;
+    *total_query_set_time += index->stats->query_total_cpu_time;
 
     get_query_stats(index, found_knn);
     print_query_stats(index, q_id, found_knn, qfilename);
@@ -2700,7 +2700,7 @@ struct query_result *exact_de_progressive_knn_search_2(
     found_knn = pos + 1;
     // COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
-    *total_query_set_time += index->stats->query_total_time;
+    *total_query_set_time += index->stats->query_total_cpu_time;
 
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn, qfilename);

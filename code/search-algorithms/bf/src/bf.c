@@ -255,9 +255,7 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         
                         /*run query set */
                         // Perform brute force knn search for all query vectors
-                        COUNT_QUERY_TIME_START
                         all_knn_results =  brute_force_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, k, &total_checked_vec);
-                        COUNT_QUERY_TIME_END
 
                         /* End of Query set */
                         /* Save query results to csv file */
@@ -308,7 +306,6 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
 
     struct vector v; 
     v.values = (ts_type *) malloc(sizeof(ts_type) * vector_length);
-    clock_t query_vec_time = 0;
 
 
     for (int i = 0; i < qnvec; ++i)
@@ -375,7 +372,7 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
             unsigned int i = 0 , j = 0, set_id = 0, total_bytes = (datasize * vector_length) + nsets;
             
             //read every candidate set and candidate vector in binary file
-            clock_t begin_query_in_curr_file = clock();
+            RESET_QUERY_TIME()
             while(total_bytes)
             {
                 if(i == 0)
@@ -405,6 +402,7 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                 }
                 else if(i <= (unsigned int)nvec*vector_length)
                 {
+                    COUNT_QUERY_TIME_START
                     if(j > vector_length - 1)
                     {    
                         j = 0;
@@ -453,8 +451,10 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                         }
                         v.pos += 1;
                     }
+                    COUNT_QUERY_TIME_END
                     // read new float value
                     fread((void*)(&val), sizeof(val), 1, bin_file);
+                    COUNT_QUERY_TIME_START
                     total_bytes--;
                     v.values[j] = val;
                     if(i == (unsigned int)nvec*vector_length)
@@ -510,9 +510,9 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                     }
                     i++;
                     j++;
+                    COUNT_QUERY_TIME_END
                 }
             }
-            query_vec_time += clock() - begin_query_in_curr_file;
         fclose(bin_file);
         }
     }
