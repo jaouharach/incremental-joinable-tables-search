@@ -13,7 +13,6 @@
 #include <linux/limits.h>
 #include "../include/utils.h"
 #include "../include/stats.h"
-#include "../include/stats.h"
 
 int main(int argc, char const *argv[])
 {   
@@ -129,12 +128,15 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
     unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top, char * result_dir,
     unsigned int total_data_file, unsigned int data_gb_size, unsigned int k)
 {
+    RESET_PARTIAL_COUNTERS()
+    COUNT_PARTIAL_TIME_START
     int opened_files = 0; 
     char * algorithm = "bfed";
     // open source dir
     struct dirent *dfile;
+    COUNT_PARTIAL_INPUT_TIME_START
     DIR *dir = opendir(dataset);
-
+    COUNT_PARTIAL_INPUT_TIME_END
     if (!dir)
     {
         printf("Unable to open directory stream %s!", dataset);
@@ -178,9 +180,11 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                 printf("Error in bfed.c:  vector length passed in argumentes (--len %d) does not match vector length in file (%d) %s.\n", vector_length_in_filename, vector_length, bin_file_path);
                 exit(1);
             }
-
+            
             /* read binary file */
+            COUNT_PARTIAL_INPUT_TIME_START
             FILE * bin_file = fopen (bin_file_path, "rb");
+            COUNT_PARTIAL_INPUT_TIME_END
             if (bin_file == NULL)
             {
                 printf("Error in bfed.c: File %s not found!\n", bin_file_path);
@@ -201,13 +205,17 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         break;
 
                     //read first integer to check how many vactors in current set
+                    COUNT_PARTIAL_INPUT_TIME_START
                     fread(&nvec, sizeof(nvec), 1, bin_file);
+                    COUNT_PARTIAL_INPUT_TIME_END
                     total_bytes--;
 
                     // query set does not fit requirments move to next set
                     if((unsigned int)nvec < min_qset_size || (unsigned int)nvec > max_qset_size)
                     {
+                        COUNT_PARTIAL_INPUT_TIME_START
                         fseek(bin_file, nvec * 4 *vector_length, SEEK_CUR);
+                        COUNT_PARTIAL_INPUT_TIME_END
                         i = 0;
                         j = 0;
                         total_bytes -= nvec * vector_length;
@@ -217,7 +225,6 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                     query_set = (struct vector *) realloc(query_set, sizeof(struct vector) * nvec);
                     printf("Query %u/%u.\n\n", (total_queries-qset_num)+1, total_queries);
                     
-                    RESET_QUERY_TIME()
                     
                     total_checked_vec = 0;
                     next_vec = 0;
@@ -241,8 +248,9 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         query_vector.pos += 1;
                         next_vec += 1;
                     }
-
+                    COUNT_PARTIAL_INPUT_TIME_START
                     fread((void*)(&val), sizeof(val), 1, bin_file);
+                    COUNT_PARTIAL_INPUT_TIME_END
                     total_bytes--;
                     query_vector.values[j] = val;
 
@@ -257,6 +265,10 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         // Perform brute force knn search for all query vectors
                         all_knn_results =  brute_force_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, k, &total_checked_vec);
 
+                        COUNT_PARTIAL_TIME_END
+                        query_time = partial_time - (partial_input_time + partial_output_time);
+                        printf("\nquerytime  = %f - (%f + %f) = %f\n", partial_time, partial_input_time, partial_output_time, query_time);
+                        
                         /* End of Query set */
                         /* Save query results to csv file */
                         char * query_result_file = make_file_path(results_dir, query_vector.table_id, query_vector.set_id, nvec, total_data_file, data_gb_size, vector_length, query_time, total_checked_vec);
@@ -276,6 +288,9 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                         free(top);
                         free(query_result_file);
 
+                        RESET_PARTIAL_COUNTERS()
+                        COUNT_PARTIAL_TIME_START
+
                         i = 0; j = 0;
                         nvec = 0u;
                         query_vector.pos = 0;
@@ -287,10 +302,15 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
             }
         }
     }
+    COUNT_PARTIAL_INPUT_TIME_START
     closedir(dir);
+    COUNT_PARTIAL_INPUT_TIME_END
     free(query_set);
     free(query_vector.values);
     free(results_dir);
+
+    COUNT_PARTIAL_TIME_END
+    RESET_PARTIAL_COUNTERS()
 }
 
 
@@ -298,6 +318,7 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
 struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned int total_data_files, unsigned int vector_length, 
     struct vector * qset, unsigned int qnvec, unsigned int k, unsigned int *total_checked_vec)
 {
+    
     ts_type * bsf = (ts_type *) malloc(sizeof(ts_type) * qnvec);
     unsigned int * next_knn = (unsigned int *) malloc(sizeof(unsigned int) * qnvec);
     //queue containing kNN results for every vector
@@ -329,13 +350,15 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
 
     // Open binary files  dir
     struct dirent *dfile;
+    COUNT_PARTIAL_INPUT_TIME_START
     DIR *dir = opendir(dataset);
-
+    COUNT_PARTIAL_INPUT_TIME_END
     if (!dir)
     {
       printf("Unable to open directory stream %s!", dataset);
       exit(1);
     }
+
     while ((dfile = readdir(dir)) != NULL && total_data_files > 0)
     {
 
@@ -359,7 +382,9 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
             }
 
             /* read binary file */
+            COUNT_PARTIAL_INPUT_TIME_START
             FILE * bin_file = fopen (bin_file_path, "rb");
+            COUNT_PARTIAL_INPUT_TIME_END
             if (bin_file == NULL)
             {
                 printf("Error in bfed.c: File %s not found!\n", bin_file_path);
@@ -372,7 +397,6 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
             unsigned int i = 0 , j = 0, set_id = 0, total_bytes = (datasize * vector_length) + nsets;
             
             //read every candidate set and candidate vector in binary file
-            RESET_QUERY_TIME()
             while(total_bytes)
             {
                 if(i == 0)
@@ -380,7 +404,9 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                     i++;
                     j = 0;
                     //read first integer to check how many vactors in current set
+                    COUNT_PARTIAL_INPUT_TIME_START
                     fread(&nvec, sizeof(nvec), 1, bin_file);
+                    COUNT_PARTIAL_INPUT_TIME_END
                     total_bytes--;
 
                     v.table_id = table_id;
@@ -391,7 +417,9 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                     if(v.table_id == qset[0].table_id && v.set_id == qset[0].set_id)
                     {
                         // do not match query set to itself
+                        COUNT_PARTIAL_INPUT_TIME_START
                         fseek(bin_file, nvec * 4 *vector_length, SEEK_CUR);
+                        COUNT_PARTIAL_INPUT_TIME_END
                         i = 0;
                         j = 0;
                         total_bytes -= nvec * vector_length;
@@ -402,7 +430,6 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                 }
                 else if(i <= (unsigned int)nvec*vector_length)
                 {
-                    COUNT_QUERY_TIME_START
                     if(j > vector_length - 1)
                     {    
                         j = 0;
@@ -451,10 +478,10 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                         }
                         v.pos += 1;
                     }
-                    COUNT_QUERY_TIME_END
                     // read new float value
+                    COUNT_PARTIAL_INPUT_TIME_START
                     fread((void*)(&val), sizeof(val), 1, bin_file);
-                    COUNT_QUERY_TIME_START
+                    COUNT_PARTIAL_INPUT_TIME_END
                     total_bytes--;
                     v.values[j] = val;
                     if(i == (unsigned int)nvec*vector_length)
@@ -502,7 +529,6 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                             }
                         }
                         
-
                         i = 0; j = 0;
                         nvec = 0u;
                         v.pos = 0;
@@ -510,15 +536,20 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                     }
                     i++;
                     j++;
-                    COUNT_QUERY_TIME_END
+                    
                 }
             }
+        COUNT_PARTIAL_INPUT_TIME_START
         fclose(bin_file);
+        COUNT_PARTIAL_INPUT_TIME_END
         }
     }
+    COUNT_PARTIAL_INPUT_TIME_START
     closedir(dir);
+    COUNT_PARTIAL_INPUT_TIME_END
     free(bsf);
     free(v.values);
     free(next_knn);
+    
     return curr_knn;
 }

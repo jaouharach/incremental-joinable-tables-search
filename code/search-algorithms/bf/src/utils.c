@@ -11,6 +11,7 @@
 #include <time.h>
 #include <linux/limits.h>
 #include "../include/utils.h"
+#include "../include/stats.h"
 
 ts_type euclidian_distance(ts_type *q, ts_type *v, unsigned int len)
 {
@@ -92,26 +93,28 @@ bool is_binaryfile(const char *filename)
 void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned int qset_id, int num_knns, struct query_result * knn_results){
 	FILE *fp;
 	int i,j;
-	fp = fopen(csv_file,"w+");
+  COUNT_PARTIAL_OUTPUT_TIME_START
+  fp = fopen(csv_file,"w+");
+  COUNT_PARTIAL_OUTPUT_TIME_END
+  if (fp == NULL) {
+          printf("Error in bfed.c: Could not open file %s!\n", csv_file);
+          exit(1);
+  }
 
-    if (fp == NULL) {
-            printf("Error in bfed.c: Could not open file %s!\n", csv_file);
-            exit(1);
-    }
-
-        // write header
-        fprintf(fp, "TQ:Q, TS:S, qindex, sindex, q, s, d");
-        
-
-    // write results
-    for(int i = 0; i < num_knns; i++){
-        fprintf(fp, "\n");
-        fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f", qtable_id, qset_id,
-            knn_results[i].vector_id->table_id, knn_results[i].vector_id->set_id,
-            knn_results[i].query_vector_pos, knn_results[i].vector_id->pos,
-            knn_results[i].distance);
-    }
+  COUNT_PARTIAL_OUTPUT_TIME_START
+  // write header
+  fprintf(fp, "TQ:Q, TS:S, qindex, sindex, q, s, d");
+  // write results
+  for(int i = 0; i < num_knns; i++){
+      fprintf(fp, "\n");
+      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f", qtable_id, qset_id,
+          knn_results[i].vector_id->table_id, knn_results[i].vector_id->set_id,
+          knn_results[i].query_vector_pos, knn_results[i].vector_id->pos,
+          knn_results[i].distance);
+  }
 	fclose(fp);
+  COUNT_PARTIAL_OUTPUT_TIME_END
+
 }
 
 
@@ -119,14 +122,18 @@ void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned
 char * make_file_path(char * result_dir, unsigned int qtable_id, unsigned int qset_id, unsigned int qsize, unsigned int l, unsigned int dlsize, unsigned int vector_length, float runtime, unsigned int total_checked_vec)
 {
   runtime /= 1000000;
+  COUNT_PARTIAL_OUTPUT_TIME_START
 	DIR* dir = opendir(result_dir);
+  COUNT_PARTIAL_OUTPUT_TIME_END
 	if (!dir)
     {
 		printf("WARNING! Experiment direstory '%s' does not exist!", result_dir);
 		exit(1);
 	}
+  COUNT_PARTIAL_OUTPUT_TIME_START
   closedir(dir);
-    
+  COUNT_PARTIAL_OUTPUT_TIME_END
+
   char * filepath = malloc(get_ndigits(qtable_id) + get_ndigits(qset_id) + get_ndigits(l)
 							 + get_ndigits(dlsize) + get_ndigits(vector_length) + get_ndigits((unsigned int) runtime) + get_ndigits(total_checked_vec)
 							 + get_ndigits(qsize) + strlen("TQ_Q_qsize_l_dlsize_len_runtime_ndistcalc_dataaccess.csv")
@@ -151,12 +158,14 @@ char * make_result_directory(char* algorithm, char * result_dir, unsigned int l,
 	sprintf(result_dir_name, "%s/%s_l%u_%uq_min%u_max%u", result_dir, algorithm, l, nq, min_qset_size, max_qset_size);
 
 	printf(">>> Result directory name: %s\n", result_dir_name);
+  COUNT_PARTIAL_OUTPUT_TIME_START
   DIR *dir = opendir(result_dir_name);
   if (dir) {
     delete_directory(result_dir_name);
   }
   mkdir(result_dir_name, 0777);
   closedir(dir);
+  COUNT_PARTIAL_OUTPUT_TIME_END
 
   return result_dir_name;
 }

@@ -727,7 +727,9 @@ enum response dstree_knn_query_multiple_binary_files(
   RESET_PARTIAL_COUNTERS()
 
   // free memory
+  COUNT_INPUT_TIME_START
   closedir(dir);
+  COUNT_INPUT_TIME_END
   free(query_vector.values);
   free(query_vector_reordered);
   free(query_order);
@@ -1515,8 +1517,9 @@ enum response dstree_index_multiple_binary_files(const char *bin_files_directory
       COUNT_PARTIAL_TIME_START
     }
   }
-
+  COUNT_PARTIAL_INPUT_TIME_START
   closedir(dir);
+  COUNT_PARTIAL_INPUT_TIME_END
   free(v.values);
   if (opened_files == 0) {
     fprintf(stderr,
