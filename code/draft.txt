@@ -1,6 +1,6 @@
-** brute force search ** 
+** brute force search (for 100k tables) ** 
 
-bin/bf --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/query-columns[10]-size[5-10]/ --nq 10 --min-qset-size 5 --max-qset-size 10 --top 10 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/bf-search/500k-tables/10nn --total-data-files 500000 --k 10 --vector-length 50
+bin/bf --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/query-columns[10]-size[5-10]/ --nq 10 --min-qset-size 5 --max-qset-size 10 --top 10 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/bf-search/100k-tables/10nn --total-data-files 100000 --k 10 --vector-length 50
 
 --------------------------------------------------------------------------------------------------------
 ** kashif **

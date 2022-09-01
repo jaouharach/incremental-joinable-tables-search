@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "globals.h"
 
 #define NBITS 64
 typedef float ts_type;
@@ -203,7 +204,9 @@ char *make_file_path(char *result_dir, unsigned int qtable_id,
                      unsigned int total_data_files, unsigned int dlsize,
                      unsigned int vector_length, float runtime,
                      unsigned int total_checked_vec) {
+  COUNT_INPUT_TIME_START
   DIR *dir = opendir(result_dir);
+  COUNT_INPUT_TIME_END
   if (!dir) {
     printf("WARNING! Experiment direstory '%s' does not exist!", result_dir);
     exit(1);
@@ -217,7 +220,6 @@ char *make_file_path(char *result_dir, unsigned int qtable_id,
       strlen(result_dir) +
       10 // float decimal precision for dlsize and runtime (.00)
       + 1);
-
   sprintf(filepath,
           "%s/"
           "TQ%u_Q%u_qsize%u_l%u_dlsize%u_len%u_runtime%.3f_ndistcalc_"
@@ -225,7 +227,9 @@ char *make_file_path(char *result_dir, unsigned int qtable_id,
           result_dir, qtable_id, qset_id, qsize, total_data_files, dlsize,
           vector_length, runtime, total_checked_vec);
 
+  COUNT_INPUT_TIME_START
   closedir(dir);
+  COUNT_INPUT_TIME_END
   return filepath;
 }
 
@@ -235,8 +239,9 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
                                         struct query_result *knn_results) {
   FILE *fp;
   int i, j;
+  COUNT_OUTPUT_TIME_START
   fp = fopen(csv_file, "w+");
-
+  COUNT_OUTPUT_TIME_END
   if (fp == NULL) {
     fprintf(stderr, "Error in dstree_file_loaders.c: Could not open file %s!\n",
             csv_file);
@@ -244,8 +249,9 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   }
 
   // write header
+  COUNT_INPUT_TIME_START
   fprintf(fp, "TQ:Q, TS:S, qindex, sindex, q, s, d");
-
+  
   // write results
   for (int i = 0; i < num_knns; i++) {
     fprintf(fp, "\n");
@@ -255,7 +261,7 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
             knn_results[i].distance);
   }
   fclose(fp);
-
+  COUNT_OUTPUT_TIME_END
   return SUCCESS;
 }
 
@@ -283,12 +289,14 @@ char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
           min_qset_size, max_qset_size);
 
   printf(">>> Result directory name: %s\n", result_dir_name);
+  COUNT_OUTPUT_TIME_START
   DIR *dir = opendir(result_dir_name);
   if (dir) {
     delete_directory(result_dir_name);
   }
   mkdir(result_dir_name, 0777);
   closedir(dir);
+  COUNT_OUTPUT_TIME_END
   
   return result_dir_name;
 }

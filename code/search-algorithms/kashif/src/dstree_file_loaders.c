@@ -473,7 +473,9 @@ enum response dstree_knn_query_multiple_binary_files(
           // query set does not fit requirments move to next set
           if ((unsigned int)nvec < min_qset_size ||
               (unsigned int)nvec > max_qset_size) {
+            COUNT_PARTIAL_INPUT_TIME_START
             fseek(bin_file, nvec * 4 * vector_length, SEEK_CUR);
+            COUNT_PARTIAL_INPUT_TIME_END
             i = 0;
             j = 0;
             total_bytes -= (nvec * vector_length);
