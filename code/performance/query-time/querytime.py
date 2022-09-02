@@ -61,8 +61,11 @@ def summarize_results_to_csv(_nqueries, _source_dir, _output_file, _num_top=10):
 
 def plot_results(_csv_file, _output_dir, _k_count):
     # set text font
-    plt.rc('text', usetex=True)
-    plt.rc('font', family='serif')
+    plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": "cm"})
+    plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
 
     _df = pandas.read_csv(_csv_file)
     _df = _df.drop(['TQ:Q'], axis = 1)

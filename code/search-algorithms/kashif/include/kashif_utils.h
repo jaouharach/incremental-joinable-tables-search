@@ -250,7 +250,7 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
 
   // write header
   COUNT_INPUT_TIME_START
-  fprintf(fp, "TQ:Q, TS:S, qindex, sindex, q, s, d");
+  fprintf(fp, "TQ:Q, TS:S, q_pos, s_pos, q, s, d");
   
   // write results
   for (int i = 0; i < num_knns; i++) {

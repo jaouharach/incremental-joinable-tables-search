@@ -97,13 +97,13 @@ void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned
   fp = fopen(csv_file,"w+");
   COUNT_PARTIAL_OUTPUT_TIME_END
   if (fp == NULL) {
-          printf("Error in bfed.c: Could not open file %s!\n", csv_file);
+          printf("Error in bf.c: Could not open file %s!\n", csv_file);
           exit(1);
   }
 
   COUNT_PARTIAL_OUTPUT_TIME_START
   // write header
-  fprintf(fp, "TQ:Q, TS:S, qindex, sindex, q, s, d");
+  fprintf(fp, "TQ:Q, TS:S, q_pos, s_pos, q, s, d");
   // write results
   for(int i = 0; i < num_knns; i++){
       fprintf(fp, "\n");

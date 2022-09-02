@@ -131,7 +131,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
     RESET_PARTIAL_COUNTERS()
     COUNT_PARTIAL_TIME_START
     int opened_files = 0; 
-    char * algorithm = "bfed";
+    char * algorithm = "bf";
     // open source dir
     struct dirent *dfile;
     COUNT_PARTIAL_INPUT_TIME_START
@@ -178,7 +178,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
             // check if vector length in file name matches vector length passed as argument
             if(vector_length_in_filename != vector_length)
             {
-                printf("Error in bfed.c:  vector length passed in argumentes (--len %d) does not match vector length in file (%d) %s.\n", vector_length_in_filename, vector_length, bin_file_path);
+                printf("Error in bf.c:  vector length passed in argumentes (--len %d) does not match vector length in file (%d) %s.\n", vector_length_in_filename, vector_length, bin_file_path);
                 exit(1);
             }
             
@@ -188,7 +188,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
             COUNT_PARTIAL_INPUT_TIME_END
             if (bin_file == NULL)
             {
-                printf("Error in bfed.c: File %s not found!\n", bin_file_path);
+                printf("Error in bf.c: File %s not found!\n", bin_file_path);
                 exit(1);
             }
 
@@ -378,7 +378,7 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
             // check if vector length in file name matches vector length passed as argument
             if(vector_length_in_filename != vector_length)
             {
-                printf("Error in bfed.c:  vector length passed in argumentes (--len %d) does not match vector length in file (%d) %s.\n", vector_length_in_filename, vector_length, bin_file_path);
+                printf("Error in bf.c:  vector length passed in argumentes (--len %d) does not match vector length in file (%d) %s.\n", vector_length_in_filename, vector_length, bin_file_path);
                 exit(1);
             }
 
@@ -388,7 +388,7 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
             COUNT_PARTIAL_INPUT_TIME_END
             if (bin_file == NULL)
             {
-                printf("Error in bfed.c: File %s not found!\n", bin_file_path);
+                printf("Error in bf.c: File %s not found!\n", bin_file_path);
                 exit(1);
             }
 
