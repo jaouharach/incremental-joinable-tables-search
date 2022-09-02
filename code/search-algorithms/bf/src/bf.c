@@ -110,7 +110,7 @@ int main(int argc, char const *argv[])
     data_gb_size = get_data_gb_size(dataset, total_data_files);
     printf("Total data size in gb = %u\n", data_gb_size);    
 
-    bf_sequential_search(dataset, vector_length, qset_num, min_qset_size, max_qset_size,
+    bf_sequential_search(queries_dir, dataset, vector_length, qset_num, min_qset_size, max_qset_size,
                             top, result_dir, total_data_files, data_gb_size, k);
 
     printf("\n>>>> Congrat! End of experiment."); 
@@ -124,7 +124,7 @@ int main(int argc, char const *argv[])
 }
 
 
-void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned int qset_num,
+void bf_sequential_search(char * queries, char * dataset, unsigned int vector_length, unsigned int qset_num,
     unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top, char * result_dir,
     unsigned int total_data_file, unsigned int data_gb_size, unsigned int k)
 {
@@ -135,11 +135,11 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
     // open source dir
     struct dirent *dfile;
     COUNT_PARTIAL_INPUT_TIME_START
-    DIR *dir = opendir(dataset);
+    DIR *dir = opendir(queries);
     COUNT_PARTIAL_INPUT_TIME_END
     if (!dir)
     {
-        printf("Unable to open directory stream %s!", dataset);
+        printf("Unable to open directory stream %s!", queries);
         exit(1);
     }
 
@@ -168,12 +168,13 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
 
             // get fill path of bin file
             char bin_file_path[PATH_MAX + 1] = ""; 
-            strcat(bin_file_path, dataset);strcat(bin_file_path, "/");strcat(bin_file_path, dfile->d_name);
+            strcat(bin_file_path, queries);strcat(bin_file_path, "/");strcat(bin_file_path, dfile->d_name);
 
             // get binary table info 
             int datasize, table_id, nsets, vector_length_in_filename;
             sscanf(dfile->d_name,"data_size%d_t%dc%d_len%d_noznorm.bin",&datasize,&table_id,&nsets,&vector_length_in_filename);
 
+            printf("table id = %u\n", table_id);
             // check if vector length in file name matches vector length passed as argument
             if(vector_length_in_filename != vector_length)
             {
@@ -223,7 +224,7 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
                     }
                     found_query = true;
                     query_set = (struct vector *) realloc(query_set, sizeof(struct vector) * nvec);
-                    printf("Query %u/%u.\n\n", (total_queries-qset_num)+1, total_queries);
+                    printf("Query %u/%u. id:(%u, %u) \n\n", (total_queries-qset_num)+1, total_queries, table_id, set_id);
                     
                     
                     total_checked_vec = 0;
@@ -267,7 +268,7 @@ void bf_sequential_search(char * dataset, unsigned int vector_length, unsigned i
 
                         COUNT_PARTIAL_TIME_END
                         query_time = partial_time - (partial_input_time + partial_output_time);
-                        printf("\nquerytime  = %f - (%f + %f) = %f\n", partial_time, partial_input_time, partial_output_time, query_time);
+                        // printf("\nquerytime  = %f - (%f + %f) = %f\n", partial_time, partial_input_time, partial_output_time, query_time);
                         
                         /* End of Query set */
                         /* Save query results to csv file */

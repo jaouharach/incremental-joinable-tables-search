@@ -33,7 +33,7 @@ struct result_sid {
 int get_ndigits(unsigned int n);
 unsigned int get_data_gb_size(char* dl_dir, unsigned int l);
 bool is_binaryfile(const char *filename);
-void bf_sequential_search( char * bin_files_directory, unsigned int vector_length, unsigned int qset_num, 
+void bf_sequential_search(char * queries_dir, char * bin_files_directory, unsigned int vector_length, unsigned int qset_num, 
     unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top, char * result_dir,
     unsigned int total_data_files, unsigned int dataset_gb_size, unsigned int k);
 void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned int qset_id, int num_knns, struct query_result * knn_results);
