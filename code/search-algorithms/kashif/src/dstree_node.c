@@ -649,7 +649,7 @@ void calculate_node_knn_distance(
           index->settings->timeseries_size, kth_bsf, query_order);
     }
 
-    if (distance < kth_bsf)
+    if (distance <= kth_bsf) // (tmp change) <= instead of <
     {
       struct query_result object_result; // =  malloc(sizeof(struct query_result));
       object_result.node = node;
@@ -666,8 +666,8 @@ void calculate_node_knn_distance(
       if (index->settings->track_vector)
       {
         object_result.vector_id = (struct vid *) malloc(sizeof(struct vid));
-        // object_result.vector_id->table_id = 0;
-        // object_result.vector_id->set_id = 0;
+        // object_result.vector_id->table_id = 101010;
+        // object_result.vector_id->set_id = 10101;
         object_result.vector_id->table_id = index->vid_cache[(node->vid_pos) + idx].table_id;
         object_result.vector_id->set_id = index->vid_cache[(node->vid_pos) + idx].set_id;
         object_result.vector_id->pos = index->vid_cache[(node->vid_pos) + idx].pos;
@@ -958,14 +958,24 @@ ts_type calculate_node_max_distance(struct dstree_index *index,
 int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
                                 unsigned int *cur_size, unsigned int k) {
   struct query_result temp;
+  temp.vector_id = malloc(sizeof(struct vid));
+
   size_t i;
   size_t newsize;
 
+  // (tmp change)
   bool is_duplicate = false;
   for (unsigned int itr = 0; itr < *cur_size; ++itr) {
-    if (q[itr].distance == d.distance)
+    // if (q[itr].distance == d.distance)
+    if((q[itr].vector_id->table_id == d.vector_id->table_id)
+        && (q[itr].vector_id->set_id == d.vector_id->set_id) 
+        && (q[itr].vector_id->pos == d.vector_id->pos))
+    {
       is_duplicate = true;
+      break;
+    } 
   }
+  // (end tmp change)
 
   if (!is_duplicate) {
 
@@ -1002,7 +1012,20 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
     while (idx < *cur_size) {
       j = idx;
       while (j > 0 && ((q[j - 1]).distance > q[j].distance)) {
-        temp = q[j];
+        /* start kashif changes */
+        // temp = q[j];
+        temp.distance = q[j].distance;
+        temp.node = q[j].node;
+        temp.label = q[j - 1].label;
+        temp.file_pos = q[j].file_pos;
+        temp.vector_id->table_id = q[j].vector_id->table_id;
+        temp.vector_id->set_id = q[j].vector_id->set_id;
+        temp.vector_id->pos = q[j].vector_id->pos;
+        strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
+
+        /* end kashif changes */
+
+
         q[j].distance = q[j - 1].distance;
         q[j].node = q[j - 1].node;
         q[j].label = q[j - 1].label;
@@ -1026,6 +1049,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       ++idx;
     }
   }
+  free(temp.vector_id);
   return 0;
 }
 

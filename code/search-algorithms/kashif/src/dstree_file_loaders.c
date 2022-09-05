@@ -468,7 +468,10 @@ enum response dstree_knn_query_multiple_binary_files(
             break;
 
           // read first integer to check how many vactors in current set
+          COUNT_PARTIAL_INPUT_TIME_START
           fread(&nvec, sizeof(nvec), 1, bin_file);
+          COUNT_PARTIAL_INPUT_TIME_END
+
           total_bytes--;
           // query set does not fit requirments move to next set
           if ((unsigned int)nvec < min_qset_size ||
