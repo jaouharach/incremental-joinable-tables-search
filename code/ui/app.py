@@ -1,7 +1,7 @@
 from flask import Flask, flash, render_template, request, redirect
 import pandas as pd
 import subprocess, re
-import time, json
+import time, json, os
 
 
 import sys
@@ -16,29 +16,27 @@ TMP_FOLDER = UPLOAD_FOLDER + "tmp/"
 BIN_FOLDER = UPLOAD_FOLDER + "bins/"
 
 EMBEDDING_DIM = 50
-KASHIF_BIN = "../kashif/bin/dstree"
+KASHIF_BIN = "../search-algorithms/kashif/bin/dstree"
 
 KASHIF_IDX = "../100-idx/" # storing 100 tables
 RAW_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/raw-tables/"
 METADATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
 
-# EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
-# PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/glove/glove.6B.50d.txt"
+EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
+PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/glove/glove.6B.50d.txt"
 
-EMBEDDING_MODEL = 'fasttext' 
-PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/fasttext/cc.en.300.bin"
+# EMBEDDING_MODEL = 'fasttext' 
+# PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/fasttext/cc.en.300.bin"
+
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # read raw file into pandas data frame
-def read_raw_file(binary_filename, source_dir):
-    # raw files are named t[table_id]_c[column_pos].json, mus extract table id and colun pos from binary raw filename
-    table_id = int(re.search(r'_t(.*)c', binary_filename).group(1))
-    column_pos = int(re.search(fr'_t{table_id}c(.*?)_', binary_filename).group(1))
-    filename = f"t{table_id}_c{column_pos}.json"
-
+def read_raw_file(raw_filename, source_dir):
+    raw_filename = os.path.basename(raw_filename)
     data = None
-    filepath = source_dir + '/' + filename
+    filepath = source_dir + '/' + raw_filename
 
     try:
         f = open(filepath, 'r')
@@ -46,8 +44,8 @@ def read_raw_file(binary_filename, source_dir):
         table = json.loads(data)
         f.close()
 
-        cols = table['cols']
-        ncols = table['ncols']
+        cols = table['relation']
+        ncols = len(table['relation'])
         num_rows = [len(col) for col in cols]
         max_num_rows = max(num_rows)
 
@@ -206,14 +204,15 @@ def view_dataset():
             return render_template('404.html')
 
         else:
-            ncols, cols, max_num_rows, msg = read_raw_file(filename, RAW_DATA_FOLDER)
-            if ncols == -1:
-                return render_template('view-dataset.html', error=msg)
-            
             metadata, msg = read_metadata_file(filename, METADATA_FOLDER)
             if metadata == -1:
                 return render_template('view-dataset.html', error=msg)
             
+            ncols, cols, max_num_rows, msg = read_raw_file(metadata["raw_data_file"], RAW_DATA_FOLDER)
+            if ncols == -1:
+                return render_template('view-dataset.html', error=msg)
+            
+
             print(metadata)
             
             return render_template('view-dataset.html', metadata=metadata, file_name=request.form['file_name'], match_col=column_idx, cols=cols, ncols=ncols, max_num_rows=max_num_rows)

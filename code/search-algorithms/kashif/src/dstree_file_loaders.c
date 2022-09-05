@@ -365,7 +365,7 @@ enum response dstree_knn_query_multiple_binary_files(
 
   int vector_length = index->settings->timeseries_size;
   int opened_files = 0, qvectors_loaded = 0;
-  ;
+  
   unsigned int offset = 0;
 
   // open source dir
@@ -373,7 +373,7 @@ enum response dstree_knn_query_multiple_binary_files(
   DIR *dir = opendir(bin_files_directory);
 
   if (!dir) {
-    fprintf("Error in dstree_file_loaders.c: Unable to open directory stream! %s", bin_files_directory);
+    fprintf(stderr, "Error in dstree_file_loaders.c: Unable to open directory stream! %s", bin_files_directory);
     exit(1);
   }
 
