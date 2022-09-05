@@ -8,6 +8,12 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 
+#USE ONLY ONE OF THESE:
+# os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Ray
+# os.environ["MODIN_ENGINE"] = "dask"  # Modin will use Dask
+
+# import modin.pandas as pd
+
 BRUTE_FORCE_ALGO_NAME = 'bfed'
 NUM_TOP = 10
 def make_file(output_file):
@@ -32,13 +38,11 @@ def get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file):
     for subdir, dirs, files in os.walk(source_dir):
         if re.search(f'nn', os.path.basename(subdir)):
             k = int(re.findall(r"(\d+)nn", subdir)[0])
-            # print(f"Current k = {k}")
-            if k == 10:
-                k_count = 1
-            else:
-                k_count += 4
+            k_count += 1
+            if k == 10000:
+                continue
             
-        if re.search(f'_{nqueries}q_min', os.path.basename(subdir)) and k_count == 1:
+        if re.search(f'_{nqueries}q_min', os.path.basename(subdir)):
             # get algorithm name
             _currentdir = os.path.basename(subdir)
             _ = _currentdir.split('_')
@@ -52,16 +56,14 @@ def get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file):
                     qsize = _[2].replace('qsize','') # get number of candidate tables
                     total_files = _[3].replace('l','') # get number of candidate tables
                     data_gb_size = _[4].replace('dlsize','') # get data lake size in GB
-                    # _len= _[5].replace('len','') # vector length
-                    # _querytime = _[6].replace('runtime','') # get query runtime in sec
-                    # _ndistcalc = _[7].replace('ndistcalc','') # get number of distance calculations
-                    # _dataaccess = _[8].replace('dataaccess','') # total checked vector
-                    # _dataaccess = _dataaccess.replace('.csv','') # remove extension '.csv'
-                   
+
+                    if k == 10000:
+                        break
                     query = (qtable_id, qset_id, qsize)
                     queries.append(query)
                     # print("compute recall...")
                     dir = str(os.path.basename(subdir)).replace(algo, BRUTE_FORCE_ALGO_NAME)
+                    print(f"----------- k = {k} ------------\n")
                     compute_query_recall(query, source_dir+f'/{k}nn/{os.path.basename(subdir)}/'+file, ground_truth_dir+f'/{k}nn/{dir}/', algo, total_files, data_gb_size, k, NUM_TOP)
                     
     return queries, k_count
@@ -80,45 +82,100 @@ def compute_query_recall(query, query_results_csv_file, ground_truth_dir, algo, 
                 gt_query = (qtable_id, qset_id, qsize)
 
                 if gt_query == query:
-                    # print(f"query = {gt_query} \t gt query = {gt_query}")
+                    print(f"query = {gt_query} \t gt query = {gt_query}")
                     recall = compute_recall(query_results_csv_file, ground_truth_dir+gt_file)
                     append_evaluation(algo, total_files, data_gb_size, k, num_top, f"TQ{qtable_id}Q{qset_id}", recall, output_file)
-                    # print(f"query {query} recall = {recall}.")
-                # else:
-                    # print(f"query = {gt_query} !=\t gt query = {gt_query}")
+                    print(f"query {query} recall = {recall}.")
 
 
 def compute_recall(csv_file, gt_csv_file):
     gt_results = pd.read_csv(gt_csv_file, delimiter=",") 
     results = pd.read_csv(csv_file, delimiter=",") 
-    total_gt_rows = len(gt_results)
-    total_rows = len(results)
 
+    # remove space in column names
     gt_results.columns = [c.replace(' ', '') for c in gt_results.columns]
     results.columns = [c.replace(' ', '') for c in results.columns]
+
+    # correct column name (for result of older code)
+    gt_results.rename(columns = {'qindex':'q_pos', 'sindex':'s_pos'}, inplace = True)
+    results.rename(columns = {'qindex':'q_pos', 'sindex':'s_pos'}, inplace = True)
+
+    total_gt_rows = len(gt_results)
+    total_rows = len(results)
 
     gt_results = gt_results.sort_values('TS:S')
     results = results.sort_values('TS:S')
 
     match_count = 0
-    for gt_r in range(total_gt_rows):
-        for r in range(total_rows):
-            if results.loc[r, "TS:S"] == gt_results.loc[gt_r, "TS:S"] and results.loc[r, "qindex"] == gt_results.loc[gt_r, "qindex"]:
-                if  results.loc[r, "sindex"] == gt_results.loc[gt_r, "sindex"] and results.loc[r, "d"] == gt_results.loc[gt_r, "d"]:
-                    match_count += 1
-                    break
+    for r in range(total_rows):
+        found = ((gt_results["TS:S"] == results.loc[r, "TS:S"]) 
+        & (gt_results["q_pos"] == results.loc[r, "q_pos"])
+        & (gt_results["s_pos"] == results.loc[r, "s_pos"])).any()
+
+        if found:
+            match_count += 1
 
     return match_count/total_gt_rows
+
+def plot_results(csv_file, output_dir, k_count):
+    # set text font
+    plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": "cm"})
+    plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
+
+    _df = pd.read_csv(csv_file)
+    _df = _df.drop(['TQ:Q'], axis = 1)
+    _df = _df.drop(['num-top'], axis = 1)
+
+    _df_new = _df.groupby(
+        ['algorithm', 'total-files', 'data-gb-size', 'k']
+    ).agg(
+        recall = ('recall','mean'),
+    ).reset_index()
+
+    # BAR PLOT
+    sns.set_style("whitegrid")
+    ax = sns.barplot(data=_df_new, x="k", y="recall")
+
+    # Set these based on your column counts
+    columncounts = [25 for i in range(k_count)]
+
+    # Maximum bar width is 1. Normalise counts to be in the interval 0-1. Need to supply a maximum possible count here as maxwidth
+    def normaliseCounts(widths,maxwidth):
+        widths = np.array(widths)/float(maxwidth)
+        return widths
+
+    widthbars = normaliseCounts(columncounts,100)
+
+    # Loop over the bars, and adjust the width (and position, to keep the bar centred)
+    for bar,newwidth in zip(ax.patches,widthbars):
+        x = bar.get_x()
+        width = bar.get_width()
+        centre = x+width/2.
+
+        bar.set_x(centre-newwidth/2.)
+        bar.set_width(newwidth)
+    
+    plt.ylabel("Mean recall", fontsize = 11)
+    plt.xlabel("k", fontsize = 11)
+    plt.xticks(fontsize = 11)
+    plt.yticks(fontsize = 11)
+    # plt.legend(loc='upper left')
+    plt.title("Kashif: mean recall (10 query columns of size [5 - 10])")
+    plt.savefig(f"{output_dir}/kashif_recall.png")
+    plt.close()
 
 
 source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/100k-tables/"
 ground_truth_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/bf/results/100k-tables"
+output_img_dir = "./img/"
+
 output_file = "./csv/recall_eval.csv"
 nqueries = 10
 
 make_file(output_file)
 queries, k_count = get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file)
 
-# print(queries)
-# print(len(queries))
-# compute_recall(csv_file, gt_csv_file)
+plot_results(output_file, output_img_dir, k_count)

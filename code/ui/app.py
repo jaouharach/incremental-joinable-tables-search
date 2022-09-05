@@ -79,7 +79,7 @@ def read_metadata_file(binary_filename, metadata_dir):
 
 # create temp file for the query column
 def create_query_bin_file(query_file , column_idx):
-    df = pd.read_csv(query_file)
+    df = pd.read_csv(query_file, engine='python')
     if column_idx < 0 or column_idx > df.shape[1] - 1:
         return -1, f"Wrong value for column idx. file only contains {df.shape[1]} columns"
     else:

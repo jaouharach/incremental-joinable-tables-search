@@ -236,12 +236,16 @@
                         <span class="text-muted">{{ result[1]["text_after_table"]|truncate(100, True, '...') }} </span>
                         {% endif %}
                         <br>
-                        <span class="text-muted">Raw binary file {{ result[0][0] }}, Found matches in column {{ result[0][1] }}. </span>
+                        <!-- <span class="text-muted">Raw binary file {{ result[0][0] }}, Found matches in column {{ result[0][1] }}. </span> -->
                       </div>
                       <div class="ms-auto">
                         <div class="text-right">
                           <!-- <h5 class="text-muted mb-0">Found</h5> -->
+                          {% if result[0][2] == 1 %}
+                          <span class="text-muted font-16">{{ result[0][2] }} match</span>
+                          {% else %}
                           <span class="text-muted font-16">{{ result[0][2] }} matches</span>
+                          {% endif %}
                         </div>
                       </div>
                     </li>

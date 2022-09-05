@@ -214,7 +214,7 @@
                     {% if metadata %}
                     <strong>Raw file:</strong>
                     <br>
-                    {% if file_name %} {{ file_name}} {% endif %}
+                    {{ metadata['raw_data_file']}}
                     <br>
                     <strong>Text before table:</strong>
                     <br>
@@ -354,7 +354,12 @@
     /****************************************
      *       Basic Table                   *
      ****************************************/
-    $("#zero_config").DataTable();
+     $(document).ready(function() {
+        $('#zero_config').DataTable( {
+            "order": [[ 0, "desc" ]] // "0" means First column and "desc" is order type; 
+        } );
+    } );
+    // $("#zero_config").DataTable();
   </script>
 </body>
 
