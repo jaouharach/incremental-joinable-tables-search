@@ -959,7 +959,11 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
                                 unsigned int *cur_size, unsigned int k) {
   struct query_result temp;
   temp.vector_id = malloc(sizeof(struct vid));
-
+  if (temp.vector_id == NULL)
+  {
+      printf("Error in dstree_node.c: Couldn't allocate memory for temp query result.");
+      exit(1);
+  }
   size_t i;
   size_t newsize;
 
@@ -969,7 +973,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
     // if (q[itr].distance == d.distance)
     if((q[itr].vector_id->table_id == d.vector_id->table_id)
         && (q[itr].vector_id->set_id == d.vector_id->set_id) 
-        && (q[itr].vector_id->pos == d.vector_id->pos))
+        && (q[itr].vector_id->pos == d.vector_id->pos)
+        && (q[itr].query_vector_pos == d.query_vector_pos))
     {
       is_duplicate = true;
       break;
@@ -989,6 +994,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[k - 1].vector_id->table_id = d.vector_id->table_id;
       q[k - 1].vector_id->set_id = d.vector_id->set_id;
       q[k - 1].vector_id->pos = d.vector_id->pos;
+      q[k - 1].query_vector_pos = d.query_vector_pos;
       strcpy(q[k - 1].vector_id->raw_data_file, d.vector_id->raw_data_file);
     }
     else
@@ -1000,6 +1006,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[*cur_size].vector_id->table_id = d.vector_id->table_id;
       q[*cur_size].vector_id->set_id = d.vector_id->set_id;
       q[*cur_size].vector_id->pos = d.vector_id->pos;
+      q[*cur_size].query_vector_pos = d.query_vector_pos;
       strcpy(q[*cur_size].vector_id->raw_data_file, d.vector_id->raw_data_file);
 
       ++(*cur_size);
@@ -1021,6 +1028,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
         temp.vector_id->table_id = q[j].vector_id->table_id;
         temp.vector_id->set_id = q[j].vector_id->set_id;
         temp.vector_id->pos = q[j].vector_id->pos;
+        temp.query_vector_pos = q[j].query_vector_pos;
         strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
 
         /* end kashif changes */
@@ -1034,6 +1042,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
         q[j].vector_id->table_id = q[j - 1].vector_id->table_id;
         q[j].vector_id->set_id = q[j - 1].vector_id->set_id;
         q[j].vector_id->pos = q[j - 1].vector_id->pos;
+        q[j].query_vector_pos = q[j - 1].query_vector_pos;
         strcpy(q[j].vector_id->raw_data_file, q[j - 1].vector_id->raw_data_file);
 
         q[j - 1].distance = temp.distance;
@@ -1043,6 +1052,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
         q[j - 1].vector_id->table_id = temp.vector_id->table_id;
         q[j - 1].vector_id->set_id = temp.vector_id->set_id;
         q[j - 1].vector_id->pos = temp.vector_id->pos;
+        q[j - 1].query_vector_pos = temp.query_vector_pos;
         strcpy(q[j - 1].vector_id->raw_data_file, temp.vector_id->raw_data_file);
         --j;
       }

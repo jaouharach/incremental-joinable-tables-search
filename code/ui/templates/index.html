@@ -109,7 +109,7 @@
                 <span class="nav-link">
                   Top-
                 </span>
-                <input type="number" name="top" class="form-control form-control-sm" value="10" required min="1" placeholder="10" aria-describedby="basic-addon2">
+                <input type="number" name="top" class="form-control form-control-sm" value="10000" required min="1" placeholder="10000" aria-describedby="basic-addon2">
                 <span class="nav-link">
                   Error
                 </span>
@@ -184,7 +184,7 @@
         <div class="page-breadcrumb">
           <div class="row">
             <div class="col-12 d-flex no-block align-items-center">
-              <h4 class="page-title">Results</h4>
+              <h4 class="page-title">Results <small>{% if total_results %} ({{ total_results }} results){% endif%}</small></h4>
               <div class="ms-auto text-end">
                 <nav aria-label="breadcrumb">
                   <ol class="breadcrumb">
@@ -227,8 +227,19 @@
                         <form id="view_dataset_form_{{ result[0][0] }}" action="http://localhost:5000/view-dataset" method="post">
                           <input type="hidden" name="file_name" value="{{ result[0][0] }}"/>
                           <input type="hidden" name="column_idx" value="{{ result[0][1] }}"/>
+                        
+                        {% if result[1]["page_title"] %} 
                         <a href="#" onclick='document.getElementById("view_dataset_form_{{ result[0][0] }}").submit();'' class="mb-0 font-medium p-0"
-                          >{{ result[1]["page_title"] }}</a>
+                          >
+                          {{ result[1]["page_title"] }}
+                        </a>
+                        {% else %}
+                        <a href="#" onclick='document.getElementById("view_dataset_form_{{ result[0][0] }}").submit();'' class="mb-0 font-medium p-0"
+                          >
+                          ** Unknown page title **
+                        </a>
+                        {% endif %}
+                        
                         </form>
                         {% if result[1]["text_before_table"] %}
                         <span class="text-muted">{{ result[1]["text_before_table"]|truncate(100, True, '...') }} </span>
@@ -288,7 +299,7 @@
                     </thead>
                     <tbody>
                       <tr>
-                        <td>Cleaning time</td>
+                        <td>Compilation time</td>
                         {% if query_cleaning_time %} 
                         <td>{{ query_cleaning_time }}</td>
                         {% else %}

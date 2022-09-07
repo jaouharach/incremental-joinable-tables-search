@@ -13,12 +13,117 @@
 #include "../include/utils.h"
 #include "../include/stats.h"
 
-ts_type euclidian_distance(ts_type *q, ts_type *v, unsigned int len)
+ts_type euclidean_distance(ts_type *q, ts_type *v, unsigned int len)
 {
     ts_type sum = 0.0;
-    for(int i = 0; i < len; ++i)
-        sum = sum + ((q[i] - v[i]) * (q[i] - v[i]));
+    for(int i = 0; i < len; i++)
+    {
+      sum = sum + ((q[i] - v[i]) * (q[i] - v[i]));
+    }
+    
+    printf("distance = %f\n", sum);
     return sum;
+}
+
+int queue_bounded_sorted_insert(struct query_result *q, struct query_result *d,
+                                unsigned int *cur_size, unsigned int k) {
+  struct query_result temp;
+  temp.vector_id = malloc(sizeof(struct vid));
+  if (temp.vector_id == NULL)
+  {
+      printf("Error in dstree_node.c: Couldn't allocate memory for temp query result.");
+      exit(1);
+  }
+  size_t i;
+  size_t newsize;
+
+  // (tmp change)
+  bool is_duplicate = false;
+  for (unsigned int itr = 0; itr < *cur_size; ++itr) {
+    // if (q[itr].distance == d.distance)
+    if((q[itr].vector_id->table_id == d->vector_id->table_id)
+        && (q[itr].vector_id->set_id == d->vector_id->set_id) 
+        && (q[itr].vector_id->pos == d->vector_id->pos))
+    {
+      is_duplicate = true;
+      break;
+    } 
+  }
+  // (end tmp change)
+
+  if (!is_duplicate) {
+
+    /* the queue is full, ovewrite last element*/
+    if (*cur_size == k)
+    {
+      q[k - 1].distance = d->distance;
+      q[k - 1].vector_id->table_id = d->vector_id->table_id;
+      q[k - 1].vector_id->set_id = d->vector_id->set_id;
+      q[k - 1].vector_id->pos = d->vector_id->pos;
+      q[k - 1].query_vector_pos = d->query_vector_pos;
+      strcpy(q[k - 1].vector_id->raw_data_file, d->vector_id->raw_data_file);
+    }
+    else
+    {
+      q[*cur_size].distance = d->distance;
+      q[*cur_size].vector_id->table_id = d->vector_id->table_id;
+      q[*cur_size].vector_id->set_id = d->vector_id->set_id;
+      q[*cur_size].vector_id->pos = d->vector_id->pos;
+      q[*cur_size].query_vector_pos = d->query_vector_pos;
+      strcpy(q[*cur_size].vector_id->raw_data_file, d->vector_id->raw_data_file);
+
+      ++(*cur_size);
+    }
+
+    unsigned int idx, j;
+
+    idx = 1;
+
+    while (idx < *cur_size) {
+      j = idx;
+      while (j > 0 && ((q[j - 1]).distance > q[j].distance)) {
+        /* start kashif changes */
+        // temp = q[j];
+        temp.distance = q[j].distance;
+        temp.vector_id->table_id = q[j].vector_id->table_id;
+        temp.vector_id->set_id = q[j].vector_id->set_id;
+        temp.vector_id->pos = q[j].vector_id->pos;
+        temp.query_vector_pos = q[j].query_vector_pos;
+        strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
+
+        /* end kashif changes */
+
+
+        q[j].distance = q[j - 1].distance;
+
+        q[j].vector_id->table_id = q[j - 1].vector_id->table_id;
+        q[j].vector_id->set_id = q[j - 1].vector_id->set_id;
+        q[j].vector_id->pos = q[j - 1].vector_id->pos;
+        q[j].query_vector_pos = q[j - 1].query_vector_pos;
+        strcpy(q[j].vector_id->raw_data_file, q[j - 1].vector_id->raw_data_file);
+
+        q[j - 1].distance = temp.distance;
+        q[j - 1].vector_id->table_id = temp.vector_id->table_id;
+        q[j - 1].vector_id->set_id = temp.vector_id->set_id;
+        q[j - 1].vector_id->pos = temp.vector_id->pos;
+        q[j - 1].query_vector_pos = temp.query_vector_pos;
+        strcpy(q[j - 1].vector_id->raw_data_file, temp.vector_id->raw_data_file);
+        --j;
+      }
+      ++idx;
+    }
+  }
+  free(temp.vector_id);
+  return 0;
+}
+void print_knns(struct query_result * knns, int k)
+{
+  printf("\nknns = {");
+  for(int i = 0; i < k; i++)
+  {
+    printf("q = %u(%u, %u, %u) d = %.3f\t", knns[i].query_vector_pos, knns[i].vector_id->table_id, knns[i].vector_id->set_id, knns[i].vector_id->pos, knns[i].distance);
+  }
+  printf("}\n");
 }
 
 // delete non empty direcory
@@ -81,6 +186,46 @@ unsigned int get_data_gb_size(char *dataset, unsigned int total_data_files) {
   return (unsigned int)round(total_dlsize / 1073741824); // return data size in GB
 }
 
+bool is_duplicate(struct query_result * curr_knns, struct vector * bsf, unsigned int qvec_pos, int k)
+{
+  for (int i = 0; i < k; i++) {
+    if(curr_knns[i].distance != FLT_MAX)
+      if((curr_knns[i].vector_id->table_id == bsf->table_id)
+          && (curr_knns[i].vector_id->set_id == bsf->set_id) 
+          && (curr_knns[i].vector_id->pos == bsf->pos)
+          && (curr_knns[i].query_vector_pos == qvec_pos))
+      {
+        return true;
+      } 
+  }
+  return false;
+}
+
+bool query_result_cpy_vector(struct query_result * dest, struct vid * src, unsigned int query_vector_pos, ts_type distance, char * raw_file_name)
+{
+  dest->distance = distance;
+  printf("copy vector distance: %f\n",  dest->distance);
+  dest->vector_id->table_id = src->table_id;
+  dest->vector_id->set_id =  src->set_id;
+  dest->vector_id->pos =  src->pos;
+  dest->query_vector_pos =  query_vector_pos;
+  strcpy(dest->vector_id->raw_data_file, raw_file_name);
+
+  return true;
+}
+
+bool query_result_cpy(struct query_result * dest, struct query_result * src)
+{
+  dest->distance = src->distance;
+  dest->vector_id->table_id = src->vector_id->table_id;
+  dest->vector_id->set_id =  src->vector_id->set_id;
+  dest->vector_id->pos =  src->vector_id->pos;
+  dest->query_vector_pos =  src->query_vector_pos;
+  strcpy(dest->vector_id->raw_data_file, 
+  src->vector_id->raw_data_file);
+
+  return true;
+}
 bool is_binaryfile(const char *filename)
 {
     // check if filename has bin extesion.
@@ -89,6 +234,15 @@ bool is_binaryfile(const char *filename)
     return nl >= el && !strcmp(filename + nl - el, ext);
 }
 
+void print_vector(ts_type * v, unsigned int v_len)
+{
+  printf("(");
+  for(int i = 0; i < v_len; i++)
+  {
+    printf("%.4f, ", v[i]);
+  }
+  printf(")\n");
+}
 // new function save query results to csv file
 void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned int qset_id, int num_knns, struct query_result * knn_results){
 	FILE *fp;

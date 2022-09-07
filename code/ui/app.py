@@ -192,7 +192,8 @@ def process_query():
                 metadata.append(metad)
         
         results = list(zip(results, metadata))
-        return render_template("index.html", results=results, metadata=metadata, query_cleaning_time=query_cleaning_time, query_time=query_time)
+        total_results = len(results)
+        return render_template("index.html", total_results=total_results, results=results, metadata=metadata, query_cleaning_time=query_cleaning_time, query_time=query_time)
 
 @app.route('/view-dataset', methods=['GET', 'POST'])
 def view_dataset():

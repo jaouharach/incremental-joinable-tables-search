@@ -224,6 +224,15 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                     }
                     found_query = true;
                     query_set = (struct vector *) realloc(query_set, sizeof(struct vector) * nvec);
+                    for(int t = 0; t < nvec; t++)
+                    {
+                        query_set[t].values = (ts_type *) malloc(sizeof(ts_type) * vector_length);
+                        if(query_set[t].values == NULL)
+                        {
+                            printf("Error in bf.c: couldn't allocate memory for query values.");
+                            exit(1);
+                        }
+                    }
                     printf("Query %u/%u. id:(%u, %u) \n\n", (total_queries-qset_num)+1, total_queries, table_id, set_id);
                     
                     
@@ -241,11 +250,18 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                 else if(i <= (unsigned int)nvec*vector_length)
                 {
                     // end of vector but still in current set
-                    if(j > vector_length - 1){
+                    if(j > (vector_length - 1)){
                         j = 0; 
                         
                         // Append vector to query set
-                        query_set[next_vec] = query_vector;
+                        query_set[next_vec].table_id = query_vector.table_id;
+                        query_set[next_vec].set_id = query_vector.set_id;
+                        query_set[next_vec].pos = query_vector.pos;
+                        for(int x = 0; x < vector_length; x++)
+                        {
+                            query_set[next_vec].values[x] = query_vector.values[x];
+                        }
+                        
                         query_vector.pos += 1;
                         next_vec += 1;
                     }
@@ -259,7 +275,13 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                     if(i == (unsigned int)nvec*vector_length)
                     {   
                         query_vector.values[j] = val;
-                        query_set[next_vec] = query_vector;
+                        query_set[next_vec].table_id = query_vector.table_id;
+                        query_set[next_vec].set_id = query_vector.set_id;
+                        query_set[next_vec].pos = query_vector.pos;
+                        for(int x = 0; x < vector_length; x++)
+                        {
+                            query_set[next_vec].values[x] = query_vector.values[x];
+                        }
                         next_vec = 0;
                         
                         /*run query set */
@@ -320,33 +342,52 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
     struct vector * qset, unsigned int qnvec, unsigned int k, unsigned int *total_checked_vec)
 {
     
-    ts_type * bsf = (ts_type *) malloc(sizeof(ts_type) * qnvec);
-    unsigned int * next_knn = (unsigned int *) malloc(sizeof(unsigned int) * qnvec);
+    float * bsf = (float *) malloc(sizeof(float) * qnvec);
+    unsigned int * curr_size = (unsigned int *) malloc(sizeof(unsigned int) * qnvec);
     //queue containing kNN results for every vector
-    struct query_result * curr_knn = (struct query_result *) malloc(sizeof(struct query_result) * k*qnvec);
+    struct query_result * all_knn_results = (struct query_result *) malloc(sizeof(struct query_result) * k*qnvec);
     
 
     struct vector v; 
     v.values = (ts_type *) malloc(sizeof(ts_type) * vector_length);
+    if (v.values == NULL)
+    {
+        printf("Error in bf.c: Couldn't allocate memory for temp vector values.");
+        exit(1);
+    }
+    struct query_result * temp = malloc(sizeof(struct query_result));
+    temp->vector_id = malloc(sizeof(struct vid));
+    struct query_result * repl = malloc(sizeof(struct query_result));
+    repl->vector_id = malloc(sizeof(struct vid));
+    temp->distance = FLT_MAX;
+    repl->distance = FLT_MAX;
 
+    if (temp->vector_id == NULL || repl->vector_id == NULL)
+    {
+        printf("Error in bf.c: Couldn't allocate memory for temp query result.");
+        exit(1);
+    }
 
     for (int i = 0; i < qnvec; ++i)
     {
         bsf[i] = FLT_MAX;
-        next_knn[i] = 0;
+        curr_size[i] = 0;
     }
 
     for (int j = 0; j < qnvec*k; ++j)
     {
-        curr_knn[j].vector_id = malloc(sizeof(struct vid));
-        if(curr_knn[j].vector_id == NULL)
+        all_knn_results[j].vector_id = malloc(sizeof(struct vid));
+        if(all_knn_results[j].vector_id == NULL)
+        {
+            printf("Error in bf.c: Couldn't allocate memory for vector id in knn results.");
             exit(1);
-        curr_knn[j].vector_id->set_id = -1;
-        curr_knn[j].vector_id->table_id = -1;
-        curr_knn[j].vector_id->pos = -1;
-        curr_knn[j].query_vector_pos = -1;
-        strcpy(curr_knn[j].vector_id->raw_data_file, "");
-        curr_knn[j].distance = FLT_MAX;
+        }
+        all_knn_results[j].vector_id->set_id = -1;
+        all_knn_results[j].vector_id->table_id = -1;
+        all_knn_results[j].vector_id->pos = -1;
+        all_knn_results[j].query_vector_pos = -1;
+        strcpy(all_knn_results[j].vector_id->raw_data_file, "");
+        all_knn_results[j].distance = FLT_MAX;
     }
 
     // Open binary files  dir
@@ -426,55 +467,30 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                         total_bytes -= nvec * vector_length;
                         continue;
                     }
-                    
-                    
                 }
                 else if(i <= (unsigned int)nvec*vector_length)
                 {
-                    if(j > vector_length - 1)
+                    if(j > (vector_length - 1))
                     {    
                         j = 0;
                         *total_checked_vec += qnvec;
                         for(int h = 0; h < qnvec; h++)
                         {
-                            d = euclidian_distance(qset[h].values, v.values, vector_length);
-
-                            // if current vector is closer to query vector
-                            if (d < bsf[h])
+                            d = euclidean_distance(qset[h].values, v.values, vector_length);
+                            // d = fabs(d);
+                            ts_type kth_bsf_dist = all_knn_results[h*k+(k-1)].distance;
+                            if (d <= kth_bsf_dist)
                             {
-                                bsf[h] = d;
-                                // move previous bsfs to put curr bsf as first
-                                for(int m = 1; m < k; ++m)
-                                {
-                                    curr_knn[h*k+m].distance = curr_knn[(h*k+m)-1].distance;
-                                    curr_knn[h*k+m].vector_id->set_id = curr_knn[(h*k+m)-1].vector_id->set_id;
-                                    curr_knn[h*k+m].vector_id->table_id = curr_knn[(h*k+m)-1].vector_id->table_id;
-                                    curr_knn[h*k+m].vector_id->pos = curr_knn[(h*k+m)-1].vector_id->pos;
-                                    curr_knn[h*k+m].query_vector_pos = curr_knn[(h*k+m)-1].query_vector_pos;
-                                    strcpy(curr_knn[h*k+m].vector_id->raw_data_file, curr_knn[(h*k+m)-1].vector_id->raw_data_file);
-                                }
-
-                                curr_knn[h*k].distance = bsf[h];
-                                curr_knn[h*k].vector_id->set_id = v.set_id;
-                                curr_knn[h*k].vector_id->table_id = v.table_id;
-                                curr_knn[h*k].vector_id->pos = v.pos;
-                                curr_knn[h*k].query_vector_pos = qset[h].pos;
-                                strcpy(curr_knn[h*k].vector_id->raw_data_file, raw_file_name);
-                                
-                                next_knn[h] = 1;
-
-                                
-                            }
-                            // if its another vector with same bsf
-                            else if(d == bsf[h] && next_knn[h] < k)
-                            {
-                                curr_knn[(h*k)+next_knn[h]].distance = bsf[h];
-                                curr_knn[(h*k)+next_knn[h]].vector_id->set_id = v.set_id;
-                                curr_knn[(h*k)+next_knn[h]].vector_id->table_id = v.table_id;
-                                curr_knn[(h*k)+next_knn[h]].vector_id->pos = v.pos;
-                                curr_knn[(h*k)+next_knn[h]].query_vector_pos = qset[h].pos;
-                                strcpy(curr_knn[(h*k)+next_knn[h]].vector_id->raw_data_file, raw_file_name);
-                                next_knn[h] = next_knn[h] + 1;
+                                // if(d == 0.0)
+                                // {
+                                //     printf("query %u = \n", h);
+                                //     print_vector(qset[h].values, vector_length);
+                                //     printf("candidate (%u, %u, %u) = \n", v.table_id, v.set_id, v.pos);
+                                //     print_vector(v.values, vector_length);
+                                // }
+                                printf("got dist = %f\n", d);  
+                                query_result_cpy_vector(repl, &v, qset[h].pos, d, raw_file_name);
+                                queue_bounded_sorted_insert(&all_knn_results[h*k], repl, &curr_size[h], k);
                             }
                         }
                         v.pos += 1;
@@ -490,43 +506,22 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                         *total_checked_vec += qnvec;
                         for(int h = 0; h < qnvec; h++)
                         {
-                            d = euclidian_distance(qset[h].values, v.values, vector_length);
-
-                            // if current vector is closer to query vector
-                            if (d < bsf[h])
+                            d = euclidean_distance(qset[h].values, v.values, vector_length);                               
+                            // d = fabs(d);
+                            ts_type kth_bsf_dist = all_knn_results[h*k+(k-1)].distance;
+                            if (d <= kth_bsf_dist)
                             {
-                                bsf[h] = d;
-                                // move previous bsfs to put curr bsf as first
-                                for(int m = 1; m < k; ++m)
-                                {
-                                    curr_knn[h*k+m].distance = curr_knn[(h*k+m)-1].distance;
-                                    curr_knn[h*k+m].vector_id->set_id = curr_knn[(h*k+m)-1].vector_id->set_id;
-                                    curr_knn[h*k+m].vector_id->table_id = curr_knn[(h*k+m)-1].vector_id->table_id;
-                                    curr_knn[h*k+m].vector_id->pos = curr_knn[(h*k+m)-1].vector_id->pos;
-                                    curr_knn[h*k+m].query_vector_pos = curr_knn[(h*k+m)-1].query_vector_pos;
-                                    strcpy(curr_knn[h*k+m].vector_id->raw_data_file, curr_knn[(h*k+m)-1].vector_id->raw_data_file);
-                                }
-
-                                curr_knn[h*k].distance = bsf[h];
-                                curr_knn[h*k].vector_id->set_id = v.set_id;
-                                curr_knn[h*k].vector_id->table_id = v.table_id;
-                                curr_knn[h*k].vector_id->pos = v.pos;
-                                curr_knn[h*k].query_vector_pos = qset[h].pos;
-                                strcpy(curr_knn[h*k].vector_id->raw_data_file, raw_file_name);
-                                next_knn[h] = 1;
-
-                                
-                            }
-                            // if its another vector with same bsf
-                            else if(d == bsf[h] && next_knn[h] < k)
-                            {
-                                curr_knn[(h*k)+next_knn[h]].distance = bsf[h];
-                                curr_knn[(h*k)+next_knn[h]].vector_id->set_id = v.set_id;
-                                curr_knn[(h*k)+next_knn[h]].vector_id->table_id = v.table_id;
-                                curr_knn[(h*k)+next_knn[h]].vector_id->pos = v.pos;
-                                curr_knn[(h*k)+next_knn[h]].query_vector_pos = qset[h].pos;
-                                strcpy(curr_knn[(h*k)+next_knn[h]].vector_id->raw_data_file, raw_file_name);
-                                next_knn[h] = next_knn[h] + 1;
+                                // if(d == 0.0)
+                                // {
+                                //     printf("query %u = \n", h);
+                                //     print_vector(qset[h].values, vector_length);
+                                //     printf("candidate (%u, %u, %u) = \n", v.table_id, v.set_id, v.pos);
+                                //     print_vector(v.values, vector_length);
+                                     
+                                // }  
+                                printf("got dist = %f\n;", d); 
+                                query_result_cpy_vector(repl, &v, qset[h].pos, d, raw_file_name);
+                                queue_bounded_sorted_insert(&all_knn_results[h*k], repl, &curr_size[h], k);
                             }
                         }
                         
@@ -548,9 +543,13 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
     COUNT_PARTIAL_INPUT_TIME_START
     closedir(dir);
     COUNT_PARTIAL_INPUT_TIME_END
+    free(temp->vector_id);
+    free(repl->vector_id);
+    free(temp);
+    free(repl);
     free(bsf);
     free(v.values);
-    free(next_knn);
+    free(curr_size);
     
-    return curr_knn;
+    return all_knn_results;
 }

@@ -9,11 +9,16 @@ bin/bf --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-bet
 
 valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset  /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --total-data-files 100000 --buffer-size 6000 --index-path ../100k-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 1000000
 
+(for 200 tables, contains ~ 10243 vectors)
 
-2- run queries on index
+valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset  /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --total-data-files 200 --buffer-size 60 --index-path /home/jaouhara.chanchaf/work-dir/indexes/200-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 1000
+
+2- run queries on index (for 100k tables):
 
 bin/dstree --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/query-columns[10]-size[5-10] --nq 10  --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins --total-data-files 100000 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/kashif-search/10nn/ --buffer-size 6000 --index-path /home/jaouhara.chanchaf/Projects/IQA/iqa-demo/code/100k-idx/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0 --k 10 --timeseries-size 50 --track-vector 1 --warping 0.00 --min-qset-size 5 --max-qset-size 10 --leaf-size 1000000 --top 10
 
+(for 200 tables, contains ~ 10243 vectors)
+bin/dstree --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/query-columns[10]-size[5-10] --nq 10  --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins --total-data-files 200 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/kashif-search/10nn/ --buffer-size 6000 --index-path /home/jaouhara.chanchaf/Projects/IQA/iqa-demo/code/100k-idx/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0 --k 10 --timeseries-size 50 --track-vector 1 --warping 0.00 --min-qset-size 5 --max-qset-size 10 --leaf-size 1000000 --top 10
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 user interface configuration (at ibnsina server, change these line in the app.py file)
@@ -41,6 +46,25 @@ PATH_TO_MODEL = "/home/jaouhara.chanchaf/work-dir/embedding-models/glove/glove.6
 
 ../search-algorithms/kashif/bin/dstree  --index-path  ../100-idx/  --queries  ./data/uploads/bins/  --nq  1  --queries-size  4  --min-qset-size  4  --max-qset-size  5  --dataset  ./data/uploads/bins/  --total-data-files  100  --dataset-GB-size  1  --dataset-size  5866  --result-dir  ./data/query_results/  --k  10  --top  10   --delta  1  --epsilon  0.0  --timeseries-size  50  --track-bsf  --incremental  --leaf-size  1000  --buffer-size  100  --mode  1  --warping  0.0  --ascii-input  0  --track-vector  1
 
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+query = continent.csv
+
+k = 1000
+
+Eliteprospects.com - Nittorps IK
+
+k = 10 (not found) (5.30 sec)
+k = 100 (not found) (6.13 sec)
+k = 500 (not found)
+k = 600 (found) (6.37 sec)
+k = 800 (found) (6.40 sec)
+k = 900 (found) with one match (6.52 sec)
+k = 1000 (found) (sec)
+k = 2000 (found)  (7.16 sec)
+
+But intersection does not improve 
 
 
 
