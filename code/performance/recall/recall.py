@@ -14,7 +14,7 @@ import numpy as np
 
 # import modin.pandas as pd
 
-BRUTE_FORCE_ALGO_NAME = 'bfed'
+BRUTE_FORCE_ALGO_NAME = 'bf'
 NUM_TOP = 10
 def make_file(output_file):
     header = ['algorithm', 'total-files', 'data-gb-size', 'k','num-top', 'TQ:Q','recall']
@@ -39,8 +39,6 @@ def get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file):
         if re.search(f'nn', os.path.basename(subdir)):
             k = int(re.findall(r"(\d+)nn", subdir)[0])
             k_count += 1
-            if k == 10000:
-                continue
             
         if re.search(f'_{nqueries}q_min', os.path.basename(subdir)):
             # get algorithm name
@@ -57,11 +55,8 @@ def get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file):
                     total_files = _[3].replace('l','') # get number of candidate tables
                     data_gb_size = _[4].replace('dlsize','') # get data lake size in GB
 
-                    if k == 10000:
-                        break
                     query = (qtable_id, qset_id, qsize)
                     queries.append(query)
-                    # print("compute recall...")
                     dir = str(os.path.basename(subdir)).replace(algo, BRUTE_FORCE_ALGO_NAME)
                     print(f"----------- k = {k} ------------\n")
                     compute_query_recall(query, source_dir+f'/{k}nn/{os.path.basename(subdir)}/'+file, ground_truth_dir+f'/{k}nn/{dir}/', algo, total_files, data_gb_size, k, NUM_TOP)
@@ -69,8 +64,6 @@ def get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file):
     return queries, k_count
 
 def compute_query_recall(query, query_results_csv_file, ground_truth_dir, algo, total_files, data_gb_size, k, num_top):
-    # print(ground_truth_dir)
-    # exit(1)
     for _, _, files in os.walk(ground_truth_dir, topdown=False):
         for gt_file in files:
             if re.search(f'_runtime', gt_file):
@@ -80,7 +73,6 @@ def compute_query_recall(query, query_results_csv_file, ground_truth_dir, algo, 
                 qsize = _[2].replace('qsize','') # get number of candidate tables
 
                 gt_query = (qtable_id, qset_id, qsize)
-
                 if gt_query == query:
                     print(f"query = {gt_query} \t gt query = {gt_query}")
                     recall = compute_recall(query_results_csv_file, ground_truth_dir+gt_file)

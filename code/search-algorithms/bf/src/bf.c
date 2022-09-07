@@ -174,7 +174,6 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
             int datasize, table_id, nsets, vector_length_in_filename;
             sscanf(dfile->d_name,"data_size%d_t%dc%d_len%d_noznorm.bin",&datasize,&table_id,&nsets,&vector_length_in_filename);
 
-            printf("table id = %u\n", table_id);
             // check if vector length in file name matches vector length passed as argument
             if(vector_length_in_filename != vector_length)
             {
@@ -224,6 +223,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                     }
                     found_query = true;
                     query_set = (struct vector *) realloc(query_set, sizeof(struct vector) * nvec);
+                    // (todo: free values memory)
                     for(int t = 0; t < nvec; t++)
                     {
                         query_set[t].values = (ts_type *) malloc(sizeof(ts_type) * vector_length);
@@ -481,14 +481,6 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                             ts_type kth_bsf_dist = all_knn_results[h*k+(k-1)].distance;
                             if (d <= kth_bsf_dist)
                             {
-                                // if(d == 0.0)
-                                // {
-                                //     printf("query %u = \n", h);
-                                //     print_vector(qset[h].values, vector_length);
-                                //     printf("candidate (%u, %u, %u) = \n", v.table_id, v.set_id, v.pos);
-                                //     print_vector(v.values, vector_length);
-                                // }
-                                printf("got dist = %f\n", d);  
                                 query_result_cpy_vector(repl, &v, qset[h].pos, d, raw_file_name);
                                 queue_bounded_sorted_insert(&all_knn_results[h*k], repl, &curr_size[h], k);
                             }
@@ -511,15 +503,6 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                             ts_type kth_bsf_dist = all_knn_results[h*k+(k-1)].distance;
                             if (d <= kth_bsf_dist)
                             {
-                                // if(d == 0.0)
-                                // {
-                                //     printf("query %u = \n", h);
-                                //     print_vector(qset[h].values, vector_length);
-                                //     printf("candidate (%u, %u, %u) = \n", v.table_id, v.set_id, v.pos);
-                                //     print_vector(v.values, vector_length);
-                                     
-                                // }  
-                                printf("got dist = %f\n;", d); 
                                 query_result_cpy_vector(repl, &v, qset[h].pos, d, raw_file_name);
                                 queue_bounded_sorted_insert(&all_knn_results[h*k], repl, &curr_size[h], k);
                             }

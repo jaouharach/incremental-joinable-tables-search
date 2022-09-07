@@ -21,7 +21,6 @@ ts_type euclidean_distance(ts_type *q, ts_type *v, unsigned int len)
       sum = sum + ((q[i] - v[i]) * (q[i] - v[i]));
     }
     
-    printf("distance = %f\n", sum);
     return sum;
 }
 
@@ -204,7 +203,6 @@ bool is_duplicate(struct query_result * curr_knns, struct vector * bsf, unsigned
 bool query_result_cpy_vector(struct query_result * dest, struct vid * src, unsigned int query_vector_pos, ts_type distance, char * raw_file_name)
 {
   dest->distance = distance;
-  printf("copy vector distance: %f\n",  dest->distance);
   dest->vector_id->table_id = src->table_id;
   dest->vector_id->set_id =  src->set_id;
   dest->vector_id->pos =  src->pos;
