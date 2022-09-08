@@ -427,6 +427,7 @@ struct result_table *get_top_tables_by_euclidean_distance(struct query_result *k
   distinct_tables[0].table_id = knn_results[0].vector_id->table_id;
   distinct_tables[0].min_distance = FLT_MAX;
   distinct_tables[0].num_min = 0;
+  distinct_tables[0].total_matches = 0;
   strcpy(distinct_tables[0].raw_data_file, knn_results[0].vector_id->raw_data_file);
 
   int found;
@@ -445,10 +446,11 @@ struct result_table *get_top_tables_by_euclidean_distance(struct query_result *k
     if(found == 0)
     {
       num_distinct_tables += 1;
-      distinct_tables = realloc(distinct_tables, (sizeof(struct result_sid) * num_distinct_tables));
+      distinct_tables = realloc(distinct_tables, (sizeof(struct result_table) * num_distinct_tables));
       distinct_tables[num_distinct_tables - 1].table_id = knn_results[i].vector_id->table_id;
       distinct_tables[num_distinct_tables - 1].min_distance = FLT_MAX;
       distinct_tables[num_distinct_tables - 1].num_min = 0;
+      distinct_tables[num_distinct_tables - 1].total_matches = 0;
       strcpy(distinct_tables[num_distinct_tables - 1].raw_data_file, knn_results[i].vector_id->raw_data_file);
     }
   }
@@ -460,6 +462,7 @@ struct result_table *get_top_tables_by_euclidean_distance(struct query_result *k
     {
       if(knn_results[i].vector_id->table_id == distinct_tables[j].table_id)
       {
+        distinct_tables[j].total_matches += 1;
         if(knn_results[i].distance < distinct_tables[j].min_distance)
         {
           distinct_tables[j].min_distance = knn_results[i].distance;
@@ -484,6 +487,7 @@ struct result_table *get_top_tables_by_euclidean_distance(struct query_result *k
       distinct_tables[i].table_id = last->table_id;
       distinct_tables[i].min_distance = last->min_distance;
       distinct_tables[i].num_min = last->num_min;
+      distinct_tables[i].total_matches = last->total_matches;
       strcpy(distinct_tables[i].raw_data_file, last->raw_data_file);
     }
   }

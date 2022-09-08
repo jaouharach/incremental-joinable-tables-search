@@ -103,17 +103,20 @@
                 </span>
                 <div class="col-2">
                   <input class="form-control form-control-sm mr-sm-2" id="query_file" name="query_file" type="file" required/>
-                </div>                
+                </div>
+                <span class="nav-link">Keyword(s) </span>
+                <input type="text" name="query_keywords"  id="query_keywords" required class="form-control form-control-sm" value=""  width="8" placeholder="">
+                        
                 <span class="nav-link">Column </span>
                 <input type="number" name="column_idx" class="form-control form-control-sm" value="1" required  min="1" width="8" placeholder="1">
                 <span class="nav-link">
                   Top-
                 </span>
                 <input type="number" name="top" class="form-control form-control-sm" value="10000" required min="1" placeholder="10000" aria-describedby="basic-addon2">
-                <span class="nav-link">
+                <!-- <span class="nav-link">
                   Error
-                </span>
-                <input type="number"  name="approx_error" class="form-control form-control-sm" value="0.0" required min="0.0" max="0.9" placeholder="0.1" step="0.0" aria-describedby="basic-addon2">
+                </span> -->
+                <input type="hidden"  name="approx_error"  class="form-control form-control-sm" value="0.0" required min="0.0" max="0.9" placeholder="0.1" step="0.0" aria-describedby="basic-addon2">
                 <span class="nav-link">
                   k
                 </span>
@@ -252,10 +255,18 @@
                       <div class="ms-auto">
                         <div class="text-right">
                           <!-- <h5 class="text-muted mb-0">Found</h5> -->
-                          {% if result[0][2] == 1 %}
-                          <span class="text-muted font-16">{{ result[0][2] }} match</span>
-                          {% else %}
-                          <span class="text-muted font-16">{{ result[0][2] }} matches</span>
+                          {% if keyword_query == 0 %}
+                            {% if result[0][2] == 1 %}
+                            <span class="text-muted font-16">{{ result[0][2] }} match</span>
+                            {% else %}
+                            <span class="text-muted font-16">{{ result[0][2] }} matches</span>
+                            {% endif %}
+                            {% else %}
+                            {% if result[0][4] == 1 %}
+                            <span class="text-muted font-16">{{ result[0][4] }} match</span>
+                            {% else %}
+                            <span class="text-muted font-16">{{ result[0][4] }} matches</span>
+                            {% endif %}
                           {% endif %}
                         </div>
                       </div>
@@ -453,29 +464,19 @@
 
     
     <script type="text/javascript">
-    //   $(document).ready(function () {
-    //     $('#query_form').bootstrapValidator({
-    //       container: '#messages',
-    //       feedbackIcons: {
-    //         valid: 'glyphicon glyphicon-ok',
-    //         invalid: 'glyphicon glyphicon-remove',
-    //         validating: 'glyphicon glyphicon-refresh'
-    //       },
-    //       fields: {
-    //         query_file: {
-    //           validators: {
-    //             notEmpty: {
-    //               message: 'You must select a valid file to upload'
-    //             },
-    //             file: {
-    //               extension: 'txt,xls,csv,json',
-    //               type: 'text/plain,application/vnd.ms-excel,text/csv'
-    //             }
-    //           }
-    //         }
-    //       }
-    //     });
-    // });
+      document.addEventListener('DOMContentLoaded', function() {
+        const inputs = Array.from(
+          document.querySelectorAll('input[name=query_keywords], input[name=query_file]')
+        );
+
+        const inputListener = e => {
+          inputs
+            .filter(i => i !== e.target)
+            .forEach(i => (i.required = !e.target.value.length));
+        };
+
+        inputs.forEach(i => i.addEventListener('input', inputListener));
+      });
     </script>
         <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery.bootstrapvalidator/0.5.3/js/bootstrapValidator.min.js"> </script>
 

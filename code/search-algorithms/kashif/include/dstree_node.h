@@ -44,6 +44,7 @@ struct result_table {
   char raw_data_file[300]; // name of the raw (json) file where set is store
   ts_type min_distance;
   unsigned int num_min;
+  unsigned int total_matches;
 };
 
 /* end kashif changes */

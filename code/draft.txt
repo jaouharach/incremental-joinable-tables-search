@@ -32,15 +32,15 @@ BIN_FOLDER = UPLOAD_FOLDER + "bins/"
 EMBEDDING_DIM = 50
 KASHIF_BIN = "../search-algorithms/kashif/bin/dstree"
 
-KASHIF_IDX = "../100-idx/" # storing 100 tables
+KASHIF_IDX = "/home/jaouhara.chanchaf/work-dir/indexes/100k-idx" # storing 100k tables
 RAW_DATA_FOLDER = "//home/jaouhara.chanchaf/work-dir/data/wdc-2015/0/"
 METADATA_FOLDER = "/home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/metadata/"
 
-EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
-PATH_TO_MODEL = "/home/jaouhara.chanchaf/work-dir/embedding-models/glove/glove.6B.50d.txt"
+# EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
+# PATH_TO_MODEL = "/home/jaouhara.chanchaf/work-dir/embedding-models/glove/glove.6B.50d.txt"
 
-# EMBEDDING_MODEL = 'fasttext' 
-# PATH_TO_MODEL = "/home/jaouhara.chanchaf/work-dir/embedding-models/fasttext/cc.en.300.bin"
+EMBEDDING_MODEL = 'fasttext' 
+PATH_TO_MODEL = "/home/jaouhara.chanchaf/work-dir/embedding-models/fasttext/cc.en.300.bin"
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 

@@ -1,3 +1,5 @@
+from ast import keyword
+from pickle import NONE
 from flask import Flask, flash, render_template, request, redirect
 import pandas as pd
 import subprocess, re
@@ -18,7 +20,7 @@ BIN_FOLDER = UPLOAD_FOLDER + "bins/"
 EMBEDDING_DIM = 50
 KASHIF_BIN = "../search-algorithms/kashif/bin/dstree"
 
-KASHIF_IDX = "../100-idx/" # storing 100 tables
+KASHIF_IDX = "../../100-idx/" # storing 100 tables
 RAW_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/raw-tables/"
 METADATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
 
@@ -31,6 +33,7 @@ PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/glove/glove.
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.secret_key = "super secret key"
 
 # read raw file into pandas data frame
 def read_raw_file(raw_filename, source_dir):
@@ -77,8 +80,8 @@ def read_metadata_file(binary_filename, metadata_dir):
     except OSError:
         return -1, f"Couldn't open metadata file for binary file {binary_filename}."
 
-# create temp file for the query column
-def create_query_bin_file(query_file , column_idx):
+# create temp file for the query column retrieved from a csv file
+def csv_to_bin_file(query_file , column_idx):
     df = pd.read_csv(query_file, engine='python')
     if column_idx < 0 or column_idx > df.shape[1] - 1:
         return -1, f"Wrong value for column idx. file only contains {df.shape[1]} columns"
@@ -88,21 +91,120 @@ def create_query_bin_file(query_file , column_idx):
         
         return query_size, msg
 
+def keywords_to_bin_file(keywords):
+    kws = list(keywords.split(" "))
+    if not keywords:
+        return -1, f"No keywwords were found."
+    else:
+        query_size, msg = query_to_bin(kws, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL, EMBEDDING_DIM)
+        return query_size, msg
 
-def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, dataset_folder, embedding_size, num_top, k, approx_error): 
-    query = subprocess.check_output([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
-    '--nq', '1', '--queries-size',  str(query_size), 
-    '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
-    '--dataset', dataset_folder, '--total-data-files', '100', 
-    '--dataset-GB-size', '1', '--dataset-size', '5866',
-    '--result-dir', result_dir, '--k', str(k),
-    '--top',  str(num_top), ' --delta', '1',
-    '--epsilon',  str(approx_error), '--timeseries-size', str(embedding_size),
-    '--track-bsf', '--incremental', '--leaf-size', '1000',
-    '--buffer-size', '100',
-    '--mode', '1',  '--warping', '0.0', '--ascii-input', '0',
-    '--track-vector', '1'
-    ])
+def get_keyword_query_results(query_size, top, k, approx_error):
+    kashif_output = run_kashif(KASHIF_BIN, KASHIF_IDX, BIN_FOLDER, query_size, RESULTS_FOLDER, BIN_FOLDER,  EMBEDDING_DIM, top, k, approx_error, keyword_query=1, join_query=0)
+    print("prog output:")
+    print(f"**{kashif_output}**")
+
+    files = list(re.findall(r'@@(.*?)\$', kashif_output)) # get file names without duplicates
+    table_ids = list(re.findall(r'table-(.*?)\-', kashif_output))
+    min_distances = list(re.findall(r'min_distance=(.*?)\§', kashif_output))
+    num_closest = list(re.findall(r'num_closest=(.*?)\#', kashif_output))
+    total_matches = list(re.findall(r'total_matches=(.*?)\µ', kashif_output))
+    query_time = "{:.2f}".format(float(re.search(r'query_time=(.*?)sec', kashif_output).group(1)))
+    print(min_distances)
+    print(f"Query time = {query_time} sec\n")
+    temp = set(list(zip(files, table_ids, min_distances, num_closest, total_matches)))
+    visited = set()
+    results = list()
+    for (f, table_id, d, nc, t) in temp:
+        if (f, table_id) not in visited: 
+            visited.add((f, table_id))
+            results.append((f, int(table_id), float(d), int(nc), int(t)))
+        
+    # sort results by overlap 
+    results.sort(key=lambda x: x[2])
+    results.sort(key=lambda x: x[3], reverse=True)
+    # results.sort(key=lambda x: x[4], reverse=True)
+
+    metadata = list()
+    for result in results:
+        metad, msg = read_metadata_file(result[0], METADATA_FOLDER)
+        if metad == -1:
+            return render_template('index.html', error=msg)
+        else:
+            metadata.append(metad)
+    
+    results = list(zip(results, metadata))
+    total_results = len(results)
+
+    return total_results, results, metadata, query_time
+
+def get_join_query_results(query_size, top, k, approx_error):
+    kashif_output = run_kashif(KASHIF_BIN, KASHIF_IDX, BIN_FOLDER, query_size, RESULTS_FOLDER, BIN_FOLDER,  EMBEDDING_DIM, top, k, approx_error, keyword_query=0, join_query=1)
+    print("prog output:")
+    print(f"**{kashif_output}**")
+
+    files = list(re.findall(r'@@(.*?)\$', kashif_output)) # get file names without duplicates
+    column_pos = list(re.findall(r'column-(.*?)\-', kashif_output))
+    overlaps = list(re.findall(r'overlap=(.*?)\§', kashif_output))
+    query_time = "{:.2f}".format(float(re.search(r'query_time=(.*?)sec', kashif_output).group(1)))
+
+    print(f"Query time = {query_time} sec\n")
+    temp = set(list(zip(files, column_pos, overlaps)))
+    visited = set()
+    results = list()
+    for (f, sid, o) in temp:
+        if o == '0':
+            continue
+        if (f, sid) not in visited: 
+            visited.add((f, sid))
+            results.append((f, int(sid)+1, int(o)))
+            print(f"{f}, {sid}, {o}")
+        
+    # sort results by overlap 
+    results.sort(key=lambda x:x[2], reverse=True)
+    metadata = list()
+    for result in results:
+        metad, msg = read_metadata_file(result[0], METADATA_FOLDER)
+        if metad == -1:
+            return render_template('index.html', error=msg)
+        else:
+            metadata.append(metad)
+    
+    results = list(zip(results, metadata))
+    total_results = len(results)
+
+    return total_results, results, metadata, query_time
+
+def run_kashif(kashif_bin, kashif_idx, bin_folder, query_size, result_dir, dataset_folder, embedding_size, num_top, k, approx_error, keyword_query=0, join_query=1): 
+    if(join_query == 1):
+        query = subprocess.check_output([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
+        '--nq', '1', '--queries-size',  str(query_size), 
+        '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
+        '--dataset', dataset_folder, '--total-data-files', '100000', 
+        '--dataset-GB-size', '1', '--dataset-size', '5032000',
+        '--result-dir', result_dir, '--k', str(k),
+        '--top',  str(num_top), ' --delta', '1',
+        '--epsilon',  str(approx_error), '--timeseries-size', str(embedding_size),
+        '--track-bsf', '--incremental', '--leaf-size', '1000',
+        '--buffer-size', '100',
+        '--mode', '1',  '--warping', '0.0', '--ascii-input', '0',
+        '--track-vector', '1'
+        ])
+    elif(keyword_query == 1):
+        query = subprocess.check_output([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
+        '--nq', '1', '--queries-size',  str(query_size), 
+        '--min-qset-size', str(query_size), '--max-qset-size', str(query_size+1),
+        '--dataset', dataset_folder, '--total-data-files', '100000', 
+        '--dataset-GB-size', '1', '--dataset-size', '5032000',
+        '--result-dir', result_dir, '--k', str(k),
+        '--top',  str(num_top), ' --delta', '1',
+        '--epsilon',  str(approx_error), '--timeseries-size', str(embedding_size),
+        '--track-bsf', '--incremental', '--leaf-size', '1000',
+        '--buffer-size', '100',
+        '--mode', '1',  '--warping', '0.0', '--ascii-input', '0',
+        '--track-vector', '1',
+        '--keyword-search', '1',
+        ])
 
     # for the index storing 500k tables
     # query = subprocess.check_output([kashif_bin, '--index-path', kashif_idx, '--queries', bin_folder,
@@ -134,9 +236,11 @@ def home():
 @app.route('/query', methods = ['GET', 'POST'])
 def process_query():
     if request.method == 'POST':
+        keyword_query = 0
+        join_query = 0
         # check if the post request has the file part
-        if 'query_file' not in request.files:
-            flash('No file part')
+        if 'query_file' not in request.files and 'query_keywords' not in request.form:
+            print('No query was submited')
             return redirect(request.url)
         
         # read form data
@@ -146,54 +250,41 @@ def process_query():
         approx_error = float(request.form['approx_error'])
         k = int(request.form['k'])
 
-        # file without a filename.
-        if input_file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-
-        # upload query column to server
-        start = time.time()
-        query_size, msg= create_query_bin_file(request.files.get('query_file'), column_idx)
-        end = time.time()
-        query_cleaning_time =  "{:.2f}".format(end - start)
-
-        if msg:
-            return render_template("index.html", error=msg)
+        if 'query_file' in request.files and input_file.filename != '':
+            join_query = 1
+        elif 'query_keywords' in request.form:
+            keyword_query = 1
         
-        kashif_output = run_kashif(KASHIF_BIN, KASHIF_IDX, BIN_FOLDER, query_size, RESULTS_FOLDER, BIN_FOLDER,  EMBEDDING_DIM, top, k, approx_error)
-        print("prog output:")
-        print(f"**{kashif_output}**")
+        total_results, results, metadata, query_time = None, None, None, None
 
-        files = list(re.findall(r'@@(.*?)\$', kashif_output)) # get file names without duplicates
-        column_pos = list(re.findall(r'column-(.*?)\-', kashif_output))
-        overlaps = list(re.findall(r'overlap=(.*?)\§', kashif_output))
-        query_time = "{:.2f}".format(float(re.search(r'query_time=(.*?)sec', kashif_output).group(1)))
-
-        print(f"Query time = {query_time} sec\n")
-        temp = set(list(zip(files, column_pos, overlaps)))
-        visited = set()
-        results = list()
-        for (f, sid, o) in temp:
-            if o == '0':
-                continue
-            if (f, sid) not in visited: 
-                visited.add((f, sid))
-                results.append((f, int(sid)+1, int(o)))
-                print(f"{f}, {sid}, {o}")
+        if(join_query):
+            # upload query to server
+            start = time.time()
+            query_size, msg= csv_to_bin_file(request.files.get('query_file'), column_idx)
+            end = time.time()
+            query_cleaning_time =  "{:.2f}".format(end - start)
+            if msg:
+                return render_template("index.html", error=msg)
             
-        # sort results by overlap 
-        results.sort(key=lambda x:x[2], reverse=True)
-        metadata = list()
-        for result in results:
-            metad, msg = read_metadata_file(result[0], METADATA_FOLDER)
-            if metad == -1:
-                return render_template('index.html', error=msg)
-            else:
-                metadata.append(metad)
+            print("cleaned join query\n")
+            total_results, results, metadata, query_time = get_join_query_results(query_size, top, k, approx_error)
+
+
+        elif(keyword_query):
+            # upload query to server
+            start = time.time()
+            query_size, msg= keywords_to_bin_file(str(request.form['query_keywords']))
+            end = time.time()
+            query_cleaning_time =  "{:.2f}".format(end - start)
+            if msg:
+                return render_template("index.html", error=msg)
+            print("cleaned keyword query\n")
+            total_results, results, metadata, query_time = get_keyword_query_results(query_size, top, k, approx_error)
         
-        results = list(zip(results, metadata))
-        total_results = len(results)
-        return render_template("index.html", total_results=total_results, results=results, metadata=metadata, query_cleaning_time=query_cleaning_time, query_time=query_time)
+        else:
+            return render_template("index.html", error="Couldn't know which type of query to run.")
+
+        return render_template("index.html", total_results=total_results, results=results, metadata=metadata, query_cleaning_time=query_cleaning_time, query_time=query_time, keyword_query=keyword_query)
 
 @app.route('/view-dataset', methods=['GET', 'POST'])
 def view_dataset():

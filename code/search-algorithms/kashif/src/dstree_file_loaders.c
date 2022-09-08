@@ -686,7 +686,7 @@ enum response dstree_knn_query_multiple_binary_files(
                 struct result_table* top = get_top_tables_by_euclidean_distance(all_knn_results, knn_array_idx, num_top);
                 for(int m = 0; m < num_top; m++)
                 {
-                  printf("table-%u- in file @@%s$ mindistance=%.3f§ numclosest=%utotal\n", top[m].table_id, top[m].raw_data_file, top[m].min_distance, top[m].num_min);
+                  printf("table-%u- in file @@%s$ min_distance=%.3f§ num_closest=%u# total_matches=%uµ\n", top[m].table_id, top[m].raw_data_file, top[m].min_distance, top[m].num_min, top[m].total_matches);
                 }
                 printf("\nquery_time=%fsec\n", query_time);
                 free(top);
