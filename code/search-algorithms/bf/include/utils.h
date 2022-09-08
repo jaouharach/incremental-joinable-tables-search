@@ -30,6 +30,13 @@ struct result_sid {
   unsigned int overlap_size;
 };
 
+// result table id for keyword search
+struct result_table { 
+  unsigned int table_id;
+  char raw_data_file[300]; // name of the raw (json) file where set is store
+  ts_type total_distance;
+};
+
 int get_ndigits(unsigned int n);
 unsigned int get_data_gb_size(char* dl_dir, unsigned int l);
 bool is_binaryfile(const char *filename);

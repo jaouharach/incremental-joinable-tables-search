@@ -336,7 +336,7 @@ enum response dstree_knn_query_multiple_binary_files(
     boolean all_mindists, boolean max_policy, unsigned int nprobes,
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
-    float warping) {
+    float warping, unsigned char keyword_search) {
 
   struct bsf_snapshot **bsf_snapshots = NULL;
   unsigned int max_bsf_snapshots;
@@ -679,21 +679,37 @@ enum response dstree_knn_query_multiple_binary_files(
               fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
               exit(1);
             }
-
-            // don't change these lines to allaow ui to fetch results
-            struct result_sid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
-            for(int m = 0; m < num_top; m++)
+            
+            if(keyword_search)
             {
-              printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+              // don't change these lines to allaow ui to fetch results
+                struct result_table* top = get_top_tables_by_euclidean_distance(all_knn_results, knn_array_idx, num_top);
+                for(int m = 0; m < num_top; m++)
+                {
+                  printf("table-%u- in file @@%s$ mindistance=%.3f§ numclosest=%utotal\n", top[m].table_id, top[m].raw_data_file, top[m].min_distance, top[m].num_min);
+                }
+                printf("\nquery_time=%fsec\n", query_time);
+                free(top);
+                // don't change these lines to allaow ui to fetch results
+            } 
+            else
+            {
+                // don't change these lines to allaow ui to fetch results
+                struct result_sid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
+                for(int m = 0; m < num_top; m++)
+                {
+                  printf("column-%u- in file @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+                }
+                printf("\nquery_time=%fsec\n", query_time);
+                free(top);
+                // don't change these lines to allaow ui to fetch results
             }
-            printf("\nquery_time=%fsec\n", query_time);
-            // don't change these lines to allaow ui to fetch results
+            
 
             // free memory
             for (int knn = 0; knn < (k * nvec); knn++)
               free(all_knn_results[knn].vector_id);
             free(all_knn_results);
-            free(top);
             free(query_result_file);
 
             RESET_PARTIAL_COUNTERS()

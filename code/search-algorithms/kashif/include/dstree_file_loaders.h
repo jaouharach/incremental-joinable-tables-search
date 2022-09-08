@@ -45,7 +45,7 @@ enum response dstree_knn_query_multiple_binary_files(
     ts_type r_delta, unsigned int k, boolean track_bsf, boolean track_pruning,
     boolean all_mindists, boolean max_policy, unsigned int nprobes,
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
-    unsigned int dlsize, float warping);
+    unsigned int dlsize, float warping, unsigned char keyword_search);
 /* end kashif changes */
 #endif
 

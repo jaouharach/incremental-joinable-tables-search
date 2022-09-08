@@ -226,7 +226,11 @@
                     {% endif %}
                     {% if match_col %}
                     <br>
-                    <a href="#data_table">Found matches in column {{ match_col }}</a>
+                    {% if metadata['header'] %}
+                    <a href="#data_table">Matches were found in column "{{ metadata['header'][match_col|int] }}"</a>
+                    {% else %}
+                    <a href="#data_table">Matches were found in column #{{ match_col }}</a>
+                    {% endif %}
                     {% endif %}
                   </div>
                 </div>

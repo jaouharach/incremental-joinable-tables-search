@@ -231,12 +231,12 @@
                         {% if result[1]["page_title"] %} 
                         <a href="#" onclick='document.getElementById("view_dataset_form_{{ result[0][0] }}").submit();'' class="mb-0 font-medium p-0"
                           >
-                          {{ result[1]["page_title"] }}
+                          (#{{ loop.index }}) {{ result[1]["page_title"] }}
                         </a>
                         {% else %}
                         <a href="#" onclick='document.getElementById("view_dataset_form_{{ result[0][0] }}").submit();'' class="mb-0 font-medium p-0"
                           >
-                          ** Unknown page title **
+                          (#{{ loop.index }}) ** Unknown page title **
                         </a>
                         {% endif %}
                         

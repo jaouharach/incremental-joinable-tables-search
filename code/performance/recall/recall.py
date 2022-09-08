@@ -156,15 +156,15 @@ def plot_results(csv_file, output_dir, k_count):
     plt.yticks(fontsize = 11)
     # plt.legend(loc='upper left')
     plt.title("Kashif: mean recall (10 query columns of size [5 - 10])")
-    plt.savefig(f"{output_dir}/kashif_recall_200t.png")
+    plt.savefig(f"{output_dir}/kashif_recall_100kt.png")
     plt.close()
 
 
-source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/200-tables/"
-ground_truth_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/bf/results/200-tables"
+source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/100k-tables/"
+ground_truth_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/bf/results/100k-tables"
 output_img_dir = "./img/"
 
-output_file = "./csv/recall_eval_200t.csv"
+output_file = "./csv/recall_eval_100kt.csv"
 nqueries = 10
 
 make_file(output_file)

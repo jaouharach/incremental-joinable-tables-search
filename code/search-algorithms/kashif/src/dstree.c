@@ -69,7 +69,9 @@ int main(int argc, char **argv) {
   static char *result_dir = "";
   static char *raw_data_dir = "";
   static unsigned int total_data_files = 100; // number of datasets to be indexed
+  static unsigned int total_columns = 0; // number of columns to be indexed
   unsigned char track_vector = 0;
+  unsigned char keyword_search = 0;
   unsigned int qset_num = 3;
   unsigned int min_qset_size = 5;
   unsigned int max_qset_size = 10;
@@ -114,12 +116,11 @@ int main(int argc, char **argv) {
         {"total-data-files", required_argument, 0,
          '|'}, // number of datasets to be indexed (tables)
         {"nq", required_argument, 0, '%'}, // number of query sets
-        {"min-qset-size", required_argument, 0,
-         'y'}, // minimum query set set size (number of vectors)
-        {"max-qset-size", required_argument, 0,
-         'w'}, // maxmum query set set size (number of vectors)
+        {"min-qset-size", required_argument, 0, 'y'}, // minimum query set set size (number of vectors)
+        {"max-qset-size", required_argument, 0, 'w'}, // maxmum query set set size (number of vectors)
         {"top", required_argument, 0, '#'}, // maxmum query set set size (number of vectors)
         {"track-vector", no_argument, 0, '*'},
+        {"keyword-search", no_argument, 0, ':'}
         /* end kashif changes */
     };
 
@@ -314,6 +315,10 @@ int main(int argc, char **argv) {
       track_vector = 1;
       break;
 
+    case ':':
+      keyword_search = 1;
+      break;
+
     case ']':
       data_gb_size = atoi(optarg);
       break;
@@ -330,13 +335,13 @@ int main(int argc, char **argv) {
   //   exit(-1);
   // }
   if (dataset_size == 0)
-    dataset_size = (unsigned int) get_total_data_vectors(dataset, total_data_files); // get total number of vectors in data repository
+    dataset_size = (unsigned int) get_total_data_vectors(dataset, total_data_files, &total_columns); // get total number of vectors in data repository
   
   if (data_gb_size == 0)
   {
     data_gb_size = get_data_gb_size(dataset, total_data_files);
   }
-  printf("Start Experiment...\n\nTotal files: %d\n\nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", total_data_files, dataset_size, data_gb_size);
+  printf("Start Experiment...\n\nTotal files: %d\nTotal columns %d\nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", total_data_files, total_columns, dataset_size, data_gb_size);
   printf("buffered memory = %f MB\n", buffered_memory_size);
 
   /* end kashif changes */
@@ -551,7 +556,7 @@ int main(int argc, char **argv) {
                                     max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,
                                     k, track_bsf, track_pruning, all_mindists,
-                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping);
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping, keyword_search);
     /* end kashif changes */
   } 
   else if (mode == 2) // build the index, execute queries and store the index
@@ -606,7 +611,7 @@ int main(int argc, char **argv) {
                                     max_qset_size, num_top, index,
                                     minimum_distance, epsilon, delta,
                                     k, track_bsf, track_pruning, all_mindists,
-                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping)) {
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping, keyword_search)) {
         fprintf(stderr, "Error main.c:  Could not execute the query.\n");
         return -1;
       }

@@ -38,6 +38,14 @@ struct result_sid {
   unsigned int overlap_size;
 };
 
+// result table id for keyword search
+struct result_table { 
+  unsigned int table_id;
+  char raw_data_file[300]; // name of the raw (json) file where set is store
+  ts_type min_distance;
+  unsigned int num_min;
+};
+
 /* end kashif changes */
 struct dstree_node {
 

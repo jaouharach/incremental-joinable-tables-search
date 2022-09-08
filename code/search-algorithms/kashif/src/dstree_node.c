@@ -973,8 +973,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
     // if (q[itr].distance == d.distance)
     if((q[itr].vector_id->table_id == d.vector_id->table_id)
         && (q[itr].vector_id->set_id == d.vector_id->set_id) 
-        && (q[itr].vector_id->pos == d.vector_id->pos)
-        && (q[itr].query_vector_pos == d.query_vector_pos))
+        && (q[itr].vector_id->pos == d.vector_id->pos))
     {
       is_duplicate = true;
       break;

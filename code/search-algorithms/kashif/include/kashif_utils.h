@@ -123,11 +123,13 @@ int get_num_vec(FILE *f, int start, int nbits) {
 
 // read datasize from diffrent files and get total datasize of a datalake
 unsigned long get_total_data_vectors(char *bindir,
-                                    unsigned int total_data_files) {
+                unsigned int total_data_files, unsigned int * total_columns) {
   struct dirent *dfile;
   DIR *dir = opendir(bindir);
   unsigned long total_vectors = 0;
   unsigned int datasize;
+  unsigned int ncols;
+  unsigned int table_id;
   if (!dir) {
     fprintf("Error in kashif_utils.c: Unable to open directory stream! %s", bindir);
     exit(1);
@@ -140,8 +142,9 @@ unsigned long get_total_data_vectors(char *bindir,
     if (is_binaryfile(dfile->d_name)) {
       total_data_files--;
       // ** get binary table info
-      sscanf(dfile->d_name, "data_size%d%*[^0123456789]", &datasize);
+      sscanf(dfile->d_name, "data_size%d_t%dc%d%*[^0123456789]", &datasize, &table_id, &ncols);
       total_vectors += datasize;
+      *total_columns += ncols;
     }
   }
   closedir(dir);
@@ -301,7 +304,7 @@ char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
   return result_dir_name;
 }
 
-// get sets with the the largest number of matching vectors with the query.
+// get sets with the the largest number of matching vectors with the query (highest ovelap size)
 struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_results, 
                          unsigned int num_top)
 {
@@ -408,4 +411,82 @@ struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_re
   free(distinct_match_vectors);
 
   return distinct_sets;
+}
+
+struct result_table *get_top_tables_by_euclidean_distance(struct query_result *knn_results, int num_knn_results, 
+                         unsigned int num_top)
+{
+  int i, j, k;
+
+  struct result_table * distinct_tables = NULL;
+  unsigned int num_distinct_tables = 0;
+
+
+  num_distinct_tables += 1;
+  distinct_tables = realloc(distinct_tables, sizeof(struct result_table));
+  distinct_tables[0].table_id = knn_results[0].vector_id->table_id;
+  distinct_tables[0].min_distance = FLT_MAX;
+  distinct_tables[0].num_min = 0;
+  strcpy(distinct_tables[0].raw_data_file, knn_results[0].vector_id->raw_data_file);
+
+  int found;
+  // get distinct sets
+  for ( i = 1; i < num_knn_results; i++)
+  {
+    found = 0;
+    for(j = num_distinct_tables - 1; j >= 0; j--)
+    {
+      if(distinct_tables[j].table_id == knn_results[i].vector_id->table_id)
+      {
+        found = 1;
+        break;
+      }
+    }
+    if(found == 0)
+    {
+      num_distinct_tables += 1;
+      distinct_tables = realloc(distinct_tables, (sizeof(struct result_sid) * num_distinct_tables));
+      distinct_tables[num_distinct_tables - 1].table_id = knn_results[i].vector_id->table_id;
+      distinct_tables[num_distinct_tables - 1].min_distance = FLT_MAX;
+      distinct_tables[num_distinct_tables - 1].num_min = 0;
+      strcpy(distinct_tables[num_distinct_tables - 1].raw_data_file, knn_results[i].vector_id->raw_data_file);
+    }
+  }
+
+  // get distinct vectors
+  for(j = num_distinct_tables - 1; j >= 0; j--)
+  {
+    for (i = 0; i < num_knn_results; i++)
+    {
+      if(knn_results[i].vector_id->table_id == distinct_tables[j].table_id)
+      {
+        if(knn_results[i].distance < distinct_tables[j].min_distance)
+        {
+          distinct_tables[j].min_distance = knn_results[i].distance;
+          distinct_tables[j].num_min = 1;
+        }
+        else if (knn_results[i].distance == distinct_tables[j].min_distance)
+        {
+          distinct_tables[j].num_min += 1;
+        }
+      }
+    }
+  }
+
+  // fill the rest withe the last element
+  if(num_distinct_tables < num_top)
+  {
+    distinct_tables = realloc(distinct_tables, (sizeof(struct result_table) * num_top));
+    struct result_table * last = &distinct_tables[num_distinct_tables - 1];
+
+    for(i = num_distinct_tables; i < num_top; i++)
+    {
+      distinct_tables[i].table_id = last->table_id;
+      distinct_tables[i].min_distance = last->min_distance;
+      distinct_tables[i].num_min = last->num_min;
+      strcpy(distinct_tables[i].raw_data_file, last->raw_data_file);
+    }
+  }
+
+  return distinct_tables;
 }
