@@ -1,6 +1,5 @@
-from ast import keyword
 from pickle import NONE
-from flask import Flask, flash, render_template, request, redirect
+from flask import Flask, render_template, request, redirect
 import pandas as pd
 import subprocess, re
 import time, json, os
@@ -25,10 +24,10 @@ RAW_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/raw-t
 METADATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
 
 EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
-PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/glove/glove.6B.50d.txt"
+PATH_TO_MODEL = {"ar": "", "en": "/home/jaouhara/Documents/Projects/embedding_models/glove/glove.6B.50d.txt","fr": ""}
 
 # EMBEDDING_MODEL = 'fasttext' 
-# PATH_TO_MODEL = "/home/jaouhara/Documents/Projects/embedding_models/fasttext/cc.en.300.bin"
+# PATH_TO_MODEL = {"ar": "/home/jaouhara/Documents/Projects/embedding_models/fasttext/cc.ar.300.bin", "en": "/home/jaouhara/Documents/Projects/embedding_models/fasttext/cc.en.300.bin","fr": "/home/jaouhara/Documents/Projects/embedding_models/fasttext/cc.fr.300.bin"}
 
 
 app = Flask(__name__)
@@ -81,22 +80,22 @@ def read_metadata_file(binary_filename, metadata_dir):
         return -1, f"Couldn't open metadata file for binary file {binary_filename}."
 
 # create temp file for the query column retrieved from a csv file
-def csv_to_bin_file(query_file , column_idx):
+def csv_to_bin_file(query_file , column_idx, query_lang):
     df = pd.read_csv(query_file, engine='python')
     if column_idx < 0 or column_idx > df.shape[1] - 1:
         return -1, f"Wrong value for column idx. file only contains {df.shape[1]} columns"
     else:
         query_column = df.iloc[:, column_idx].values
-        query_size, msg = query_to_bin(query_column, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL, EMBEDDING_DIM)
+        query_size, msg = query_to_bin(query_column, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL[query_lang], EMBEDDING_DIM)
         
         return query_size, msg
 
-def keywords_to_bin_file(keywords):
+def keywords_to_bin_file(keywords, query_lang):
     kws = list(keywords.split(" "))
     if not keywords:
         return -1, f"No keywwords were found."
     else:
-        query_size, msg = query_to_bin(kws, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL, EMBEDDING_DIM)
+        query_size, msg = query_to_bin(kws, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL[query_lang], EMBEDDING_DIM)
         return query_size, msg
 
 def get_keyword_query_results(query_size, top, k, approx_error):
@@ -249,6 +248,7 @@ def process_query():
         top = int(request.form['top'])
         approx_error = float(request.form['approx_error'])
         k = int(request.form['k'])
+        query_lang = str(request.form['query_lang'])
 
         if 'query_file' in request.files and input_file.filename != '':
             join_query = 1
@@ -260,7 +260,7 @@ def process_query():
         if(join_query):
             # upload query to server
             start = time.time()
-            query_size, msg= csv_to_bin_file(request.files.get('query_file'), column_idx)
+            query_size, msg= csv_to_bin_file(request.files.get('query_file'), column_idx, query_lang)
             end = time.time()
             query_cleaning_time =  "{:.2f}".format(end - start)
             if msg:
@@ -273,7 +273,7 @@ def process_query():
         elif(keyword_query):
             # upload query to server
             start = time.time()
-            query_size, msg= keywords_to_bin_file(str(request.form['query_keywords']))
+            query_size, msg= keywords_to_bin_file(str(request.form['query_keywords']), query_lang)
             end = time.time()
             query_cleaning_time =  "{:.2f}".format(end - start)
             if msg:

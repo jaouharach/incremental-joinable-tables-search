@@ -83,38 +83,43 @@
                 data-sidebartype="mini-sidebar"><i class="mdi mdi-menu font-24"></i></a>
             </li>
           </ul>
-          <form id="query_form" class="navbar-nav form-inline" action="http://localhost:5000/query"
-            style="margin: 15px;" method="post" enctype="multipart/form-data">
+          <form id="query_form" class="navbar-nav form-inline" action="http://localhost:5000/query"  style="margin: 15px;" method="post" enctype="multipart/form-data">
             <span class="nav-link">
               Dataset
             </span>
             <div class="col-2">
-              <input class="form-control form-control-sm mr-sm-2" id="query_file" name="query_file" type="file"
-                required />
+              <input class="form-control form-control-sm mr-sm-2" id="query_file" name="query_file" type="file" required/>
             </div>
+           
+            <span class="nav-link">Keyword(s) </span>
+            <input type="text" name="query_keywords"  id="query_keywords" required class="form-control form-control-sm" value=""  width="8" placeholder="">
+            <span class="nav-link">
+              Lang.
+            </span>
+            <select  class="form-select form-select-sm" name="query_lang" id="query_lang">
+              <option value="ar">Arabic</option>
+              <option value="en" selected>English</option>
+              <option value="fr">Frensh</option>
+            </select>
             <span class="nav-link">Column </span>
-            <input type="number" name="column_idx" class="form-control form-control-sm" value="1" required min="0"
-              width="8" placeholder="1">
+            <input type="number" name="column_idx" class="form-control form-control-sm" value="1" required  min="1" width="8" placeholder="1">
             <span class="nav-link">
               Top-
             </span>
-            <input type="number" name="top" class="form-control form-control-sm" value="10000" required min="0"
-              placeholder="10000" aria-describedby="basic-addon2">
-            <span class="nav-link">
+            <input type="number" name="top" class="form-control form-control-sm" value="10000" required min="1" placeholder="10000" aria-describedby="basic-addon2">
+            <!-- <span class="nav-link">
               Error
-            </span>
-            <input type="number" name="approx_error" class="form-control form-control-sm" value="0.0" required min="0.0"
-              max="0.9" placeholder="0.1" step="0.0" aria-describedby="basic-addon2">
+            </span> -->
+            <input type="hidden"  name="approx_error"  class="form-control form-control-sm" value="0.0" required min="0.0" max="0.9" placeholder="0.1" step="0.0" aria-describedby="basic-addon2">
             <span class="nav-link">
               k
             </span>
-            <input type="number" name="k" class="form-control form-control-sm" value="10" required min="3" max="9999"
-              placeholder="10" step="1" aria-describedby="basic-addon2">
-
+            <input type="number"  name="k" class="form-control form-control-sm" value="10" required min="3" max="9999" placeholder="10" step="1" aria-describedby="basic-addon2">
+            
             <span class="input-group-btn input-space">
-              <button id="query_submit_btn" class="btn btn-success btn-sm text-white" type="submit">Search</button>
+            <button id="query_submit_btn" class="btn btn-success btn-sm text-white" type="submit">Search</button>
             </span>
-          </form>
+        </form>
         </div>
       </nav>
     </header>

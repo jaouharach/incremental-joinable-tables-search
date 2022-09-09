@@ -104,9 +104,17 @@
                 <div class="col-2">
                   <input class="form-control form-control-sm mr-sm-2" id="query_file" name="query_file" type="file" required/>
                 </div>
+               
                 <span class="nav-link">Keyword(s) </span>
                 <input type="text" name="query_keywords"  id="query_keywords" required class="form-control form-control-sm" value=""  width="8" placeholder="">
-                        
+                <span class="nav-link">
+                  Lang.
+                </span>
+                <select class="form-select form-select-sm" name="query_lang" id="query_lang">
+                  <option value="ar">Arabic</option>
+                  <option value="en" selected>English</option>
+                  <option value="fr">Frensh</option>
+                </select>
                 <span class="nav-link">Column </span>
                 <input type="number" name="column_idx" class="form-control form-control-sm" value="1" required  min="1" width="8" placeholder="1">
                 <span class="nav-link">
