@@ -35,83 +35,67 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result *d,
   }
   size_t i;
   size_t newsize;
-
-  // (tmp change)
-  bool is_duplicate = false;
-  for (unsigned int itr = 0; itr < *cur_size; ++itr) {
-    // if (q[itr].distance == d.distance)
-    if((q[itr].vector_id->table_id == d->vector_id->table_id)
-        && (q[itr].vector_id->set_id == d->vector_id->set_id) 
-        && (q[itr].vector_id->pos == d->vector_id->pos))
-    {
-      is_duplicate = true;
-      break;
-    } 
+  
+  /* the queue is full, ovewrite last element*/
+  if (*cur_size == k)
+  {
+    q[k - 1].distance = d->distance;
+    q[k - 1].vector_id->table_id = d->vector_id->table_id;
+    q[k - 1].vector_id->set_id = d->vector_id->set_id;
+    q[k - 1].vector_id->pos = d->vector_id->pos;
+    q[k - 1].query_vector_pos = d->query_vector_pos;
+    strcpy(q[k - 1].vector_id->raw_data_file, d->vector_id->raw_data_file);
   }
-  // (end tmp change)
+  else
+  {
+    q[*cur_size].distance = d->distance;
+    q[*cur_size].vector_id->table_id = d->vector_id->table_id;
+    q[*cur_size].vector_id->set_id = d->vector_id->set_id;
+    q[*cur_size].vector_id->pos = d->vector_id->pos;
+    q[*cur_size].query_vector_pos = d->query_vector_pos;
+    strcpy(q[*cur_size].vector_id->raw_data_file, d->vector_id->raw_data_file);
 
-  if (!is_duplicate) {
-
-    /* the queue is full, ovewrite last element*/
-    if (*cur_size == k)
-    {
-      q[k - 1].distance = d->distance;
-      q[k - 1].vector_id->table_id = d->vector_id->table_id;
-      q[k - 1].vector_id->set_id = d->vector_id->set_id;
-      q[k - 1].vector_id->pos = d->vector_id->pos;
-      q[k - 1].query_vector_pos = d->query_vector_pos;
-      strcpy(q[k - 1].vector_id->raw_data_file, d->vector_id->raw_data_file);
-    }
-    else
-    {
-      q[*cur_size].distance = d->distance;
-      q[*cur_size].vector_id->table_id = d->vector_id->table_id;
-      q[*cur_size].vector_id->set_id = d->vector_id->set_id;
-      q[*cur_size].vector_id->pos = d->vector_id->pos;
-      q[*cur_size].query_vector_pos = d->query_vector_pos;
-      strcpy(q[*cur_size].vector_id->raw_data_file, d->vector_id->raw_data_file);
-
-      ++(*cur_size);
-    }
-
-    unsigned int idx, j;
-
-    idx = 1;
-
-    while (idx < *cur_size) {
-      j = idx;
-      while (j > 0 && ((q[j - 1]).distance > q[j].distance)) {
-        /* start kashif changes */
-        // temp = q[j];
-        temp.distance = q[j].distance;
-        temp.vector_id->table_id = q[j].vector_id->table_id;
-        temp.vector_id->set_id = q[j].vector_id->set_id;
-        temp.vector_id->pos = q[j].vector_id->pos;
-        temp.query_vector_pos = q[j].query_vector_pos;
-        strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
-
-        /* end kashif changes */
-
-
-        q[j].distance = q[j - 1].distance;
-
-        q[j].vector_id->table_id = q[j - 1].vector_id->table_id;
-        q[j].vector_id->set_id = q[j - 1].vector_id->set_id;
-        q[j].vector_id->pos = q[j - 1].vector_id->pos;
-        q[j].query_vector_pos = q[j - 1].query_vector_pos;
-        strcpy(q[j].vector_id->raw_data_file, q[j - 1].vector_id->raw_data_file);
-
-        q[j - 1].distance = temp.distance;
-        q[j - 1].vector_id->table_id = temp.vector_id->table_id;
-        q[j - 1].vector_id->set_id = temp.vector_id->set_id;
-        q[j - 1].vector_id->pos = temp.vector_id->pos;
-        q[j - 1].query_vector_pos = temp.query_vector_pos;
-        strcpy(q[j - 1].vector_id->raw_data_file, temp.vector_id->raw_data_file);
-        --j;
-      }
-      ++idx;
-    }
+    ++(*cur_size);
   }
+
+  unsigned int idx, j;
+
+  idx = 1;
+
+  while (idx < *cur_size) {
+    j = idx;
+    while (j > 0 && ((q[j - 1]).distance > q[j].distance)) {
+      /* start kashif changes */
+      // temp = q[j];
+      temp.distance = q[j].distance;
+      temp.vector_id->table_id = q[j].vector_id->table_id;
+      temp.vector_id->set_id = q[j].vector_id->set_id;
+      temp.vector_id->pos = q[j].vector_id->pos;
+      temp.query_vector_pos = q[j].query_vector_pos;
+      strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
+
+      /* end kashif changes */
+
+
+      q[j].distance = q[j - 1].distance;
+
+      q[j].vector_id->table_id = q[j - 1].vector_id->table_id;
+      q[j].vector_id->set_id = q[j - 1].vector_id->set_id;
+      q[j].vector_id->pos = q[j - 1].vector_id->pos;
+      q[j].query_vector_pos = q[j - 1].query_vector_pos;
+      strcpy(q[j].vector_id->raw_data_file, q[j - 1].vector_id->raw_data_file);
+
+      q[j - 1].distance = temp.distance;
+      q[j - 1].vector_id->table_id = temp.vector_id->table_id;
+      q[j - 1].vector_id->set_id = temp.vector_id->set_id;
+      q[j - 1].vector_id->pos = temp.vector_id->pos;
+      q[j - 1].query_vector_pos = temp.query_vector_pos;
+      strcpy(q[j - 1].vector_id->raw_data_file, temp.vector_id->raw_data_file);
+      --j;
+    }
+    ++idx;
+  }
+  
   free(temp.vector_id);
   return 0;
 }

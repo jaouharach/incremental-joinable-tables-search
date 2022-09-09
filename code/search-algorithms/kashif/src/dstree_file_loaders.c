@@ -558,21 +558,33 @@ enum response dstree_knn_query_multiple_binary_files(
             }
 
             // copy new knn(s) to knn_results array
-            for (int t = 0; t < k; t++) {
+            // printf("end of query for vector sent %u received %u\n", query_vector.pos, curr_knn[0].vector_id->pos);
+            for (int t = 0; t < k; t++) 
+            {
               all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
               all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
               all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
               all_knn_results[knn_array_idx].query_vector_pos = curr_knn[t].query_vector_pos;
               strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file, curr_knn[t].vector_id->raw_data_file);
-              
               // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
-
               all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
+
+              // if(curr_knn[t].distance == FLT_MAX)
+              // {
+              //   printf("query vector pos = sent %u vs recieved %u", query_vector.pos, curr_knn[t].query_vector_pos);
+              //   printf("max distance for vector (%u, %u, %u)\n", curr_knn[t].vector_id->table_id, curr_knn[t].vector_id->set_id, curr_knn[t].vector_id->pos);
+              // }
+              // if(all_knn_results[knn_array_idx].distance == FLT_MAX)
+              // {
+              //   printf("after assignment!\n");
+              //   printf("query vector pos = sent %u vs recieved %u", query_vector.pos, curr_knn[t].query_vector_pos);
+              //   printf("max distance for vector (%u, %u, %u)\n", curr_knn[t].vector_id->table_id, curr_knn[t].vector_id->set_id, curr_knn[t].vector_id->pos);
+              // }
 
               knn_array_idx++;
             }
             query_vector.pos += 1;
-
+            printf("next query %u\n", query_vector.pos);
             if (knn_array_idx > (k * nvec)) {
               fprintf(stderr, "Error in dstree_file_loaders.c: Storing more results "
                      "that expected!");
@@ -642,16 +654,29 @@ enum response dstree_knn_query_multiple_binary_files(
             }
 
             // append new knn(s) to knn_results array
+            // printf("end of query for vector sent %u received %u\n", query_vector.pos, curr_knn[0].vector_id->pos);
             for (int t = 0; t < k; t++) {
               all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
               all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
               all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
               all_knn_results[knn_array_idx].query_vector_pos = curr_knn[t].query_vector_pos;
               strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file,  curr_knn[t].vector_id->raw_data_file);
-              
+              all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
+          
+              // if(curr_knn[t].distance == FLT_MAX)
+              // {
+              //   printf("query vector pos = sent %u vs recieved %u", query_vector.pos, curr_knn[t].query_vector_pos);
+              //   printf("max distance for vector (%u, %u, %u)\n", curr_knn[t].vector_id->table_id, curr_knn[t].vector_id->set_id, curr_knn[t].vector_id->pos);
+              // }
+              // if(all_knn_results[knn_array_idx].distance == FLT_MAX)
+              // {
+              //   printf("after assignment!\n");
+              //   printf("query vector pos = sent %u vs recieved %u", query_vector.pos, curr_knn[t].query_vector_pos);
+              //   printf("max distance for vector (%u, %u, %u)\n", curr_knn[t].vector_id->table_id, curr_knn[t].vector_id->set_id, curr_knn[t].vector_id->pos);
+              // }
+
               // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
 
-              all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
               knn_array_idx++;
             }
             query_vector.pos = 0;

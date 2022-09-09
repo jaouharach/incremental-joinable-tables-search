@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  15 AUG 2022 11:45
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  9 SEP 2022 14:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -803,9 +803,36 @@ File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-(./introduction.tex) (./preliminaries.tex) (./related-work.tex)
-(./proposed-approach.tex) (./experiments.tex
-<../../img/grad-output.png, id=60, 602.25pt x 260.975pt>
+(./introduction.tex) (./preliminaries.tex
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 8.
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 8.
+
+
+Package caption Warning: \label without proper reference on input line 28.
+See the caption package documentation for explanation.
+
+
+LaTeX Warning: Reference `tab:q1-result1' on page 1 undefined on input line 9.
+
+
+Package caption Warning: \label without proper reference on input line 52.
+See the caption package documentation for explanation.
+
+
+LaTeX Warning: Reference `tab:q1-result2' on page 1 undefined on input line 9.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 61--62
+
+ []
+
+) (./related-work.tex) (./proposed-approach.tex) (./experiments.tex
+<../../img/grad-output.png, id=62, 602.25pt x 260.975pt>
 File: ../../img/grad-output.png Graphic file (type png)
 <use ../../img/grad-output.png>
 Package pdftex.def Info: ../../img/grad-output.png  used on input line 11.
@@ -819,7 +846,14 @@ Class acmart Warning: A possible image without description on input line 14.
 
 
 Comment 'acks' writing to comment.cut. Straight input of comment.cut.
-(./comment.cut) (./paper.bbl)
+(./comment.cut) (./paper.bbl
+
+Package balance Warning: You have called \balance in second column
+(balance)                Columns might not be balanced.
+
+[1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
+
+ <../../img/grad-output.png>])
 
 Class acmart Warning: Some images may lack descriptions.
 
@@ -828,28 +862,33 @@ Package caption Warning: Unused \captionsetup[sub] on input line 41.
 See the caption package documentation for explanation.
 
 
-Package balance Warning: You have called \balance in second column
-(balance)                Columns might not be balanced.
+Overfull \vbox (11.0pt too high) has occurred while \output is active []
 
-[1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
 
- <../../img/grad-output.png>]
+Overfull \vbox (13.25pt too high) has occurred while \output is active []
+
+ [2.2]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 221.
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 221.
- (./paper.aux)
+
+(./paper.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 221.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 221.
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: 00145D8618BADAD9C57E978212085D95;1464.
+(rerunfilecheck)             Checksum: E68D25EE8D2A8BB55C0599D06A2EBE8F;1464.
+
+
+LaTeX Warning: There were undefined references.
+
  ) 
 Here is how much of TeX's memory you used:
- 17235 strings out of 494847
- 250716 string characters out of 6179081
- 410260 words of memory out of 5000000
- 20014 multiletter control sequences out of 15000+600000
+ 17262 strings out of 494847
+ 251164 string characters out of 6179081
+ 416414 words of memory out of 5000000
+ 20034 multiletter control sequences out of 15000+600000
  15211 words of font info for 69 fonts, out of 8000000 for 9000
  220 hyphenation exceptions out of 8191
- 60i,11n,94p,817b,437s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,11n,94p,817b,496s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share
 /texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texliv
@@ -859,11 +898,12 @@ onts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/typ
 e1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
 c/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfon
 ts/cm/cmssbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/c
-m/cmti9.pfb>
-Output written on paper.pdf (1 page, 186257 bytes).
+m/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9
+.pfb>
+Output written on paper.pdf (2 pages, 203230 bytes).
 PDF statistics:
- 151 PDF objects out of 1000 (max. 8388607)
- 119 compressed objects within 2 object streams
- 31 named destinations out of 1000 (max. 500000)
+ 164 PDF objects out of 1000 (max. 8388607)
+ 129 compressed objects within 2 object streams
+ 34 named destinations out of 1000 (max. 500000)
  16494 words of extra memory for PDF output out of 17280 (max. 10000000)
 

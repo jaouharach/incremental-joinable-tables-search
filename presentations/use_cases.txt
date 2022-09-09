@@ -1,0 +1,14 @@
+Use case 1: keyword query -------------------------------------------------------------
+
+query: crop yield
+results: 
+#1 SOCIO-ECONOMIC IMPACT OF SMALLHOLDER IRRIGATION DEVELOPMENT IN ZIMBABWE
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------
