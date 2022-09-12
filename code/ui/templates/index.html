@@ -258,6 +258,7 @@
                         <span class="text-muted">{{ result[1]["text_after_table"]|truncate(100, True, '...') }} </span>
                         {% endif %}
                         <br>
+                        <a href="{{ result[1]['url'] }}">Source page</a>
                         <!-- <span class="text-muted">Raw binary file {{ result[0][0] }}, Found matches in column {{ result[0][1] }}. </span> -->
                       </div>
                       <div class="ms-auto">

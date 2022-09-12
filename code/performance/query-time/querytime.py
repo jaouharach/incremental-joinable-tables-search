@@ -62,10 +62,11 @@ def summarize_results_to_csv(_nqueries, _source_dir, _output_file, _num_top=10):
 def plot_results(_csv_file, _output_dir, _k_count):
     # set text font
     plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "serif",
-    "font.serif": "cm"})
-    plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
+                     "text.usetex": True,
+                     "font.family": "serif",
+                     "font.serif": "Computer Modern",
+                     "savefig.dpi": 130})
+
 
     _df = pandas.read_csv(_csv_file)
     _df = _df.drop(['TQ:Q'], axis = 1)
@@ -77,6 +78,7 @@ def plot_results(_csv_file, _output_dir, _k_count):
         querytime = ('querytime','mean'),
     ).reset_index()
 
+    print(_df_new)
     # BAR PLOT
     sns.set_style("whitegrid")
     ax = sns.barplot(data=_df_new, x="k", y="querytime")
@@ -100,17 +102,17 @@ def plot_results(_csv_file, _output_dir, _k_count):
         bar.set_x(centre-newwidth/2.)
         bar.set_width(newwidth)
     
-    plt.ylabel("Mean query time (sec)", fontsize = 11)
-    plt.xlabel("k", fontsize = 11)
+    plt.ylabel(r'$\mathrm{Mean \ query \ time \ (sec)}$', fontsize = 11)
+    plt.xlabel(r'$\mathrm{k}$', fontsize = 11)
     plt.xticks(fontsize = 11)
     plt.yticks(fontsize = 11)
     # plt.legend(loc='upper left')
-    plt.title("Kashif: mean query time (10 query columns of size [5 - 10])")
+    # plt.title(r'$\mathrm{Mean \ query \ time \ (10 \ query \ columns, \  query \ size \ = \ [50 \ - \ 100])}$')
     plt.savefig(f"{_output_dir}/kashif_querytime.png")
     plt.close()
 
 
-_source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/100k-tables/"
+_source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/100k-results/"
 _output_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/performance/query-time/img/"
 _csv_file = "./csv/querytime.csv"
 _nqueries = 10

@@ -219,15 +219,17 @@
                     {% if metadata %}
                     <strong>Raw file:</strong>
                     <br>
+                    <a href="{{ metadata['url'] }}">Source page</a>
+                    <br>
                     {{ metadata['raw_data_file']}}
                     <br>
                     <strong>Text before table:</strong>
                     <br>
-                    {{ metadata['text_before_table']|truncate(1000, True, '...')}}
+                    {{ metadata['text_before_table']}}
                     <br>
                     <strong>Text after table:</strong>
                     <br>
-                    {{ metadata['text_after_table']|truncate(1000, True, '...')}}
+                    {{ metadata['text_after_table']}}
                     {% endif %}
                     {% if match_col %}
                     <br>
@@ -369,6 +371,21 @@
         } );
     } );
     // $("#zero_config").DataTable();
+  </script>
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputs = Array.from(
+        document.querySelectorAll('input[name=query_keywords], input[name=query_file]')
+      );
+
+      const inputListener = e => {
+        inputs
+          .filter(i => i !== e.target)
+          .forEach(i => (i.required = !e.target.value.length));
+      };
+
+      inputs.forEach(i => i.addEventListener('input', inputListener));
+    });
   </script>
 </body>
 

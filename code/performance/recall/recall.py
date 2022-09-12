@@ -3,6 +3,7 @@
 import os
 import csv
 import re
+from turtle import color
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -109,27 +110,55 @@ def compute_recall(csv_file, gt_csv_file):
 
     return match_count/total_gt_rows
 
-def plot_results(csv_file, output_dir, k_count):
+def plot_results(csv_file, querytime_csv_file, output_dir, k_count):
     # set text font
     plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "serif",
-    "font.serif": "cm"})
-    plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
+                     "text.usetex": True,
+                     "font.family": "serif",
+                     "font.serif": "Computer Modern",
+                     "savefig.dpi": 130})
 
-    _df = pd.read_csv(csv_file)
-    _df = _df.drop(['TQ:Q'], axis = 1)
-    _df = _df.drop(['num-top'], axis = 1)
+    data1 = pd.read_csv(csv_file)
+    data2 = pd.read_csv(querytime_csv_file)
+    
+    # using merge function by setting how='inner'
+    df = pd.merge(data1, data2, 
+                    on=['TQ:Q','k', 'total-files','data-gb-size', 'num-top'], 
+                    how='inner')
 
-    _df_new = _df.groupby(
-        ['algorithm', 'total-files', 'data-gb-size', 'k']
+    df = df.drop(['dataaccess'], axis = 1)
+    df = df.drop(['ndistcalc'], axis = 1)
+    df = df.drop(['num-top'], axis = 1)
+
+    plt.rc('axes', axisbelow=True)
+
+    print(df)
+  
+    recall_df = df.groupby(
+        ['total-files', 'data-gb-size', 'k']
     ).agg(
         recall = ('recall','mean'),
     ).reset_index()
 
+    querytime_df = df.groupby(
+        ['total-files', 'data-gb-size', 'k']
+    ).agg(
+        querytime = ('querytime','mean'),
+    ).reset_index()
+
     # BAR PLOT
-    sns.set_style("whitegrid")
-    ax = sns.barplot(data=_df_new, x="k", y="recall")
+    fig, ax1 = plt.subplots()
+    ax1.yaxis.grid(True, color="lightgray")
+    ax2 = ax1.twinx()
+    ax2.yaxis.grid(True, linestyle='dashed', color="lightgray")
+    sns.barplot(data = df,x="k", y="recall", ax=ax1, ci=None,)
+    sns.lineplot(data = querytime_df['querytime'], marker='o', sort = False, ax=ax2, color="blue")
+    
+
+    ax1.set_ylabel(r'$\mathrm{Mean \ recall}$')
+    ax2.set_ylabel(r'$\mathrm{Mean \ query \ time \ (sec)}$')
+    # ax2.legend(loc=0)
+    ax2.set_xlabel(r'$\mathrm{k}$')
 
     # Set these based on your column counts
     columncounts = [25 for i in range(k_count)]
@@ -142,32 +171,32 @@ def plot_results(csv_file, output_dir, k_count):
     widthbars = normaliseCounts(columncounts,100)
 
     # Loop over the bars, and adjust the width (and position, to keep the bar centred)
-    for bar,newwidth in zip(ax.patches,widthbars):
+    for bar,newwidth in zip(ax2.patches,widthbars):
         x = bar.get_x()
         width = bar.get_width()
         centre = x+width/2.
 
         bar.set_x(centre-newwidth/2.)
         bar.set_width(newwidth)
-    
-    plt.ylabel("Mean recall", fontsize = 11)
-    plt.xlabel("k", fontsize = 11)
+
+    plt.xlabel(r'$\mathrm{k}$', fontsize = 11)
     plt.xticks(fontsize = 11)
     plt.yticks(fontsize = 11)
     # plt.legend(loc='upper left')
-    plt.title("Kashif: mean recall (10 query columns of size [5 - 10])")
-    plt.savefig(f"{output_dir}/kashif_recall_100kt_[50-100]qs.png")
+    # plt.title("Kashif: mean recall (10 query columns of size [50 - 100])")
+    plt.savefig(f"{output_dir}/kashif_recall_querytime.png")
     plt.close()
 
 
-source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/100k-tables-100qs/"
-ground_truth_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/bf/results/100k-tables-100qs/"
+# source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/100k-tables-100qs/"
+# ground_truth_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/bf/results/100k-tables-100qs/"
 output_img_dir = "./img/"
 
-output_file = "./csv/recall_eval_100kt_[50-100]qs.csv"
-nqueries = 10
+csv_file = "./csv/recall_eval_100k_(k=1to100).csv"
+querytime_csv_file = "../query-time/csv/querytime.csv"
+# nqueries = 10
+k_count = 10
+# make_file(output_file)
+# queries, k_count = get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file)
 
-make_file(output_file)
-queries, k_count = get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file)
-
-plot_results(output_file, output_img_dir, k_count)
+plot_results(csv_file,querytime_csv_file, output_img_dir, k_count)

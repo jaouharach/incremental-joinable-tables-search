@@ -2051,6 +2051,12 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
                          index, knn_results, k, bsf_snapshots, cur_bsf_snapshot,
                          &curr_size, warping);
 
+
+  // printf("approx: knns for vector %u\n", query_vector_pos);
+  // for(int j = 0; j <index->settings->timeseries_size; j++)
+  //   printf("%.3f - ", query_ts[j]);
+  // printf("\n");
+
   // set the approximate result to be the first item in the queue
   struct query_result approximate_result = knn_results[0];
   // struct query_result bsf_result = approximate_result;

@@ -1,6 +1,8 @@
 ** brute force search (for 100k tables) ** 
 
-bin/bf --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/query-columns[10]-size[5-10]/ --nq 10 --min-qset-size 5 --max-qset-size 10 --top 10 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/bf-search/100k-tables/10nn --total-data-files 100000 --k 10 --vector-length 50
+
+bin/bf --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/[50-100]queries/ --nq 10 --min-qset-size 50 --max-qset-size 100 --top 10 --total-data-files 100000 --vector-length 50 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/bf-search/100k-results/1nn/  --k 1
+
 
 --------------------------------------------------------------------------------------------------------
 ** kashif **
@@ -70,6 +72,29 @@ k = 1000 (found) (sec)
 k = 2000 (found)  (7.16 sec)
 
 But intersection does not improve 
+
+
+
+bin/dstree --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/[50-100]queries/ --nq 10   --total-data-files 500000 --buffer-size 6000 --index-path /home/jaouhara.chanchaf/work-dir/indexes/500k-idx/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0  --timeseries-size 50 --track-vector 1 --warping 0.00 --min-qset-size 50 --max-qset-size 100 --leaf-size 100000 --top 10 --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/kashif-search/50000k-results/50000nn/ --k 50000
+
+
+
+
+
+
+
+
+bin/dstree --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/[50-100]queries/ --nq 10   --total-data-files 100000 --buffer-size 6000 --index-path /home/jaouhara.chanchaf/work-dir/indexes/100k-idx/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0  --timeseries-size 50 --track-vector 1 --warping 0.00 --min-qset-size 50 --max-qset-size 100 --leaf-size 10000 --top 10 --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/kashif-search/100k-results/10000nn/ --k 10000
+
+
+
+
+
+
+bin/bf --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/[50-100]queries/ --nq 10 --min-qset-size 50 --max-qset-size 100 --top 10 --total-data-files 100000 --vector-length 50 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/bf-search/100k-results/10000nn --k 10000
+
+
+
 
 
 

@@ -21,7 +21,7 @@ KASHIF_BIN = "../search-algorithms/kashif/bin/dstree"
 
 KASHIF_IDX = "../../100-idx/" # storing 100 tables
 RAW_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/raw-tables/"
-METADATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
+CLEAN_DATA_FOLDER = "/home/jaouhara/Documents/Projects/iqa-demo/code/ui/data/metadata/"
 
 EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
 PATH_TO_MODEL = {"ar": "", "en": "/home/jaouhara/Documents/Projects/embedding_models/glove/glove.6B.50d.txt","fr": ""}
@@ -58,26 +58,67 @@ def read_raw_file(raw_filename, source_dir):
     except OSError:
         return -1, -1, -1, f"Couldn't open raw data file {filepath}."
 
+# check if table has header
+def has_header(table):
+    if table['hasHeader'] and table['headerPosition'] == 'FIRST_ROW':
+        return True
+    return False
+
 # read raw file into pandas data frame
-def read_metadata_file(binary_filename, metadata_dir):
+def read_metadata_file(binary_filename, clean_data_dir, raw_data_dir):
     # raw files are named t[table_id]_c[column_pos].json, mus extract table id and colun pos from binary raw filename
     table_id = int(re.search(r'_t(.*)c', binary_filename).group(1))
     column_pos = int(re.search(fr'_t{table_id}c(.*?)_', binary_filename).group(1))
     filename = f"t{table_id}_c{column_pos}.json"
 
     data = None
-    filepath = metadata_dir + '/' + filename
+    filepath = clean_data_dir + '/' + filename
+    raw_file_name = ""
 
     try:
         f = open(filepath, 'r')
         data = f.read()
-        metadata = json.loads(data)
+        table = json.loads(data)
+        raw_file_name = table["raw_file"]
+        f.close()
+    except OSError:
+        return -1, f"Couldn't open clean data file {filepath}."
+    
+    raw_filepath = raw_data_dir + '/' + raw_file_name
+
+    try:
+        f = open(raw_filepath, 'r')
+        raw_data = f.read()
+        table = json.loads(raw_data)
         f.close()
 
+        metadata = {"page_title" : "", "title": "", "header": [], "url": "",
+        "text_before_table" : "", "text_after_table": "", "last_modified": "", 
+        "raw_data_file": raw_file_name}
+        
+        if "pageTitle" in table:
+            metadata["page_title"]  = table["pageTitle"]
+        if "title" in table:
+            metadata["title"]  = table["title"]
+
+        if has_header(table):
+            for col in table['relation']:
+                metadata["header"].append(col[0])
+
+        if "url" in table:
+            metadata["url"]  = table["url"]
+        if "textBeforeTable" in table:
+            metadata["text_before_table"]  = table["textBeforeTable"]
+        if "textAfterTable" in table:
+            metadata["text_after_table"]  = table["textAfterTable"]
+        if "lastModified" in table:
+            metadata["last_modified"]  = table["lastModified"]
+        
+        print(metadata)
         return metadata, ""
 
     except OSError:
-        return -1, f"Couldn't open metadata file for binary file {binary_filename}."
+        return -1, f"Couldn't open raw data file {raw_filepath}."
 
 # create temp file for the query column retrieved from a csv file
 def csv_to_bin_file(query_file , column_idx, query_lang):
@@ -126,8 +167,9 @@ def get_keyword_query_results(query_size, top, k, approx_error):
 
     metadata = list()
     for result in results:
-        metad, msg = read_metadata_file(result[0], METADATA_FOLDER)
+        metad, msg = read_metadata_file(result[0], CLEAN_DATA_FOLDER, RAW_DATA_FOLDER)
         if metad == -1:
+            print(msg)
             return render_template('index.html', error=msg)
         else:
             metadata.append(metad)
@@ -163,7 +205,7 @@ def get_join_query_results(query_size, top, k, approx_error):
     results.sort(key=lambda x:x[2], reverse=True)
     metadata = list()
     for result in results:
-        metad, msg = read_metadata_file(result[0], METADATA_FOLDER)
+        metad, msg = read_metadata_file(result[0], CLEAN_DATA_FOLDER, RAW_DATA_FOLDER)
         if metad == -1:
             return render_template('index.html', error=msg)
         else:
@@ -296,7 +338,7 @@ def view_dataset():
             return render_template('404.html')
 
         else:
-            metadata, msg = read_metadata_file(filename, METADATA_FOLDER)
+            metadata, msg = read_metadata_file(filename, CLEAN_DATA_FOLDER, RAW_DATA_FOLDER)
             if metadata == -1:
                 return render_template('view-dataset.html', error=msg)
             

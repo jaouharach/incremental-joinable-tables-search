@@ -510,10 +510,21 @@ enum response dstree_knn_query_multiple_binary_files(
           // end of vector but still in current set
           if (j > (vector_length - 1)) {
             j = 0;
+            
+            // printf("-- vector %u\n", query_vector.pos);
+
+            // printf("before reorder\n");
+            // for(int j = 0; j <index->settings->timeseries_size; j++)
+            //   printf("%.3f - ", query_vector.values[j]);
+            // printf("\n");
             /*run query vector in dstree */
             reorder_query(query_vector.values, query_vector_reordered,
                           query_order, vector_length);
             qvectors_loaded += 1;
+            // printf("after reorder\n");
+            // for(int j = 0; j <index->settings->timeseries_size; j++)
+            //   printf("%.3f - ", query_vector.values[j]);
+            // printf("\n");
 
             // perform extact knn search
             // with incremental answering
@@ -584,7 +595,7 @@ enum response dstree_knn_query_multiple_binary_files(
               knn_array_idx++;
             }
             query_vector.pos += 1;
-            printf("next query %u\n", query_vector.pos);
+            // printf("next query %u\n", query_vector.pos);
             if (knn_array_idx > (k * nvec)) {
               fprintf(stderr, "Error in dstree_file_loaders.c: Storing more results "
                      "that expected!");
