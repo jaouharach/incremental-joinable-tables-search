@@ -89,6 +89,39 @@ void approximate_knn_search(ts_type *query_ts, ts_type *query_ts_reordered,
   }
 }
 
+/* start kashif changes */
+// get the k best neighbors from one leaf
+void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
+                            int *query_order, unsigned int offset, ts_type bsf,
+                            struct dstree_index *index,
+                            struct query_result *knn_results, unsigned int k,
+                            struct bsf_snapshot **bsf_snapshots,
+                            unsigned int *cur_bsf_snapshot,
+                            unsigned int *curr_size, float warping, struct vid * query_id) {
+
+  struct query_result result;
+  struct dstree_node *node = index->first_node;
+  // ts_type bsf = FLT_MAX;  //no bsf known so far
+
+  if (node != NULL) {
+    // Traverse tree
+    while (!node->is_leaf) {
+      if (node_split_policy_route_to_left(node, query_ts)) {
+        node = node->left_child;
+      } else {
+        node = node->right_child;
+      }
+    }
+
+    calculate_node_knn_distance_2(index, node, query_ts_reordered, query_order,
+                                offset, bsf, k, knn_results, bsf_snapshots,
+                                cur_bsf_snapshot, curr_size, warping, query_id);
+  } else {
+    printf("Error in dstree_query_engine: null pointer to node.\n");
+  }
+}
+/* end kashif changes */
+
 struct query_result exact_search(ts_type *query_ts, ts_type *query_ts_reordered,
                                  int *query_order, unsigned int offset,
                                  struct dstree_index *index,
@@ -2021,7 +2054,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     char *qfilename, double *total_query_set_time,
     unsigned int *total_checked_ts, struct bsf_snapshot **bsf_snapshots,
     unsigned int *cur_bsf_snapshot, float warping, FILE *dataset_file,
-    FILE *series_file, unsigned int query_vector_pos)
+    FILE *series_file,struct vid * query_id)
 {
 
   unsigned int curr_size = 0;
@@ -2043,13 +2076,13 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     knn_results[idx].vector_id->table_id = 1000000000000;
     knn_results[idx].vector_id->set_id = 1000000000000;
     knn_results[idx].vector_id->pos = 1000000000000;
-    knn_results[idx].query_vector_pos = query_vector_pos;
+    knn_results[idx].query_vector_pos = query_id->pos;
   }
 
   // return k approximate results
-  approximate_knn_search(query_ts, query_ts_reordered, query_order, offset, bsf,
+  approximate_knn_search_2(query_ts, query_ts_reordered, query_order, offset, bsf,
                          index, knn_results, k, bsf_snapshots, cur_bsf_snapshot,
-                         &curr_size, warping);
+                         &curr_size, warping, query_id);
 
 
   // printf("approx: knns for vector %u\n", query_vector_pos);
@@ -2175,10 +2208,10 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     if (n->node->is_leaf) // n is a leaf
     {
       // upon return, the queue will update the next best (k-foundkNN)th objects
-      calculate_node_knn_distance(index, n->node, query_ts_reordered,
+      calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
                                   query_order, offset, bsf_result.distance, k,
                                   knn_results, bsf_snapshots, cur_bsf_snapshot,
-                                  &curr_size, warping);
+                                  &curr_size, warping, query_id);
 
       // if (r_delta != FLT_MAX && (knn_results[k-1].distance  <= r_delta * (1 +
       // epsilon)))

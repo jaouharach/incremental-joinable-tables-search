@@ -3,7 +3,6 @@
 import os
 import csv
 import re
-from turtle import color
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -60,11 +59,11 @@ def get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file):
                     queries.append(query)
                     dir = str(os.path.basename(subdir)).replace(algo, BRUTE_FORCE_ALGO_NAME)
                     print(f"----------- k = {k} ------------\n")
-                    compute_query_recall(query, source_dir+f'/{k}nn/{os.path.basename(subdir)}/'+file, ground_truth_dir+f'/{k}nn/{dir}/', algo, total_files, data_gb_size, k, NUM_TOP)
+                    compute_query_recall(query, source_dir+f'/{k}nn/{os.path.basename(subdir)}/'+file, ground_truth_dir+f'/{k}nn/{dir}/', algo, total_files, data_gb_size, k, NUM_TOP, output_file)
                     
     return queries, k_count
 
-def compute_query_recall(query, query_results_csv_file, ground_truth_dir, algo, total_files, data_gb_size, k, num_top):
+def compute_query_recall(query, query_results_csv_file, ground_truth_dir, algo, total_files, data_gb_size, k, num_top, output_file):
     for _, _, files in os.walk(ground_truth_dir, topdown=False):
         for gt_file in files:
             if re.search(f'_runtime', gt_file):
@@ -72,7 +71,7 @@ def compute_query_recall(query, query_results_csv_file, ground_truth_dir, algo, 
                 qtable_id = _[0].replace('TQ', '')
                 qset_id =  _[1].replace('Q', '')
                 qsize = _[2].replace('qsize','') # get number of candidate tables
-
+            
                 gt_query = (qtable_id, qset_id, qsize)
                 if gt_query == query:
                     print(f"query = {gt_query} \t gt query = {gt_query}")
@@ -96,11 +95,21 @@ def compute_recall(csv_file, gt_csv_file):
     total_gt_rows = len(gt_results)
     total_rows = len(results)
 
+    
+    gt_results = gt_results.sort_values('q_pos')
+    results = results.sort_values('q_pos')
+
     gt_results = gt_results.sort_values('TS:S')
     results = results.sort_values('TS:S')
 
+    gt_results = gt_results.sort_values('s_pos')
+    results = results.sort_values('s_pos')
+
     match_count = 0
     for r in range(total_rows):
+        # if gt_results.loc[r, "q_pos"] == results.loc[r, "q_pos"] and gt_results.loc[r, "s_pos"] == results.loc[r, "s_pos"] and gt_results.loc[r, "TS:S"] == results.loc[r, "TS:S"]:
+        #     match_count += 1
+
         found = ((gt_results["TS:S"] == results.loc[r, "TS:S"]) 
         & (gt_results["q_pos"] == results.loc[r, "q_pos"])
         & (gt_results["s_pos"] == results.loc[r, "s_pos"])).any()
@@ -152,11 +161,13 @@ def plot_results(csv_file, querytime_csv_file, output_dir, k_count):
     ax2 = ax1.twinx()
     ax2.yaxis.grid(True, linestyle='dashed', color="lightgray")
     sns.barplot(data = df,x="k", y="recall", ax=ax1, ci=None,)
-    sns.lineplot(data = querytime_df['querytime'], marker='o', sort = False, ax=ax2, color="blue")
+    sns.lineplot(data = querytime_df['querytime'], sort = False, ax=ax2, color="blue")
     
 
     ax1.set_ylabel(r'$\mathrm{Mean \ recall}$')
     ax2.set_ylabel(r'$\mathrm{Mean \ query \ time \ (sec)}$')
+    ax1.set_ylim([0, 1.5])
+    ax2.set_yscale('linear')
     # ax2.legend(loc=0)
     ax2.set_xlabel(r'$\mathrm{k}$')
 
@@ -184,19 +195,19 @@ def plot_results(csv_file, querytime_csv_file, output_dir, k_count):
     plt.yticks(fontsize = 11)
     # plt.legend(loc='upper left')
     # plt.title("Kashif: mean recall (10 query columns of size [50 - 100])")
-    plt.savefig(f"{output_dir}/kashif_recall_querytime.png")
+    plt.savefig(f"{output_dir}/kashif_recall_querytime_on_vid.png")
     plt.close()
 
 
-# source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/100k-tables-100qs/"
-# ground_truth_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/bf/results/100k-tables-100qs/"
+source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/kashif/results/100k-results/"
+ground_truth_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/bf/results/100k-results/"
 output_img_dir = "./img/"
 
-csv_file = "./csv/recall_eval_100k_(k=1to100).csv"
-querytime_csv_file = "../query-time/csv/querytime.csv"
-# nqueries = 10
+csv_file = "./csv/recall_eval_100k_on_vectorid.csv"
+querytime_csv_file = "../query-time/csv/kashif_querytime_100k_new.csv"
+nqueries = 10
 k_count = 10
-# make_file(output_file)
-# queries, k_count = get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file)
+make_file(csv_file)
+queries, k_count = get_recall_evaluation(nqueries, source_dir, ground_truth_dir, csv_file)
 
 plot_results(csv_file,querytime_csv_file, output_img_dir, k_count)

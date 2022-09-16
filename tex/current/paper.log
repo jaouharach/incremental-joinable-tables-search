@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  12 SEP 2022 19:12
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  16 SEP 2022 15:35
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -687,7 +687,11 @@ Package hyperref Info: Option `pdfdisplaydoctitle' set `true' on input line 133
 .
 
 Excluding comment 'screenonly' Include comment 'printonly'
-Include comment 'anonsuppress' (./paper.aux)
+Include comment 'anonsuppress' (./paper.aux
+
+LaTeX Warning: Label `tab:q1-result1' multiply defined.
+
+)
 \openout1 = `paper.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 133.
@@ -708,7 +712,8 @@ LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 133.
 LaTeX Font Info:    ... okay on input line 133.
 <<ot1.cmap>><<oml.cmap>><<oms.cmap>><<omx.cmap>>
 LaTeX Font Info:    Try loading font information for U+msa on input line 133.
- (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
 LaTeX Font Info:    Try loading font information for U+msb on input line 133.
@@ -838,63 +843,180 @@ File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
 (./introduction.tex
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 6.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 7.
  (/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 6.
-)
-(./background.tex) (./system-architecture.tex) (./demonstration.tex
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 7.
 
-LaTeX Warning: Reference `sec:demonstration' on page 1 undefined on input line 
-3.
 
-) (./ideas.tex) Processing 'acks' comment.
+LaTeX Warning: Reference `tab:q1-result2' on page 1 undefined on input line 13.
+
+
+
+LaTeX Warning: Reference `tab:q1-result2' on page 1 undefined on input line 15.
+
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+[]|\OT1/cmr/m/n/9 (+20) Wheelabrator
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+[]|\OT1/cmr/m/n/9 (+20) Logging
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+\OT1/cmr/m/n/9 (+20) and Mill
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 70--70
+\OT1/cmr/m/n/9 (+20) Residue/Ag
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 72--72
+[]|\OT1/cmr/m/n/9 (+20) Ag
+ []
+
+
+Overfull \hbox (3.477pt too wide) in paragraph at lines 72--72
+\OT1/cmr/m/n/9 (-20) Residue/Urban
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+[]|\OT1/cmr/m/n/9 (+20) Covanta
+ []
+
+
+Underfull \hbox (badness 2951) in paragraph at lines 74--74
+[]|\OT1/cmr/m/n/9 (+20) Orchard and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+\OT1/cmr/m/n/9 (+20) Vine-yard
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+\OT1/cmr/m/n/9 (+12) Prun-ings/Nut
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 74--74
+\OT1/cmr/m/n/9 (+20) Shells/Stone
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+[]|\OT1/cmr/m/n/9 (+20) Honey Lake
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+[]|\OT1/cmr/m/n/9 (+20) Mill and Log-ging
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+\OT1/cmr/m/n/9 (+20) Residue/Forest
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 76--76
+\OT1/cmr/m/n/9 (+20) Thin-ning/Urban
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+[]|\OT1/cmr/m/n/9 (+20) Plant
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--89
+[]|\OT1/cmr/m/n/9 (+20) Start
+ []
+
+
+Underfull \hbox (badness 2142) in paragraph at lines 89--89
+[]|\OT1/cmr/m/n/9 (+20) Prime mover
+ []
+
+
+Underfull \hbox (badness 1168) in paragraph at lines 89--89
+[]|\OT1/cmr/m/n/9 (+20) Prime Mover
+ []
+
+
+Overfull \hbox (6.79466pt too wide) in paragraph at lines 89--89
+[]|\OT1/cmr/m/n/9 (-20) Capacity| 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 89--90
+[]|\OT1/cmr/m/n/9 (+20) net
+ []
+
+
+Overfull \hbox (40.90346pt too wide) in paragraph at lines 87--95
+ [][] 
+ []
+
+) (./background.tex) (./system-architecture.tex
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 3.
+
+) (./demonstration.tex
+
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 3.
+
+) Processing 'acks' comment.
 \openout4 = `comment.cut'.
 
+ Comment 'acks' writing to comment.cut.
+Straight input of comment.cut. (./comment.cut) (./paper.bbl)
 
-Comment 'acks' writing to comment.cut. Straight input of comment.cut.
-(./comment.cut) (./paper.bbl
+Package caption Warning: Unused \captionsetup[sub] on input line 41.
+See the caption package documentation for explanation.
+
 
 Package balance Warning: You have called \balance in second column
 (balance)                Columns might not be balanced.
 
 [1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
 
-])
-
-Package caption Warning: Unused \captionsetup[sub] on input line 41.
-See the caption package documentation for explanation.
-
-
-Overfull \vbox (11.0pt too high) has occurred while \output is active []
-
-
-Overfull \vbox (13.25pt too high) has occurred while \output is active []
-
- [2.2]
+] [2.2]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 221.
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 221.
-
-(./paper.aux)
+ (./paper.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 221.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 221.
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: C2720DA84BD79220A3E46B9BB8DBCC37;1087.
+(rerunfilecheck)             Checksum: 047BF8BCD4DFDE85EFED49C01C54D876;791.
 
 
 LaTeX Warning: There were undefined references.
 
+
+LaTeX Warning: There were multiply-defined labels.
+
  ) 
 Here is how much of TeX's memory you used:
- 17374 strings out of 494847
- 253003 string characters out of 6179081
- 422253 words of memory out of 5000000
- 20133 multiletter control sequences out of 15000+600000
- 15676 words of font info for 77 fonts, out of 8000000 for 9000
+ 17359 strings out of 494847
+ 252855 string characters out of 6179081
+ 416070 words of memory out of 5000000
+ 20128 multiletter control sequences out of 15000+600000
+ 15835 words of font info for 79 fonts, out of 8000000 for 9000
  220 hyphenation exceptions out of 8191
- 60i,11n,94p,817b,496s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,11n,94p,817b,465s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share
 /texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texliv
@@ -907,10 +1029,10 @@ nts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
 mr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.
 pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></u
 sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb>
-Output written on paper.pdf (2 pages, 183315 bytes).
+Output written on paper.pdf (2 pages, 177585 bytes).
 PDF statistics:
- 164 PDF objects out of 1000 (max. 8388607)
- 128 compressed objects within 2 object streams
- 31 named destinations out of 1000 (max. 500000)
- 16473 words of extra memory for PDF output out of 17280 (max. 10000000)
+ 140 PDF objects out of 1000 (max. 8388607)
+ 104 compressed objects within 2 object streams
+ 20 named destinations out of 1000 (max. 500000)
+ 16449 words of extra memory for PDF output out of 17280 (max. 10000000)
 

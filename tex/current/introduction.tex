@@ -2,17 +2,19 @@
 \label{sec:introduction}
 
 \begin{itemize}
+%	relative food prices affect dietary quality
 	\item \textbf{Use case 1: Keyword Query}\\
-	 A data scientist wants to analyze the impact of food cost inflation on food consumption. Initially  The user decides to start the search with the keywords \{"food", "consumption"\} and $k = 10$ . The search engine returns Table \ref{tab:q1-result1} which contains data from year 1990 to 2009 about {\it "Per Capita Consumption of Principal Foods (in pounds)"}. The user decides to keep Table \ref{tab:q1-result1} for the study and continue to search for other relevant tables. %k = 10
+	 A data scientist wants to analyze the impact of food cost inflation on food consumption. Initially  The user decides to start the search with a keyword-query $Q_{0} = $  (\{"food", "consumption"\}, $k = 10$). The search engine returns Table \ref{tab:q1-result1} which contains data from year 1990 to 2009 about {\it "Per Capita Consumption of Principal Foods (in pounds)"}. The user decides to keep Table \ref{tab:q1-result1} for the study and continue to search for other relevant tables. %k = 10
 	
 	\item \textbf{Use case 2: Join Query}
-	Table \ref{tab:q1-result1} is a good first result as it contains a complete list of the main food types, however the result lacks information on food prices. For that the use perform a join query on the food column to explore other tables that may have information about food prices for the years 1990 to 2009. \\*
-	\textbf{Attempt 1:} To speed up search the user submits the first query $Q_{1} =$ (Table \ref{tab:q1-result1}, Join column : "Food", $k = 10$). The search engine returned 775 tables. However, after skimming through the list of returned tables nothing seemed relevant to the user. 
+	Table \ref{tab:q1-result1} is a good first result as it contains a complete list of the main food types, however this result lacks information on food prices. For that the use perform a join query on the food column to explore other tables that may have information about food prices for the years 1990 to 2009. \\*
+	\textbf{Attempt 1:} To speed up search the user submits $Q_{1} =$ (Table \ref{tab:q1-result1}, Join column : "Food", $k = 10$) with a small $k$ value. The search engine returned $775$ tables. However, after skimming through the list of returned tables nothing seemed relevant to the user. 
 	
 	\textbf{Attempt 2:} The user decides to increase $k$ to get more results from the search engine. He/she submits a second query $Q_{2} =$ (Table \ref{tab:q1-result1}, Join column : "Food", $k = 20$). This time the search engine returned 161 tables, because the number of results is big the user could notice Table \ref{tab:q1-result2} ranked at position 55.
 	
-	\textbf{Attempt 3:} For the last attempt the user gave up on getting any fast meaningful result so he/she decide to increase $k$ significantly in hope that a relevant table will appear in the list of results. He/she submits $Q_{3}$ to the search engine.$Q_{3} =$ (Table \ref{tab:q1-result1}, Join column : "Food", $k = 200$). Finally and after several attempts, the search engine returns Table \ref{tab:q1-result2} at position $11$ which contains information on food prices from the 2007 WIC program. % k = 100 \\
+	\textbf{Attempt 3:} As a last attempt the user gave up on getting any fast meaningful result so he/she decide to increase $k$ significantly in hope that a relevant table will appear in the list of results. He/she submits $Q_{3} =$ (Table \ref{tab:q1-result1}, Join column : "Food", $k = 200$). Finally and after several attempts, the search engine returned Table \ref{tab:q1-result2} at position $11$ which contains information on food prices from the 2007 WIC program. % k = 100 \\
 
+\iffalse
 	\begin{table*}[t]
 		\setlength{\tabcolsep}{0.9\tabcolsep}
 		\begin{tabular}{ |l|l|l|l|l|l|l|l|  }
@@ -55,8 +57,42 @@
 			
 		\end{tabular}
 		\vspace{.2cm}
-		\caption{Federal Register | Special Supplemental Nutrition Program for Women, Infants and Children (WIC), 2007\label{tab:q1-result2}}
+		\caption{WIC Foods: Food Item, Selection Criteria, Units, and Prices Per Unit (US Federal Register, 2007) \label{tab:q1-result2}}
 	\end{table*}
+\fi
+
+\begin{table*}[!ht]
+	\setlength\extrarowheight{2pt} % for a bit of visual "breathing space"
+	\begin{tabular}{ |l|p{2cm}|p{3cm}|p{2cm}|l|  }
+		\hline
+		\textbf{Company}&	\textbf{Plant}&	\textbf{Location}&	\textbf{Feedstock}&	\textbf{Capacity (MW)}\\
+		\hline
+		Wheelabrator Technologies Inc.& 	Wheelabrator Shasta Energy Co. Inc.& 	Anderson - CA& 	Logging and Mill Residue/Ag Residue& 	50\\
+		\hline
+		Greenleaf Power LLC& 	Desert View& 	Mecca - CA& 	Ag Residue/Urban Wood Waste& 	47\\
+		\hline
+		Covanta& 	Covanta Delano& 	Delano - CA& 	Orchard and Vineyard Prunings/Nut Shells/Stone Fruit Pits& 	58\\
+		\hline
+		Greenleaf Power LLC& 	Honey Lake 	Wendel - CA&	Mill and Logging Residue/Forest Thinning/Urban Woodwaste& 	30\\
+		\hline
+		
+	\end{tabular}
+	\vspace{.2cm}
+	\caption{U.S. Biomass Power Plants\label{tab:q1-result1}}
+\end{table*}
 	
-	
+
+\begin{table*}[!ht]
+	\setlength\extrarowheight{2pt} % for a bit of visual "breathing space"
+	\begin{tabular}{ |l|p{1cm}|p{2cm}|p{1cm}|l|p{1cm}|p{2cm}|p{2cm}|p{2cm}|p{1cm}|p{1cm}|  }
+		\hline
+		Category& 	Plant ID& 	Plant Name& 	Unit& 	Status& 	Start Date& 	Retire Date& 	Prime mover ID& Prime Mover Description& Capacity& net MWh\\
+		\hline
+		
+		
+	\end{tabular}
+	\vspace{.2cm}
+	\caption{U.S. Biomass Power Plants\label{tab:q1-result1}}
+\end{table*}
+
 \end{itemize}

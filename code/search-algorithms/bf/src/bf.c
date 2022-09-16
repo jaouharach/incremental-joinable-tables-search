@@ -30,7 +30,7 @@ int main(int argc, char const *argv[])
     unsigned int k = 1;
     unsigned int qset_num = 0 ,min_qset_size = 0, max_qset_size = 0;
     unsigned int top = 0; //top x sets to be returned 
-
+    unsigned char exact_search = 0;
     while (1)
     {
         /*
@@ -47,6 +47,7 @@ int main(int argc, char const *argv[])
             {"total-data-files", required_argument, 0, '|'}, // number of datasets to be indexed (tables)
             {"k", required_argument, 0, 'k'},
             {"vector-length", required_argument, 0, 't'},
+            {"exact-search", no_argument, 0, 'e'},
         };
         /* getopt_long stores the option index here. */
         int option_index = 0;
@@ -102,6 +103,10 @@ int main(int argc, char const *argv[])
             vector_length = atoi(optarg);
             break;
 
+        case 'e':
+            exact_search = 1;
+            break;
+
         default:
             exit(-1);
             break;
@@ -111,7 +116,7 @@ int main(int argc, char const *argv[])
     printf("Total data size in gb = %u\n", data_gb_size);    
 
     bf_sequential_search(queries_dir, dataset, vector_length, qset_num, min_qset_size, max_qset_size,
-                            top, result_dir, total_data_files, data_gb_size, k);
+                            top, result_dir, total_data_files, data_gb_size, k, exact_search);
 
     printf("\n>>>> Congrat! End of experiment."); 
     printf("\n>>>> Results are stored in %s", result_dir); 
@@ -126,7 +131,7 @@ int main(int argc, char const *argv[])
 
 void bf_sequential_search(char * queries, char * dataset, unsigned int vector_length, unsigned int qset_num,
     unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top, char * result_dir,
-    unsigned int total_data_file, unsigned int data_gb_size, unsigned int k)
+    unsigned int total_data_file, unsigned int data_gb_size, unsigned int k, unsigned char exact_search)
 {
     RESET_PARTIAL_COUNTERS()
     COUNT_PARTIAL_TIME_START
@@ -137,6 +142,9 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
     COUNT_PARTIAL_INPUT_TIME_START
     DIR *dir = opendir(queries);
     COUNT_PARTIAL_INPUT_TIME_END
+
+    unsigned int total_knns = 0;
+
     if (!dir)
     {
         printf("Unable to open directory stream %s!", queries);
@@ -284,32 +292,64 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                         }
                         next_vec = 0;
                         
-                        /*run query set */
-                        // Perform brute force knn search for all query vectors
-                        all_knn_results =  brute_force_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, k, &total_checked_vec);
-
-                        COUNT_PARTIAL_TIME_END
-                        query_time = partial_time - (partial_input_time + partial_output_time);
-                        // printf("\nquerytime  = %f - (%f + %f) = %f\n", partial_time, partial_input_time, partial_output_time, query_time);
-                        
-                        /* End of Query set */
-                        /* Save query results to csv file */
-                        char * query_result_file = make_file_path(results_dir, query_vector.table_id, query_vector.set_id, nvec, total_data_file, data_gb_size, vector_length, query_time, total_checked_vec);
-                        save_to_query_result_file(query_result_file, table_id, query_vector.set_id, k * nvec, all_knn_results);
-
-                        struct result_sid * top = get_top_sets(all_knn_results, k * nvec, num_top);
-                        for(int m = 0; m < num_top; m++)
+                        // only return vectors with distance 0
+                        if(exact_search)
                         {
-                        printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
-                        }
-                        printf("\nquery_time=%fsec\n", query_time/1000000);
-                        
+                           /*run query set */
+                            // Perform brute force knn search for all query vectors
+                            all_knn_results =  brute_force_exact_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, &total_checked_vec, &total_knns);
 
-                        for (int knn = 0; knn < (k*nvec); knn++)
-                            free(all_knn_results[knn].vector_id);
-                        free(all_knn_results);
-                        free(top);
-                        free(query_result_file);
+                            COUNT_PARTIAL_TIME_END
+                            query_time = partial_time - (partial_input_time + partial_output_time);
+                            
+                            /* End of Query set */
+                            /* Save query results to csv file */
+                            char * query_result_file = make_file_path(results_dir, query_vector.table_id, query_vector.set_id, nvec, total_data_file, data_gb_size, vector_length, query_time, total_checked_vec);
+                            save_to_query_result_file(query_result_file, table_id, query_vector.set_id, total_knns, all_knn_results);
+
+                            struct result_sid * top = get_top_sets(all_knn_results, total_knns, num_top);
+                            for(int m = 0; m < num_top; m++)
+                            {
+                            printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+                            }
+                            printf("\nquery_time=%fsec\n", query_time/1000000);
+                            
+
+                            for (int knn = 0; knn < (total_knns); knn++)
+                                free(all_knn_results[knn].vector_id);
+                            free(all_knn_results);
+                            free(top);
+                            free(query_result_file);
+                        }
+                        else
+                        {
+                            /*run query set */
+                            // Perform brute force knn search for all query vectors
+                            all_knn_results =  brute_force_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, k, &total_checked_vec);
+
+                            COUNT_PARTIAL_TIME_END
+                            query_time = partial_time - (partial_input_time + partial_output_time);
+                            // printf("\nquerytime  = %f - (%f + %f) = %f\n", partial_time, partial_input_time, partial_output_time, query_time);
+                            
+                            /* End of Query set */
+                            /* Save query results to csv file */
+                            char * query_result_file = make_file_path(results_dir, query_vector.table_id, query_vector.set_id, nvec, total_data_file, data_gb_size, vector_length, query_time, total_checked_vec);
+                            save_to_query_result_file(query_result_file, table_id, query_vector.set_id, k * nvec, all_knn_results);
+
+                            struct result_sid * top = get_top_sets(all_knn_results, k * nvec, num_top);
+                            for(int m = 0; m < num_top; m++)
+                            {
+                            printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+                            }
+                            printf("\nquery_time=%fsec\n", query_time/1000000);
+                            
+
+                            for (int knn = 0; knn < (k*nvec); knn++)
+                                free(all_knn_results[knn].vector_id);
+                            free(all_knn_results);
+                            free(top);
+                            free(query_result_file);
+                        }
 
                         RESET_PARTIAL_COUNTERS()
                         COUNT_PARTIAL_TIME_START
@@ -505,6 +545,210 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
                             {
                                 query_result_cpy_vector(repl, &v, qset[h].pos, d, raw_file_name);
                                 queue_bounded_sorted_insert(&all_knn_results[h*k], repl, &curr_size[h], k);
+                            }
+                        }
+                        
+                        i = 0; j = 0;
+                        nvec = 0u;
+                        v.pos = 0;
+                        continue;
+                    }
+                    i++;
+                    j++;
+                    
+                }
+            }
+        COUNT_PARTIAL_INPUT_TIME_START
+        fclose(bin_file);
+        COUNT_PARTIAL_INPUT_TIME_END
+        }
+    }
+    COUNT_PARTIAL_INPUT_TIME_START
+    closedir(dir);
+    COUNT_PARTIAL_INPUT_TIME_END
+    free(temp->vector_id);
+    free(repl->vector_id);
+    free(temp);
+    free(repl);
+    free(bsf);
+    free(v.values);
+    free(curr_size);
+    
+    return all_knn_results;
+}
+
+struct query_result * brute_force_exact_knn_search_optimized(char * dataset, unsigned int total_data_files, unsigned int vector_length, 
+    struct vector * qset, unsigned int qnvec, unsigned int *total_checked_vec, unsigned int * total_knns)
+{
+    
+    float * bsf = (float *) malloc(sizeof(float) * qnvec);
+    unsigned int * curr_size = (unsigned int *) malloc(sizeof(unsigned int) * qnvec);
+
+    //queue containing kNN results for every vector
+    struct query_result * all_knn_results = NULL;
+
+    struct vector v; 
+    v.values = (ts_type *) malloc(sizeof(ts_type) * vector_length);
+    if (v.values == NULL)
+    {
+        printf("Error in bf.c: Couldn't allocate memory for temp vector values.");
+        exit(1);
+    }
+    struct query_result * temp = malloc(sizeof(struct query_result));
+    temp->vector_id = malloc(sizeof(struct vid));
+    struct query_result * repl = malloc(sizeof(struct query_result));
+    repl->vector_id = malloc(sizeof(struct vid));
+    temp->distance = FLT_MAX;
+    repl->distance = FLT_MAX;
+
+    if (temp->vector_id == NULL || repl->vector_id == NULL)
+    {
+        printf("Error in bf.c: Couldn't allocate memory for temp query result.");
+        exit(1);
+    }
+
+    for (int i = 0; i < qnvec; ++i)
+    {
+        bsf[i] = FLT_MAX;
+        curr_size[i] = 0;
+    }
+    // Open binary files  dir
+    struct dirent *dfile;
+    COUNT_PARTIAL_INPUT_TIME_START
+    DIR *dir = opendir(dataset);
+    COUNT_PARTIAL_INPUT_TIME_END
+    if (!dir)
+    {
+      printf("Unable to open directory stream %s!", dataset);
+      exit(1);
+    }
+
+    while ((dfile = readdir(dir)) != NULL && total_data_files > 0)
+    {
+
+        if(is_binaryfile(dfile->d_name))
+        {
+            char * raw_file_name = dfile->d_name;
+            total_data_files--;
+            // get fill path of bin file
+            char bin_file_path[PATH_MAX + 1] = ""; 
+            strcat(bin_file_path, dataset);strcat(bin_file_path, "/");strcat(bin_file_path, dfile->d_name);
+
+            // get binary table info 
+            int datasize, table_id, nsets, vector_length_in_filename;
+            sscanf(dfile->d_name,"data_size%d_t%dc%d_len%d_noznorm.bin",&datasize,&table_id,&nsets,&vector_length_in_filename);
+
+            // check if vector length in file name matches vector length passed as argument
+            if(vector_length_in_filename != vector_length)
+            {
+                printf("Error in bf.c:  vector length passed in argumentes (--len %d) does not match vector length in file (%d) %s.\n", vector_length_in_filename, vector_length, bin_file_path);
+                exit(1);
+            }
+
+            /* read binary file */
+            COUNT_PARTIAL_INPUT_TIME_START
+            FILE * bin_file = fopen (bin_file_path, "rb");
+            COUNT_PARTIAL_INPUT_TIME_END
+            if (bin_file == NULL)
+            {
+                printf("Error in bf.c: File %s not found!\n", bin_file_path);
+                exit(1);
+            }
+
+            ts_type val; 
+            uint32_t nvec = 0u;
+            ts_type d = 0.0;
+            unsigned int i = 0 , j = 0, set_id = 0, total_bytes = (datasize * vector_length) + nsets;
+            
+            //read every candidate set and candidate vector in binary file
+            while(total_bytes)
+            {
+                if(i == 0)
+                { 
+                    i++;
+                    j = 0;
+                    //read first integer to check how many vactors in current set
+                    COUNT_PARTIAL_INPUT_TIME_START
+                    fread(&nvec, sizeof(nvec), 1, bin_file);
+                    COUNT_PARTIAL_INPUT_TIME_END
+                    total_bytes--;
+
+                    v.table_id = table_id;
+                    v.set_id = set_id;
+                    v.pos = 0;
+                    set_id = set_id +  1;
+
+                    if(v.table_id == qset[0].table_id && v.set_id == qset[0].set_id)
+                    {
+                        // do not match query set to itself
+                        COUNT_PARTIAL_INPUT_TIME_START
+                        fseek(bin_file, nvec * 4 *vector_length, SEEK_CUR);
+                        COUNT_PARTIAL_INPUT_TIME_END
+                        i = 0;
+                        j = 0;
+                        total_bytes -= nvec * vector_length;
+                        continue;
+                    }
+                }
+                else if(i <= (unsigned int)nvec*vector_length)
+                {
+                    if(j > (vector_length - 1))
+                    {    
+                        j = 0;
+                        *total_checked_vec += qnvec;
+                        for(int h = 0; h < qnvec; h++)
+                        {
+                            d = euclidean_distance(qset[h].values, v.values, vector_length);
+                            if (d == 0.0)
+                            {
+                                *total_knns += 1;
+                                all_knn_results = (struct query_result *) realloc(all_knn_results, sizeof(struct query_result) * (*total_knns));
+                            
+                                all_knn_results[*total_knns - 1].vector_id = malloc(sizeof(struct vid));
+                                if(all_knn_results[*total_knns - 1].vector_id == NULL)
+                                {
+                                    printf("Error in bf.c: Couldn't allocate memory for vector id in knn results.");
+                                    exit(1);
+                                }
+                                all_knn_results[*total_knns - 1].vector_id->table_id = v.table_id;
+                                all_knn_results[*total_knns - 1].vector_id->set_id = v.set_id;
+                                all_knn_results[*total_knns - 1].vector_id->pos = v.pos;
+                                all_knn_results[*total_knns - 1].query_vector_pos = qset[h].pos;
+                                strcpy(all_knn_results[*total_knns - 1].vector_id->raw_data_file, raw_file_name);
+                                all_knn_results[*total_knns - 1].distance = d;
+                            }
+                        }
+                        v.pos += 1;
+                    }
+                    // read new float value
+                    COUNT_PARTIAL_INPUT_TIME_START
+                    fread((void*)(&val), sizeof(val), 1, bin_file);
+                    COUNT_PARTIAL_INPUT_TIME_END
+                    total_bytes--;
+                    v.values[j] = val;
+                    if(i == (unsigned int)nvec*vector_length)
+                    {   
+                        *total_checked_vec += qnvec;
+                        for(int h = 0; h < qnvec; h++)
+                        {
+                            d = euclidean_distance(qset[h].values, v.values, vector_length);                               
+                            if (d == 0.0)
+                            {
+                                *total_knns += 1;
+                                all_knn_results = (struct query_result *) realloc(all_knn_results, sizeof(struct query_result) * (*total_knns));
+                            
+                                all_knn_results[*total_knns - 1].vector_id = malloc(sizeof(struct vid));
+                                if(all_knn_results[*total_knns - 1].vector_id == NULL)
+                                {
+                                    printf("Error in bf.c: Couldn't allocate memory for vector id in knn results.");
+                                    exit(1);
+                                }
+                                all_knn_results[*total_knns - 1].vector_id->table_id = v.table_id;
+                                all_knn_results[*total_knns - 1].vector_id->set_id = v.set_id;
+                                all_knn_results[*total_knns - 1].vector_id->pos = v.pos;
+                                all_knn_results[*total_knns - 1].query_vector_pos = qset[h].pos;
+                                strcpy(all_knn_results[*total_knns - 1].vector_id->raw_data_file, raw_file_name);
+                                all_knn_results[*total_knns - 1].distance = d;
                             }
                         }
                         

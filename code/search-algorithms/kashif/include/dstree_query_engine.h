@@ -184,6 +184,13 @@ void exact_de_incr_progressive_knn_search(
     unsigned int *cur_bsf_snapshot, float warping, FILE *, FILE *);
 
 /* start kashif changes */
+void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
+                            int *query_order, unsigned int offset, ts_type bsf,
+                            struct dstree_index *index,
+                            struct query_result *knn_results, unsigned int k,
+                            struct bsf_snapshot **bsf_snapshots,
+                            unsigned int *cur_bsf_snapshot,
+                            unsigned int *curr_size, float warping, struct vid * query_id);
 void exact_de_progressive_knn_search(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,
     unsigned int offset, struct dstree_index *index, ts_type minimum_distance,
@@ -198,13 +205,14 @@ struct query_result * exact_de_knn_search_2(ts_type *query_ts, ts_type *query_ts
                          unsigned int q_id, char *qfilename, double *total_query_set_time,
 						 unsigned int *total_checked_ts, unsigned int query_vector_pos);
              
-struct query_result * exact_de_incr_progressive_knn_search_2(
+struct query_result *exact_de_incr_progressive_knn_search_2(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,
     unsigned int offset, struct dstree_index *index, ts_type minimum_distance,
     ts_type epsilon, ts_type r_delta, unsigned int k, unsigned int q_id,
-    char *qfilename, double *total_query_set_time, unsigned int *total_checked_ts,
-	  struct bsf_snapshot ** bsf_snapshots,
-    unsigned int *cur_bsf_snapshot, float warping, FILE *, FILE *, unsigned int query_vector_pos);
+    char *qfilename, double *total_query_set_time,
+    unsigned int *total_checked_ts, struct bsf_snapshot **bsf_snapshots,
+    unsigned int *cur_bsf_snapshot, float warping, FILE *dataset_file,
+    FILE *series_file,struct vid * query_id);
 
 struct query_result * exact_de_progressive_knn_search_2(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,

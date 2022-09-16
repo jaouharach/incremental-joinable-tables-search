@@ -403,6 +403,7 @@ enum response dstree_knn_query_multiple_binary_files(
   struct query_result *curr_knn = NULL;
   struct vid *top_matches;
   int knn_array_idx = 0;
+  struct vid query_id;
 
   RESET_PARTIAL_COUNTERS()
   COUNT_PARTIAL_TIME_START
@@ -530,13 +531,18 @@ enum response dstree_knn_query_multiple_binary_files(
             // with incremental answering
             if (track_bsf) {
               cur_bsf_snapshot = 0;
+
+              query_id.table_id = query_vector.table_id;
+              query_id.set_id = query_vector.set_id;
+              query_id.pos = query_vector.pos;
+
               if (incremental) {
                 curr_knn = exact_de_incr_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
-                    warping, dataset_file, series_file, query_vector.pos);
+                    warping, dataset_file, series_file, &query_id);
               } else {
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
@@ -626,13 +632,18 @@ enum response dstree_knn_query_multiple_binary_files(
             // with incremental answering
             if (track_bsf) {
               cur_bsf_snapshot = 0;
+
+              query_id.table_id = query_vector.table_id;
+              query_id.set_id = query_vector.set_id;
+              query_id.pos = query_vector.pos;
+              
               if (incremental) {
                 curr_knn = exact_de_incr_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
-                    warping, dataset_file, series_file, query_vector.pos);
+                    warping, dataset_file, series_file, &query_id);
               } else {
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,

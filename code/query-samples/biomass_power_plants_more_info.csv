@@ -1,0 +1,6 @@
+Category, 	Plant ID, 	Plant Name, 	Unit, 	Status, 	Start Date, 	Retire Date, 	Prime mover ID, Prime Mover Description, Capacity, net MWh
+E, 	E0086, 	Wheelabrator Shasta, 	Units 1-3, 	OP, 	1987/1/1, -, ST, 	Steam Turbine, 	54.9, 	405628
+E, 	E0029, 	Covanta Delano Inc, 	Delano 1-2, 	OP, 	1990/6/12, 	-,	ST, 	Steam Turbine, 	58, 	322731
+E,  E0027, 	Desert View Power (Mecca Plant), 	GEN1, 	OP, 	1991/11/1, -, ST, 	Steam Turbine, 	54.15, 	351291
+E, 	E0041, 	HL Power Company (Honey Lake), 	GEN 1, 	OP, 	1989/7/26, -, ST, 	Steam Turbine, 	35.5, 	200712
+G, 	G0679, 	Woodland Generation Station, 	Woodland 2-12, 	OP, 	2003/6/1, -, CS, 	Combined Cycle - Single Shaft, 	87, 	267135
