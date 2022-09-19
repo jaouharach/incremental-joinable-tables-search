@@ -236,17 +236,25 @@ void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned
           printf("Error in bf.c: Could not open file %s!\n", csv_file);
           exit(1);
   }
+  printf("storing knns, total knns = %d\n", num_knns);
 
   COUNT_PARTIAL_OUTPUT_TIME_START
   // write header
   fprintf(fp, "TQ:Q, TS:S, q_pos, s_pos, q, s, d");
   // write results
-  for(int i = 0; i < num_knns; i++){
+  if (num_knns == 0)
+  {
+    printf("no exact matches were found for this query.\n");
+  }
+  else
+  {
+    for(int i = 0; i < num_knns; i++){
       fprintf(fp, "\n");
       fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f", qtable_id, qset_id,
           knn_results[i].vector_id->table_id, knn_results[i].vector_id->set_id,
           knn_results[i].query_vector_pos, knn_results[i].vector_id->pos,
           knn_results[i].distance);
+    }
   }
 	fclose(fp);
   COUNT_PARTIAL_OUTPUT_TIME_END

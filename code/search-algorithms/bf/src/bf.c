@@ -252,6 +252,8 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                     query_vector.set_id = set_id;
                     query_vector.pos = 0;
                     set_id = set_id + 1;
+                    total_knns = 0; 
+
                     i++;
                     j = 0;
                 }
@@ -299,6 +301,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                             // Perform brute force knn search for all query vectors
                             all_knn_results =  brute_force_exact_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, &total_checked_vec, &total_knns);
 
+                            printf("\nDone. total knns = %d\n.", total_knns);
                             COUNT_PARTIAL_TIME_END
                             query_time = partial_time - (partial_input_time + partial_output_time);
                             
@@ -307,18 +310,21 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                             char * query_result_file = make_file_path(results_dir, query_vector.table_id, query_vector.set_id, nvec, total_data_file, data_gb_size, vector_length, query_time, total_checked_vec);
                             save_to_query_result_file(query_result_file, table_id, query_vector.set_id, total_knns, all_knn_results);
 
-                            struct result_sid * top = get_top_sets(all_knn_results, total_knns, num_top);
-                            for(int m = 0; m < num_top; m++)
+
+                            if(total_knns != 0)
                             {
-                            printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+                                struct result_sid * top = get_top_sets(all_knn_results, total_knns, num_top);
+                                for(int m = 0; m < num_top; m++)
+                                {
+                                printf("column-%u- in @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+                                }
+                                printf("\nquery_time=%fsec\n", query_time/1000000);
+                                free(top);
                             }
-                            printf("\nquery_time=%fsec\n", query_time/1000000);
-                            
 
                             for (int knn = 0; knn < (total_knns); knn++)
                                 free(all_knn_results[knn].vector_id);
                             free(all_knn_results);
-                            free(top);
                             free(query_result_file);
                         }
                         else
@@ -353,6 +359,11 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
 
                         RESET_PARTIAL_COUNTERS()
                         COUNT_PARTIAL_TIME_START
+
+                        for(int t = 0; t < nvec; t++)
+                        {
+                            free(query_set[t].values);
+                        }
 
                         i = 0; j = 0;
                         nvec = 0u;
@@ -701,6 +712,7 @@ struct query_result * brute_force_exact_knn_search_optimized(char * dataset, uns
                             d = euclidean_distance(qset[h].values, v.values, vector_length);
                             if (d == 0.0)
                             {
+                                printf("++ new exact match.");
                                 *total_knns += 1;
                                 all_knn_results = (struct query_result *) realloc(all_knn_results, sizeof(struct query_result) * (*total_knns));
                             
@@ -734,6 +746,7 @@ struct query_result * brute_force_exact_knn_search_optimized(char * dataset, uns
                             d = euclidean_distance(qset[h].values, v.values, vector_length);                               
                             if (d == 0.0)
                             {
+                                printf("++ new exact match.");
                                 *total_knns += 1;
                                 all_knn_results = (struct query_result *) realloc(all_knn_results, sizeof(struct query_result) * (*total_knns));
                             
