@@ -745,7 +745,7 @@ enum response dstree_knn_query_multiple_binary_files(
                 struct result_sid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
                 for(int m = 0; m < num_top; m++)
                 {
-                  printf("column-%u- in file @@%s$ overlap=%u§\n", top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+                  printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
                 }
                 printf("\nquery_time=%fsec\n", query_time);
                 free(top);

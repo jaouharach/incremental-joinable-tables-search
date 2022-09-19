@@ -236,7 +236,7 @@ void save_to_query_result_file(char * csv_file, unsigned int qtable_id, unsigned
           printf("Error in bf.c: Could not open file %s!\n", csv_file);
           exit(1);
   }
-  printf("storing knns, total knns = %d\n", num_knns);
+  // printf("storing knns, total knns = %d\n", num_knns);
 
   COUNT_PARTIAL_OUTPUT_TIME_START
   // write header

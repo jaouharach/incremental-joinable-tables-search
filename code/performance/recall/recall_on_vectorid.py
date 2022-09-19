@@ -59,7 +59,7 @@ def get_recall_evaluation(nqueries, source_dir, ground_truth_dir, output_file):
                     queries.append(query)
                     dir = str(os.path.basename(subdir)).replace(algo, BRUTE_FORCE_ALGO_NAME)
                     print(f"----------- k = {k} ------------\n")
-                    compute_query_recall(query, source_dir+f'/{k}nn/{os.path.basename(subdir)}/'+file, ground_truth_dir+f'/{k}nn/{dir}/', algo, total_files, data_gb_size, k, NUM_TOP, output_file)
+                    compute_query_recall(query, source_dir+f'/{k}nn/{os.path.basename(subdir)}/'+file, ground_truth_dir+f'/{dir}/', algo, total_files, data_gb_size, k, NUM_TOP, output_file)
                     
     return queries, k_count
 
@@ -95,7 +95,6 @@ def compute_recall(csv_file, gt_csv_file):
     total_gt_rows = len(gt_results)
     total_rows = len(results)
 
-    
     gt_results = gt_results.sort_values('q_pos')
     results = results.sort_values('q_pos')
 
@@ -203,7 +202,7 @@ source_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/
 ground_truth_dir = "/home/jaouhara/Documents/Projects/iqa-demo/code/search-algorithms/bf/results/100k-results/"
 output_img_dir = "./img/"
 
-csv_file = "./csv/recall_eval_100k_on_vectorid.csv"
+csv_file = "./csv/recall.csv"
 querytime_csv_file = "../query-time/csv/kashif_querytime_100k_new.csv"
 nqueries = 10
 k_count = 10

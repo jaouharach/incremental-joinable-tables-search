@@ -237,7 +237,8 @@
                       <div>
                         <form id="view_dataset_form_{{ result[0][0] }}" action="http://localhost:5000/view-dataset" method="post">
                           <input type="hidden" name="file_name" value="{{ result[0][0] }}"/>
-                          <input type="hidden" name="column_idx" value="{{ result[0][1] }}"/>
+                          <input type="hidden" name="column_idx" value="{{ result[0][2] }}"/>
+                          <input type="hidden" name="table_id" value="{{ result[0][1] }}">
                         
                         {% if result[1]["page_title"] %} 
                         <a href="#" onclick='document.getElementById("view_dataset_form_{{ result[0][0] }}").submit();'' class="mb-0 font-medium p-0"
@@ -259,18 +260,17 @@
                         {% endif %}
                         <br>
                         <a href="{{ result[1]['url'] }}">Source page</a>
-                        <!-- <span class="text-muted">Raw binary file {{ result[0][0] }}, Found matches in column {{ result[0][1] }}. </span> -->
                       </div>
                       <div class="ms-auto">
                         <div class="text-right">
                           <!-- <h5 class="text-muted mb-0">Found</h5> -->
                           {% if keyword_query == 0 %}
-                            {% if result[0][2] == 1 %}
-                            <span class="text-muted font-16">{{ result[0][2] }} match</span>
+                            {% if result[0][3] == 1 %}
+                            <span class="text-muted font-16">{{ result[0][3] }} match</span>
                             {% else %}
-                            <span class="text-muted font-16">{{ result[0][2] }} matches</span>
+                            <span class="text-muted font-16">{{ result[0][3] }} matches</span>
                             {% endif %}
-                            {% else %}
+                          {% else %}
                             {% if result[0][4] == 1 %}
                             <span class="text-muted font-16">{{ result[0][4] }} match</span>
                             {% else %}

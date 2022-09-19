@@ -1,0 +1,30 @@
+from pickle import NONE
+from flask import Flask, render_template, request, redirect
+import pandas as pd
+import subprocess, re
+import time, json, os
+
+
+import sys
+sys.path.append('./utils')
+from query_to_bin import *
+
+ALLOWED_EXTENSIONS = {'csv'}
+
+RESULTS_FOLDER = "/home/jaouhara.chanchaf/Projects/IQA/iqa-bf/iqa-demo/code/ui/data/query_results/"
+UPLOAD_FOLDER = "/home/jaouhara.chanchaf/Projects/IQA/iqa-bf/iqa-demo/code/ui/data/uploads/"
+TMP_FOLDER = UPLOAD_FOLDER + "tmp/"
+BIN_FOLDER = UPLOAD_FOLDER + "bins/"
+
+EMBEDDING_DIM = 50
+KASHIF_BIN = "../search-algorithms/kashif/bin/dstree"
+
+KASHIF_IDX = "/home/jaouhara.chanchaf/work-dir/indexes/900k-idx/" # storing 100k tables
+RAW_DATA_FOLDER = "//home/jaouhara.chanchaf/work-dir/data/wdc-2015/0/"
+CLEAN_DATA_FOLDER = "/home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/tables/"
+
+# EMBEDDING_MODEL = 'glove' # 'fasttext' or 'glove'
+# PATH_TO_MODEL = {"ar": "", "en": "/home/jaouhara.chanchaf/work-dir/embedding-models/glove/glove.6B.50d.txt","fr": ""}
+
+EMBEDDING_MODEL = 'fasttext'
+PATH_TO_MODEL = {"ar": "/home/jaouhara.chanchaf/work-dir/embedding-models/fasttext/cc.ar.300.bin", "en": "/home/jaouhara.chanchaf/work-dir/embedding-models/fasttext/cc.en.300.bin","fr": "/home/jaouhara.chanchaf/work-dir/embedding-models/fasttext/cc.fr.300.bin"}

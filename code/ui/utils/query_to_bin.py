@@ -36,7 +36,7 @@ def save_bin_file(target_dir, tableid, bin_table, totalvec, ncols, embedding_dim
     f.write(bin_table)
     f.close()
 
-def query_to_bin(query_array, text_target_dir, bin_target_dir, embedding_model, path_to_embedding_model, embedding_dim):
+def query_to_bin(query_array, text_target_dir, bin_target_dir, embedding_model, path_to_embedding_model, embedding_dim, query_table_id = 0):
     # check if target dir exists
     if not os.path.exists(text_target_dir) or not os.path.exists(bin_target_dir):
         return -1, "Target directory doesn't exist"
@@ -49,7 +49,7 @@ def query_to_bin(query_array, text_target_dir, bin_target_dir, embedding_model, 
         return -1, "Query column is a numerical column!"
     else:
         query_size = len(new_array)
-        query_data = {'id': 0, 'ncols':  1, 'cols': [new_array]}
+        query_data = {'id': query_table_id, 'ncols':  1, 'cols': [new_array]}
         
         # delete all temp files in temp folder
         if(clear_folder(text_target_dir) and clear_folder(bin_target_dir)):

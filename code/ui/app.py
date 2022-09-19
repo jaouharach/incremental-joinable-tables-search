@@ -1,5 +1,6 @@
 from pickle import NONE
 from flask import Flask, render_template, request, redirect
+from matplotlib.pyplot import table
 import pandas as pd
 import subprocess, re
 import time, json, os
@@ -50,8 +51,7 @@ def read_raw_file(raw_filename, source_dir):
         ncols = len(table['relation'])
         num_rows = [len(col) for col in cols]
         max_num_rows = max(num_rows)
-
-        print(f"\n\n\n max rows = {max_num_rows}\n\n\n")
+        
         # df = pd.DataFrame(table['cols'])
         return ncols, cols, max_num_rows,  ""
 
@@ -124,10 +124,13 @@ def read_metadata_file(binary_filename, clean_data_dir, raw_data_dir):
 def csv_to_bin_file(query_file , column_idx, query_lang):
     df = pd.read_csv(query_file, engine='python')
     if column_idx < 0 or column_idx > df.shape[1] - 1:
-        return -1, f"Wrong value for column idx. file only contains {df.shape[1]} columns"
+        return -1, f"Wrong value for column idx. file only contains {df.shape[1]} columns."
     else:
         query_column = df.iloc[:, column_idx].values
-        query_size, msg = query_to_bin(query_column, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL[query_lang], EMBEDDING_DIM)
+        query_table_id = int(re.search(r'_t(.*).csv', query_file.filename).group(1))
+        if query_table_id:
+            query_table_id = int(query_table_id)
+        query_size, msg = query_to_bin(query_column, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL[query_lang], EMBEDDING_DIM, query_table_id)
         
         return query_size, msg
 
@@ -185,24 +188,25 @@ def get_join_query_results(query_size, top, k, approx_error):
     print(f"**{kashif_output}**")
 
     files = list(re.findall(r'@@(.*?)\$', kashif_output)) # get file names without duplicates
+    table_ids = list(re.findall(r'table-(.*?)\-', kashif_output))
     column_pos = list(re.findall(r'column-(.*?)\-', kashif_output))
     overlaps = list(re.findall(r'overlap=(.*?)\§', kashif_output))
     query_time = "{:.2f}".format(float(re.search(r'query_time=(.*?)sec', kashif_output).group(1)))
 
     print(f"Query time = {query_time} sec\n")
-    temp = set(list(zip(files, column_pos, overlaps)))
+    temp = set(list(zip(files, table_ids, column_pos, overlaps)))
     visited = set()
     results = list()
-    for (f, sid, o) in temp:
+    for (f, tid, sid, o) in temp:
         if o == '0':
             continue
-        if (f, sid) not in visited: 
-            visited.add((f, sid))
-            results.append((f, int(sid)+1, int(o)))
-            print(f"{f}, {sid}, {o}")
+        if (f, tid, sid) not in visited: 
+            visited.add((f, tid, sid))
+            results.append((f,  int(tid), int(sid)+1, int(o)))
+            print(f"{f}, {tid}, {sid}, {o}")
         
     # sort results by overlap 
-    results.sort(key=lambda x:x[2], reverse=True)
+    results.sort(key=lambda x:x[3], reverse=True)
     metadata = list()
     for result in results:
         metad, msg = read_metadata_file(result[0], CLEAN_DATA_FOLDER, RAW_DATA_FOLDER)
@@ -333,6 +337,9 @@ def view_dataset():
     if request.method == 'POST':
         filename = request.form['file_name']
         column_idx = request.form['column_idx']
+        table_id = request.form['table_id']
+
+        print(f"(+) table id = {table_id}")
 
         if not filename or not column_idx:
             return render_template('404.html')
@@ -349,7 +356,7 @@ def view_dataset():
 
             print(metadata)
             
-            return render_template('view-dataset.html', metadata=metadata, file_name=request.form['file_name'], match_col=column_idx, cols=cols, ncols=ncols, max_num_rows=max_num_rows)
+            return render_template('view-dataset.html', metadata=metadata, file_name=request.form['file_name'], table_id=table_id, match_col=column_idx, cols=cols, ncols=ncols, max_num_rows=max_num_rows)
 
 
 if __name__ == '__main__':
