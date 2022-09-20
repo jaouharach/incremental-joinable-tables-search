@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  16 SEP 2022 15:35
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  20 SEP 2022 10:29
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -687,11 +687,7 @@ Package hyperref Info: Option `pdfdisplaydoctitle' set `true' on input line 133
 .
 
 Excluding comment 'screenonly' Include comment 'printonly'
-Include comment 'anonsuppress' (./paper.aux
-
-LaTeX Warning: Label `tab:q1-result1' multiply defined.
-
-)
+Include comment 'anonsuppress' (./paper.aux)
 \openout1 = `paper.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 133.
@@ -712,8 +708,7 @@ LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 133.
 LaTeX Font Info:    ... okay on input line 133.
 <<ot1.cmap>><<oml.cmap>><<oms.cmap>><<omx.cmap>>
 LaTeX Font Info:    Try loading font information for U+msa on input line 133.
-
-(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+ (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
 LaTeX Font Info:    Try loading font information for U+msb on input line 133.
@@ -850,121 +845,193 @@ File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 7.
 
-
-LaTeX Warning: Reference `tab:q1-result2' on page 1 undefined on input line 13.
-
-
-
-LaTeX Warning: Reference `tab:q1-result2' on page 1 undefined on input line 15.
+Underfull \hbox (badness 2020) in paragraph at lines 6--9
+\OT1/cmr/m/n/9 (+20) a keyword-query $\OML/cmm/m/it/9 Q[] \OT1/cmr/m/n/9 (+20) 
+=$ (\OMS/cmsy/m/n/9 f\OT1/cmr/m/n/9 (+20) "biomass", "power",
+ []
 
 
+Underfull \hbox (badness 1824) in paragraph at lines 6--9
+\OT1/cmr/m/n/9 (+20) at-tempt the search en-gine re-turns Ta-ble []1[] (at
+ []
 
-Underfull \hbox (badness 10000) in paragraph at lines 70--70
+
+Underfull \hbox (badness 10000) in paragraph at lines 6--9
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 10--14
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
 []|\OT1/cmr/m/n/9 (+20) Wheelabrator
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 70--70
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
 []|\OT1/cmr/m/n/9 (+20) Logging
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 70--70
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
 \OT1/cmr/m/n/9 (+20) and Mill
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 70--70
+Underfull \hbox (badness 10000) in paragraph at lines 28--28
 \OT1/cmr/m/n/9 (+20) Residue/Ag
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 72--72
+Underfull \hbox (badness 10000) in paragraph at lines 30--30
 []|\OT1/cmr/m/n/9 (+20) Ag
  []
 
 
-Overfull \hbox (3.477pt too wide) in paragraph at lines 72--72
+Overfull \hbox (3.477pt too wide) in paragraph at lines 30--30
 \OT1/cmr/m/n/9 (-20) Residue/Urban
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 74--74
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+[]|\OT1/cmr/m/n/9 (+20) Mill and
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+\OT1/cmr/m/n/9 (+20) Log-ging
+ []
+
+
+Overfull \hbox (2.63678pt too wide) in paragraph at lines 32--32
+\OT1/cmr/m/n/9 (-20) Residue/Forest
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+\OT1/cmr/m/n/9 (+20) Thin-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 32--32
+\OT1/cmr/m/n/9 (+20) ning/Urban
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
 []|\OT1/cmr/m/n/9 (+20) Covanta
  []
 
 
-Underfull \hbox (badness 2951) in paragraph at lines 74--74
+Underfull \hbox (badness 2951) in paragraph at lines 34--34
 []|\OT1/cmr/m/n/9 (+20) Orchard and
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 74--74
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
 \OT1/cmr/m/n/9 (+20) Vine-yard
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 74--74
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
 \OT1/cmr/m/n/9 (+12) Prun-ings/Nut
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 74--74
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
 \OT1/cmr/m/n/9 (+20) Shells/Stone
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 76--76
-[]|\OT1/cmr/m/n/9 (+20) Honey Lake
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 76--76
-[]|\OT1/cmr/m/n/9 (+20) Mill and Log-ging
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 76--76
-\OT1/cmr/m/n/9 (+20) Residue/Forest
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 76--76
-\OT1/cmr/m/n/9 (+20) Thin-ning/Urban
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 89--89
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
 []|\OT1/cmr/m/n/9 (+20) Plant
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 89--89
-[]|\OT1/cmr/m/n/9 (+20) Start
+Underfull \hbox (badness 10000) in paragraph at lines 49--49
+[]|\OT1/cmr/m/n/9 (+20) Retire
  []
 
 
-Underfull \hbox (badness 2142) in paragraph at lines 89--89
+Underfull \hbox (badness 2142) in paragraph at lines 49--49
 []|\OT1/cmr/m/n/9 (+20) Prime mover
  []
 
 
-Underfull \hbox (badness 1168) in paragraph at lines 89--89
+Underfull \hbox (badness 1168) in paragraph at lines 49--49
 []|\OT1/cmr/m/n/9 (+20) Prime Mover
  []
 
 
-Overfull \hbox (6.79466pt too wide) in paragraph at lines 89--89
+Overfull \hbox (6.79466pt too wide) in paragraph at lines 49--49
 []|\OT1/cmr/m/n/9 (-20) Capacity| 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 89--90
+Underfull \hbox (badness 10000) in paragraph at lines 49--50
 []|\OT1/cmr/m/n/9 (+20) net
  []
 
 
-Overfull \hbox (40.90346pt too wide) in paragraph at lines 87--95
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+[]|\OT1/cmr/m/n/9 (+20) Desert View
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 51--51
+[]|\OT1/cmr/m/n/9 (+20) Steam Tur-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+[]|\OT1/cmr/m/n/9 (+20) HL Power
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+\OT1/cmr/m/n/9 (+20) Com-pany
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 53--53
+[]|\OT1/cmr/m/n/9 (+20) Steam Tur-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+[]|\OT1/cmr/m/n/9 (+20) Covanta
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+[]|\OT1/cmr/m/n/9 (+11) Delano
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 55--55
+[]|\OT1/cmr/m/n/9 (+20) Steam Tur-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+[]|\OT1/cmr/m/n/9 (+20) Wheelabrator
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+[]|\OT1/cmr/m/n/9 (+20) Units
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 57--57
+[]|\OT1/cmr/m/n/9 (+20) Steam Tur-
+ []
+
+
+Overfull \hbox (40.90346pt too wide) in paragraph at lines 47--66
  [][] 
  []
 
@@ -1001,38 +1068,32 @@ Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 221.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 221.
 Package rerunfilecheck Info: File `paper.out' has not changed.
 (rerunfilecheck)             Checksum: 047BF8BCD4DFDE85EFED49C01C54D876;791.
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: There were multiply-defined labels.
-
  ) 
 Here is how much of TeX's memory you used:
- 17359 strings out of 494847
- 252855 string characters out of 6179081
- 416070 words of memory out of 5000000
+ 17347 strings out of 494847
+ 252773 string characters out of 6179081
+ 423091 words of memory out of 5000000
  20128 multiletter control sequences out of 15000+600000
- 15835 words of font info for 79 fonts, out of 8000000 for 9000
+ 15415 words of font info for 73 fonts, out of 8000000 for 9000
  220 hyphenation exceptions out of 8191
- 60i,11n,94p,817b,465s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,11n,94p,817b,464s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share
 /texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texliv
-e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/share/texlive/texmf
--dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/f
-onts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
-mr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.
-pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></u
-sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb>
-Output written on paper.pdf (2 pages, 177585 bytes).
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb
+></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/shar
+e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb>
+Output written on paper.pdf (2 pages, 188169 bytes).
 PDF statistics:
- 140 PDF objects out of 1000 (max. 8388607)
- 104 compressed objects within 2 object streams
+ 150 PDF objects out of 1000 (max. 8388607)
+ 112 compressed objects within 2 object streams
  20 named destinations out of 1000 (max. 500000)
  16449 words of extra memory for PDF output out of 17280 (max. 10000000)
 

@@ -127,9 +127,12 @@ def csv_to_bin_file(query_file , column_idx, query_lang):
         return -1, f"Wrong value for column idx. file only contains {df.shape[1]} columns."
     else:
         query_column = df.iloc[:, column_idx].values
-        query_table_id = int(re.search(r'_t(.*).csv', query_file.filename).group(1))
+        query_table_id = re.search(r't(.*).csv', query_file.filename)
+        
         if query_table_id:
-            query_table_id = int(query_table_id)
+            query_table_id = int(query_table_id.group(1))
+        else:
+            query_table_id = 0
         query_size, msg = query_to_bin(query_column, TMP_FOLDER, BIN_FOLDER, EMBEDDING_MODEL, PATH_TO_MODEL[query_lang], EMBEDDING_DIM, query_table_id)
         
         return query_size, msg

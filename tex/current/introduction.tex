@@ -4,63 +4,21 @@
 \begin{itemize}
 %	relative food prices affect dietary quality
 	\item \textbf{Use case 1: Keyword Query}\\
-	 A data scientist wants to analyze the impact of food cost inflation on food consumption. Initially  The user decides to start the search with a keyword-query $Q_{0} = $  (\{"food", "consumption"\}, $k = 10$). The search engine returns Table \ref{tab:q1-result1} which contains data from year 1990 to 2009 about {\it "Per Capita Consumption of Principal Foods (in pounds)"}. The user decides to keep Table \ref{tab:q1-result1} for the study and continue to search for other relevant tables. %k = 10
+	 A data scientist wants to retrieve datasets with information related to Biomass Power Companies. Initially,  The user decides to start the search with a keyword-query $Q_{0,0} = $  (\{"biomass", "power", "companies"\}, $k = 10$). The search engine returns thirty datasets but none seem relevant to the user.
+	 To retrieve more results the user decides to run the same query and increase $k$, $Q_{0,1} = $  (\{"biomass", "power", "companies"\}, $k = 20$). After the second attempt the search engine returns Table \ref{tab:q1-result1} (at position \#31) which contains data about biomass power plants per company. The user decides to keep Table \ref{tab:q1-result1} and continue to search for other relevant tables.\\
 	
 	\item \textbf{Use case 2: Join Query}
-	Table \ref{tab:q1-result1} is a good first result as it contains a complete list of the main food types, however this result lacks information on food prices. For that the use perform a join query on the food column to explore other tables that may have information about food prices for the years 1990 to 2009. \\*
-	\textbf{Attempt 1:} To speed up search the user submits $Q_{1} =$ (Table \ref{tab:q1-result1}, Join column : "Food", $k = 10$) with a small $k$ value. The search engine returned $775$ tables. However, after skimming through the list of returned tables nothing seemed relevant to the user. 
+	Table \ref{tab:q1-result1} is relevant to $Q_{0,1}$ as it contains a list of biomass power plants, their location and capacity in Mega-Watt. However the user wants to include other information related to the prime mover of each plant, its status (operational or not), its start date etc. For that the user selects a set of plants based in California,  and  perform a join query on the "Plant" column in Table \ref{tab:q1-result1} to explore other tables that may complement  Table \ref{tab:q1-result1} with more information. \\*
+	To avoid running the join query multiple times, the user chooses a high $k$ value at the expense of query time.
+	$Q_{1,0} =$ ($\sigma_{Location = "\%CA\%"}$(Table \ref{tab:q1-result1}), Join column : "Plant", $k = 100$). The search engine returned $381$ results. After skimming through the list of result, the user finds Table \ref{tab:q1-result2} at position \#121. Table \ref{tab:q1-result2} can be joined with Table \ref{tab:q1-result1} on column "Plant name". \\
 	
-	\textbf{Attempt 2:} The user decides to increase $k$ to get more results from the search engine. He/she submits a second query $Q_{2} =$ (Table \ref{tab:q1-result1}, Join column : "Food", $k = 20$). This time the search engine returned 161 tables, because the number of results is big the user could notice Table \ref{tab:q1-result2} ranked at position 55.
 	
-	\textbf{Attempt 3:} As a last attempt the user gave up on getting any fast meaningful result so he/she decide to increase $k$ significantly in hope that a relevant table will appear in the list of results. He/she submits $Q_{3} =$ (Table \ref{tab:q1-result1}, Join column : "Food", $k = 200$). Finally and after several attempts, the search engine returned Table \ref{tab:q1-result2} at position $11$ which contains information on food prices from the 2007 WIC program. % k = 100 \\
-
-\iffalse
-	\begin{table*}[t]
-		\setlength{\tabcolsep}{0.9\tabcolsep}
-		\begin{tabular}{ |l|l|l|l|l|l|l|l|  }
-			\hline
-			Food&	1990&	1995&	2000&	2002&	2004&	2005&	2009\\
-			\hline
-			Wheat flour& 	135.9& 	140.0& 	146.3& 	136.8& 	134.3& 	134.1& 	134.6\\
-			Vegetables& 	386.0& 	407.6& 	423.0& 	411.8& 	422.8& 	415.4& 	390.9\\
-			Veal& 	0.9& 	0.8& 	0.5& 	0.5& 	0.4& 	0.4& 	0.3\\
-			Turkey& 	13.8& 	13.9& 	13.7& 	14.0& 	13.4& 	13.1& 	13.3\\
-			Tree nuts& 	2.45& 	1.94& 	2.57& 	3.24& 	3.62& 	2.7& 	3.7\\
-			Rice (milled basis)& 	15.8& 	17.1& 	18.9& 	19.5& 	20.4& 	21.0& 	21.2\\
-			Red meats2,3,4& 	112.2& 	113.6& 	113.7& 	114.0& 	112.0& 	110.0& 	105.7\\
-			Poultry2,3,4& 	56.2& 	62.1& 	67.9& 	70.7& 	72.7& 	73.6& 	69.4\\
-			... & ...& ...& ...& ...& ...& ...& ...\\
-			\hline
-			
-		\end{tabular}
-		\vspace{.2cm}
-		\caption{ U.S. Economy and the Federal Budget Economy: Per Capita Consumption of Principal Foods \label{tab:q1-result1}}
-	\end{table*}
+	Because the user has no prior knowledge of the total dataset size nor the optimal $k$ value to retrieve relevant results in the least time possible, the user chooses $k$ values randomly until he/she finds a relevant table.\\*
+	In use case 2 the user is unaware that the same result could be retrieved with $k = 10$ and in less time.  \\* Due to a large number of results, It is also possible that the user does not notice the result at position  \#121, and decides to further increase $k$. For example, if the user submits $Q_{1,1} =$ (Table \ref{tab:q1-result1}, Join column : "Plant", $k = 200$). The search engine will return 755 results, and Table \ref{tab:q1-result2} would be at position \#235.
 	
-	\begin{table*}[!ht]
-	\setlength\extrarowheight{2pt} % for a bit of visual "breathing space"
-		\begin{tabular}{ |l|p{8cm}|l|p{4cm}|  }
-			\hline
-			\textbf{Food item}&	\textbf{Retail sales database selection criteria}&	\textbf{Units}&	\textbf{Price per unit (inflated to FY06)}\\
-			\hline
-			
-			Yogurt& 	Quart sized containers and larger. Plain, vanilla, and fruit flavors& 	qt& 	2.068\\\hline
-			Whole-grain& bread 	Wheat or grain bread& 	lb& 	1.422\\\hline
-			Whole& 	Fresh dairy milk only,1/2gallon or gallon containers. Reduced fat includes skim milk and milk identified as 2\% or lower milk fat& 	qt& 	0.767\\\hline
+	
 
-			Tuna& 	Chunk light, canned& 	oz& 	0.101\\\hline
-		
-			Peanut butter& 	All forms and varieties. Not mixed with jelly& 	oz& 	0.094\\\hline
-			Brown rice& 	Instant or regular& 	lb& 	1.178\\\hline
-			...& 	...& 	...& 	...\\
-			\hline
-			
-		\end{tabular}
-		\vspace{.2cm}
-		\caption{WIC Foods: Food Item, Selection Criteria, Units, and Prices Per Unit (US Federal Register, 2007) \label{tab:q1-result2}}
-	\end{table*}
-\fi
-
+% k = 50 retult at 16, tr = 147
 \begin{table*}[!ht]
 	\setlength\extrarowheight{2pt} % for a bit of visual "breathing space"
 	\begin{tabular}{ |l|p{2cm}|p{3cm}|p{2cm}|l|  }
@@ -71,9 +29,11 @@
 		\hline
 		Greenleaf Power LLC& 	Desert View& 	Mecca - CA& 	Ag Residue/Urban Wood Waste& 	47\\
 		\hline
+		Greenleaf Power LLC& 	Honey Lake& 	Wendel - CA&	Mill and Logging Residue/Forest Thinning/Urban Woodwaste& 	30\\
+		\hline
 		Covanta& 	Covanta Delano& 	Delano - CA& 	Orchard and Vineyard Prunings/Nut Shells/Stone Fruit Pits& 	58\\
 		\hline
-		Greenleaf Power LLC& 	Honey Lake 	Wendel - CA&	Mill and Logging Residue/Forest Thinning/Urban Woodwaste& 	30\\
+		... & ... & ... & ... & ...\\
 		\hline
 		
 	\end{tabular}
@@ -84,15 +44,26 @@
 
 \begin{table*}[!ht]
 	\setlength\extrarowheight{2pt} % for a bit of visual "breathing space"
-	\begin{tabular}{ |l|p{1cm}|p{2cm}|p{1cm}|l|p{1cm}|p{2cm}|p{2cm}|p{2cm}|p{1cm}|p{1cm}|  }
+	\begin{tabular}{ |l|p{1cm}|p{2cm}|p{1cm}|l|p{2cm}|p{1cm}|p{2cm}|p{2cm}|p{1cm}|p{1cm}|  }
 		\hline
 		Category& 	Plant ID& 	Plant Name& 	Unit& 	Status& 	Start Date& 	Retire Date& 	Prime mover ID& Prime Mover Description& Capacity& net MWh\\
+		\hline
+		 E& E0027& 	Desert View Power (Mecca Plant)& 	GEN1& 	OP& 	1991/11/1& 	-	&ST& 	Steam Turbine& 	54.15& 	351291\\
+		 \hline
+		 E & 	E0041& 	HL Power Company (Honey Lake)& 	GEN 1& 	OP& 	1989/7/26& 	-	&ST& 	Steam Turbine& 	35.5& 	200712\\
+		 \hline
+		 E& E0029& 	Covanta Delano, Inc& 	Delano 1-2& 	OP& 	1990/6/12& 	- &ST& 	Steam Turbine& 	58& 	322731\\
+		 \hline
+		 E& 	E0086& 	Wheelabrator Shasta& 	Units 1-3& 	OP& 	1987/1/1& 	-	&ST& 	Steam Turbine& 	54.9& 	405628\\
+		 \hline
+		 ... & ... & ... & ... & ... & ... & ... & ... & ... & ... & ... \\
+		 
 		\hline
 		
 		
 	\end{tabular}
 	\vspace{.2cm}
-	\caption{U.S. Biomass Power Plants\label{tab:q1-result1}}
+	\caption{Annual Generation - Plant Unit\label{tab:q1-result2}}
 \end{table*}
 
 \end{itemize}
