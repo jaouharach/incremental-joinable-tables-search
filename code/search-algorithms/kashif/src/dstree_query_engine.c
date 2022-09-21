@@ -2077,6 +2077,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     knn_results[idx].vector_id->set_id = 1000000000000;
     knn_results[idx].vector_id->pos = 1000000000000;
     knn_results[idx].query_vector_pos = query_id->pos;
+    knn_results[idx].time = 0;
+    knn_results[idx].num_checked_vectors = 0;
   }
 
   // return k approximate results
@@ -2116,7 +2118,12 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
     // IMPORTANT!!!!
     // fix this: increase found_knn and do not print until the end.
-    // update_query_stats(index,q_id, found_knn, approximate_result);
+    update_query_stats(index,q_id, found_knn, approximate_result);
+    for(int w = 0; w > k; w++)
+    {
+      knn_results[w].time += index->stats->query_total_cpu_time;
+      knn_results[w].num_checked_vectors += index->stats->query_filter_checked_ts_count;
+    }      
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn,qfilename);
   }
@@ -2170,17 +2177,16 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
         update_query_stats(index, q_id, found_knn, bsf_result);
         *total_query_set_time += index->stats->query_total_cpu_time;
-
+        knn_results[found_knn].time += index->stats->query_total_cpu_time;
+        knn_results[found_knn].num_checked_vectors += index->stats->query_filter_checked_ts_count;
         // get_query_stats(index, found_knn);
         // print_query_stats(index, q_id, found_knn, qfilename);
 
 
         // printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
-
         // print_perk_progressive_bsf_snapshots(
         //     index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
         //     bsf_result.distance, dataset_file, series_file, series);
-
         // printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
 
         // print_perk_progressive_bsf_snapshots(index,
@@ -2275,18 +2281,19 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     found_knn = pos + 1;
     COUNT_PARTIAL_TIME_END
     update_query_stats(index, q_id, found_knn, bsf_result);
+    knn_results[pos].time += index->stats->query_total_cpu_time;
+    knn_results[pos].num_checked_vectors += index->stats->query_filter_checked_ts_count;
     *total_query_set_time += index->stats->query_total_cpu_time;
 
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn, qfilename);
 
     // printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
-
     // print_perk_progressive_bsf_snapshots(
     //     index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
     //     bsf_result.distance, dataset_file, series_file, series);
-    
     // printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+
     // print_perk_progressive_bsf_snapshots(index,
     // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
     // bsf_result.distance, NULL, NULL); report all results for found_knn -
@@ -2348,6 +2355,8 @@ struct query_result *exact_de_knn_search_2(
     knn_results[idx].vector_id->set_id = 1000000000000;
     knn_results[idx].vector_id->pos = 1000000000000;
     knn_results[idx].query_vector_pos = query_vector_pos;
+    knn_results[idx].time = 0;
+    knn_results[idx].num_checked_vectors = 0;
   }
 
   // return k approximate results
@@ -2585,6 +2594,8 @@ struct query_result *exact_de_progressive_knn_search_2(
     knn_results[idx].vector_id->set_id = 1000000000000;
     knn_results[idx].vector_id->pos = 1000000000000;
     knn_results[idx].query_vector_pos = query_vector_pos;
+    knn_results[idx].time = 0;
+    knn_results[idx].num_checked_vectors = 0;
   }
 
   // return k approximate results

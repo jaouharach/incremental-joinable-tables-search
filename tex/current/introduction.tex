@@ -10,15 +10,12 @@
 	\item \textbf{Use case 2: Join Query}
 	Table \ref{tab:q1-result1} is relevant to $Q_{0,1}$ as it contains a list of biomass power plants, their location and capacity in Mega-Watt. However the user wants to include other information related to the prime mover of each plant, its status (operational or not), its start date etc. For that the user selects a set of plants based in California,  and  perform a join query on the "Plant" column in Table \ref{tab:q1-result1} to explore other tables that may complement  Table \ref{tab:q1-result1} with more information. \\*
 	To avoid running the join query multiple times, the user chooses a high $k$ value at the expense of query time.
-	$Q_{1,0} =$ ($\sigma_{Location = "\%CA\%"}$(Table \ref{tab:q1-result1}), Join column : "Plant", $k = 100$). The search engine returned $381$ results. After skimming through the list of result, the user finds Table \ref{tab:q1-result2} at position \#121. Table \ref{tab:q1-result2} can be joined with Table \ref{tab:q1-result1} on column "Plant name". \\
+	$Q_{1,0} =$ ($\sigma_{Location = "\%CA\%"}$(Table \ref{tab:q1-result1}), Join column : "Plant", $k = 100$). The search engine returned $381$ results. After skimming through the list of result, the user finds Table \ref{tab:q1-result2} at position \#315. Table \ref{tab:q1-result2} can be joined with Table \ref{tab:q1-result1} on column "Plant name". \\
 	
-	
-	Because the user has no prior knowledge of the total dataset size nor the optimal $k$ value to retrieve relevant results in the least time possible, the user chooses $k$ values randomly until he/she finds a relevant table.\\*
-	In use case 2 the user is unaware that the same result could be retrieved with $k = 10$ and in less time.  \\* Due to a large number of results, It is also possible that the user does not notice the result at position  \#121, and decides to further increase $k$. For example, if the user submits $Q_{1,1} =$ (Table \ref{tab:q1-result1}, Join column : "Plant", $k = 200$). The search engine will return 755 results, and Table \ref{tab:q1-result2} would be at position \#235.
-	
-	
+\end{itemize}
+Because the user has no prior knowledge of the total dataset size nor the optimal $k$ value to retrieve relevant results in the least time possible, the user chooses $k$ values randomly until he/she finds a relevant table.\\*
+In use case 2 the user is unaware that the same result could be retrieved at position \#5 with $k = 10$.  \\* Due to a large number of results, It is also possible that the user does not notice the desired result and decides to further increase $k$. For example, suppose that in use case 2 the user did not notice the result at position \#315 and decided to submit $Q_{1,1} =$ ($\sigma_{Location = "\%CA\%"}$(Table \ref{tab:q1-result1}), Join column : "Plant", $k = 200$). The search engine will return 755 results, and Table \ref{tab:q1-result2} would be at position \#235.
 
-% k = 50 retult at 16, tr = 147
 \begin{table*}[!ht]
 	\setlength\extrarowheight{2pt} % for a bit of visual "breathing space"
 	\begin{tabular}{ |l|p{2cm}|p{3cm}|p{2cm}|l|  }
@@ -66,4 +63,3 @@
 	\caption{Annual Generation - Plant Unit\label{tab:q1-result2}}
 \end{table*}
 
-\end{itemize}

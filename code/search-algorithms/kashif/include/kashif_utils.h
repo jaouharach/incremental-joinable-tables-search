@@ -25,13 +25,14 @@ typedef struct vector {
 // create result file name and path.
 char *make_file_path(char *result_dir, unsigned int qtable_id,
                      unsigned int qset_id, unsigned int qsize, unsigned int l,
-                     unsigned int dlsize, unsigned int vector_length,
-                     float runtime, unsigned int total_checked_vec);
+                     unsigned int dlsize, unsigned int vector_length, unsigned int k);
+
+void get_k_values(unsigned int * k_values, char * k_values_str, unsigned int * num_k_values);
 
 // save query results to csv file
 enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
                                         unsigned int qset_id, int num_knns,
-                                        struct query_result *knn_results);
+                                        struct query_result *knn_results, unsigned int k, unsigned int max_k);
 
 // create experiment results dir
 char *make_result_directory(char *result_dir, unsigned int total_data_files,
@@ -191,6 +192,32 @@ unsigned int get_data_gb_size(char *dl_dir, unsigned int total_data_files) {
                              1073741824); // return data size in GB
 }
 
+// extract k values from a string. ex: "1,3,5,10,30,50" to [1, 2, 3, 10, 30, 50]
+void get_k_values(unsigned int * k_values, char * k_values_str, unsigned int * num_k_values)
+{
+  // More general pattern:
+  char *token, *str, *tofree;
+  tofree = str = strdup(k_values_str);  // We own str's memory now.
+  while ((token = strsep(&str, ",")))
+  {
+    unsigned int k = atoi(token);
+    if(k)
+    {
+      (*num_k_values) += 1;
+      k_values = (unsigned int *) realloc(k_values, sizeof(unsigned int) * (*num_k_values));
+      if (k_values == NULL)
+      {
+        fprintf(stderr,"Error kashif_utils.c:  Could not allocate memory for set of k values.\n");
+          return -1;
+      }
+      k_values[(*num_k_values) -1] = k;
+    }
+  }
+  
+  free(tofree);
+  return k_values;
+}
+
 // count digits in integer
 int get_ndigits(unsigned int n) {
   int total_digits = 0;
@@ -205,8 +232,7 @@ int get_ndigits(unsigned int n) {
 char *make_file_path(char *result_dir, unsigned int qtable_id,
                      unsigned int qset_id, unsigned int qsize,
                      unsigned int total_data_files, unsigned int dlsize,
-                     unsigned int vector_length, float runtime,
-                     unsigned int total_checked_vec) {
+                     unsigned int vector_length, unsigned int k) {
   COUNT_INPUT_TIME_START
   DIR *dir = opendir(result_dir);
   COUNT_INPUT_TIME_END
@@ -217,29 +243,28 @@ char *make_file_path(char *result_dir, unsigned int qtable_id,
   char *filepath = malloc(
       get_ndigits(qtable_id) + get_ndigits(qset_id) +
       get_ndigits(total_data_files) + get_ndigits(dlsize) +
-      get_ndigits(vector_length) + get_ndigits((unsigned int)runtime) +
-      get_ndigits(total_checked_vec) + get_ndigits(qsize) +
-      strlen("TQ_Q_qsize_l_dlsize_len_runtime_ndistcalc_dataaccess.csv") +
-      strlen(result_dir) +
-      10 // float decimal precision for dlsize and runtime (.00)
-      + 1);
+      get_ndigits(vector_length) + get_ndigits(qsize) + get_ndigits(k) +
+      strlen("TQ_Q_qsize_l_dlsize_len_k.csv") +
+      strlen(result_dir));
+
   sprintf(filepath,
           "%s/"
-          "TQ%u_Q%u_qsize%u_l%u_dlsize%u_len%u_runtime%.3f_ndistcalc_"
-          "dataaccess%u.csv\0",
+          "TQ%u_Q%u_qsize%u_l%u_dlsize%u_len%u_k%u\0",
           result_dir, qtable_id, qset_id, qsize, total_data_files, dlsize,
-          vector_length, runtime, total_checked_vec);
+          vector_length, k);
+
 
   COUNT_INPUT_TIME_START
   closedir(dir);
   COUNT_INPUT_TIME_END
+
   return filepath;
 }
 
 // save query results to csv file
 enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
                                         unsigned int qset_id, int num_knns,
-                                        struct query_result *knn_results) {
+                                        struct query_result *knn_results, unsigned int k, unsigned int max_k) {
   FILE *fp;
   int i, j;
   COUNT_OUTPUT_TIME_START
@@ -253,18 +278,36 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
 
   // write header
   COUNT_INPUT_TIME_START
-  fprintf(fp, "TQ:Q, TS:S, q_pos, s_pos, q, s, d");
-  
-  // write results
-  for (int i = 0; i < num_knns; i++) {
-    fprintf(fp, "\n");
-    fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f", qtable_id, qset_id,
-            knn_results[i].vector_id->table_id, knn_results[i].vector_id->set_id,
-            knn_results[i].query_vector_pos, knn_results[i].vector_id->pos,
-            knn_results[i].distance);
+  fprintf(fp, "TQ:Q, TS:S, q_pos, s_pos, q, s, d, time, k");
+  double total_querytime = 0;
+  unsigned int total_checked_vec = 0;
+
+  // write results for a specific k value
+  for (int i = 0, j = 0; i < num_knns; i += max_k, j++)
+  {
+    for(int s = i; s < (k + (j * max_k)); s++)
+    {
+      fprintf(fp, "\n");
+      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f, %.6f, %u", qtable_id, qset_id,
+            knn_results[s].vector_id->table_id, knn_results[s].vector_id->set_id,
+            knn_results[s].query_vector_pos, knn_results[s].vector_id->pos,
+            knn_results[s].distance, knn_results[s].time/1000000, k);
+    
+    total_querytime += knn_results[s].time;
+    total_checked_vec += knn_results[s].num_checked_vectors;
+    }
   }
   fclose(fp);
   COUNT_OUTPUT_TIME_END
+  
+  // add query time to file name and rename csv file
+  char * new_csv_filename =  malloc(strlen(csv_file) + strlen("runtime_ndistcalc_dataaccess.csv") + 20 + 1);
+  sprintf(new_csv_filename, "%s_runtime%.3f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
+  
+  printf("[k = %u] Combined total query time  = %f\n", k, total_querytime/1000000);
+  int ret = rename(csv_file, new_csv_filename);
+  
+  free(new_csv_filename);
   return SUCCESS;
 }
 

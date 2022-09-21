@@ -694,6 +694,7 @@ void calculate_node_knn_distance_2(
     tS_bsf = partial_time_start.tv_sec * 1000000 + (partial_time_start.tv_usec);
     tE_bsf = current_time_bsf.tv_sec * 1000000 + (current_time_bsf.tv_usec);
 
+     
     for (int j = 0; j < k; ++j) {
       bsf_snapshots[j][*cur_bsf_snapshot].distance = knn_results[j].distance;
       bsf_snapshots[j][*cur_bsf_snapshot].time = tE_bsf - tS_bsf;

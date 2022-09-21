@@ -336,7 +336,7 @@ enum response dstree_knn_query_multiple_binary_files(
     boolean all_mindists, boolean max_policy, unsigned int nprobes,
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
-    float warping, unsigned char keyword_search) {
+    float warping, unsigned char keyword_search, unsigned int * k_values, unsigned int num_k_values) {
 
   struct bsf_snapshot **bsf_snapshots = NULL;
   unsigned int max_bsf_snapshots;
@@ -402,8 +402,11 @@ enum response dstree_knn_query_multiple_binary_files(
   struct query_result *all_knn_results = NULL;
   struct query_result *curr_knn = NULL;
   struct vid *top_matches;
-  int knn_array_idx = 0;
   struct vid query_id;
+  int knn_array_idx = 0;
+
+  // max k values for which we must save results
+  unsigned int max_k = k_values[num_k_values - 1];
 
   RESET_PARTIAL_COUNTERS()
   COUNT_PARTIAL_TIME_START
@@ -585,19 +588,7 @@ enum response dstree_knn_query_multiple_binary_files(
               strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file, curr_knn[t].vector_id->raw_data_file);
               // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
               all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
-
-              // if(curr_knn[t].distance == FLT_MAX)
-              // {
-              //   printf("query vector pos = sent %u vs recieved %u", query_vector.pos, curr_knn[t].query_vector_pos);
-              //   printf("max distance for vector (%u, %u, %u)\n", curr_knn[t].vector_id->table_id, curr_knn[t].vector_id->set_id, curr_knn[t].vector_id->pos);
-              // }
-              // if(all_knn_results[knn_array_idx].distance == FLT_MAX)
-              // {
-              //   printf("after assignment!\n");
-              //   printf("query vector pos = sent %u vs recieved %u", query_vector.pos, curr_knn[t].query_vector_pos);
-              //   printf("max distance for vector (%u, %u, %u)\n", curr_knn[t].vector_id->table_id, curr_knn[t].vector_id->set_id, curr_knn[t].vector_id->pos);
-              // }
-
+              all_knn_results[knn_array_idx].time = curr_knn[t].time;
               knn_array_idx++;
             }
             query_vector.pos += 1;
@@ -674,7 +665,6 @@ enum response dstree_knn_query_multiple_binary_files(
                   qvectors_loaded, bin_file_path, &query_time,
                   &total_checked_ts, query_vector.pos);
             }
-
             // append new knn(s) to knn_results array
             // printf("end of query for vector sent %u received %u\n", query_vector.pos, curr_knn[0].vector_id->pos);
             for (int t = 0; t < k; t++) {
@@ -684,20 +674,7 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[knn_array_idx].query_vector_pos = curr_knn[t].query_vector_pos;
               strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file,  curr_knn[t].vector_id->raw_data_file);
               all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
-          
-              // if(curr_knn[t].distance == FLT_MAX)
-              // {
-              //   printf("query vector pos = sent %u vs recieved %u", query_vector.pos, curr_knn[t].query_vector_pos);
-              //   printf("max distance for vector (%u, %u, %u)\n", curr_knn[t].vector_id->table_id, curr_knn[t].vector_id->set_id, curr_knn[t].vector_id->pos);
-              // }
-              // if(all_knn_results[knn_array_idx].distance == FLT_MAX)
-              // {
-              //   printf("after assignment!\n");
-              //   printf("query vector pos = sent %u vs recieved %u", query_vector.pos, curr_knn[t].query_vector_pos);
-              //   printf("max distance for vector (%u, %u, %u)\n", curr_knn[t].vector_id->table_id, curr_knn[t].vector_id->set_id, curr_knn[t].vector_id->pos);
-              // }
-
-              // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
+              all_knn_results[knn_array_idx].time = curr_knn[t].time;
 
               knn_array_idx++;
             }
@@ -712,19 +689,24 @@ enum response dstree_knn_query_multiple_binary_files(
                      "that expected!");
               exit(1);
             }
-
             // End of Query set
             /* Save query results to csv file */
             query_time /= 1000000;
-            char *query_result_file = make_file_path(results_dir, table_id, query_vector.set_id, nvec,
-                                      total_data_files, dlsize, vector_length,
-                                      query_time, total_checked_ts);
 
-            if(!save_to_query_result_file(query_result_file, table_id, query_vector.set_id,
-                                    k * nvec, all_knn_results))
+            for(int z = 0; z < num_k_values; z++)
             {
-              fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
-              exit(1);
+              unsigned int curr_k = k_values[z];
+              
+              char *query_result_file = make_file_path(results_dir, table_id, query_vector.set_id, nvec,
+                                      total_data_files, dlsize, vector_length, curr_k);
+
+              if(!save_to_query_result_file(query_result_file, table_id, query_vector.set_id,
+                                      k * nvec, all_knn_results, curr_k, k))
+              {
+                fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
+                exit(1);
+              }
+              free(query_result_file);
             }
             
             if(keyword_search)
@@ -757,7 +739,7 @@ enum response dstree_knn_query_multiple_binary_files(
             for (int knn = 0; knn < (k * nvec); knn++)
               free(all_knn_results[knn].vector_id);
             free(all_knn_results);
-            free(query_result_file);
+            
 
             RESET_PARTIAL_COUNTERS()
             COUNT_PARTIAL_TIME_START

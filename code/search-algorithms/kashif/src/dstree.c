@@ -77,6 +77,9 @@ int main(int argc, char **argv) {
   unsigned int max_qset_size = 10;
   unsigned int num_top = 3;           // number top sets to be returned
   static unsigned int data_gb_size = 0; // datalake size in GB
+  unsigned int num_k_values = 0;
+  char * k_values_str = "";
+  // unsigned int * k_values;
   /* end kashif changes */
 
   // printf("new code\n");
@@ -120,7 +123,8 @@ int main(int argc, char **argv) {
         {"max-qset-size", required_argument, 0, 'w'}, // maxmum query set set size (number of vectors)
         {"top", required_argument, 0, '#'}, // maxmum query set set size (number of vectors)
         {"track-vector", no_argument, 0, '*'},
-        {"keyword-search", no_argument, 0, ':'}
+        {"keyword-search", no_argument, 0, ':'},
+        {"k-values", required_argument, 0, ';'}
         /* end kashif changes */
     };
 
@@ -322,6 +326,11 @@ int main(int argc, char **argv) {
     case ']':
       data_gb_size = atoi(optarg);
       break;
+
+    case ';':
+      k_values_str = optarg;
+      break;
+
     /* end kashif changes */
     default:
       exit(-1);
@@ -334,6 +343,17 @@ int main(int argc, char **argv) {
   //   fprintf(stderr,"Current datasize is less that 1!. Please change dataset directory.\n");
   //   exit(-1);
   // }
+
+  // k values for which store experiment results
+  unsigned int * k_values = malloc(0);
+  get_k_values(k_values, k_values_str, &num_k_values);
+  if (k_values == NULL)
+  {
+    fprintf(stderr,
+              "Error dstree.c:  Could not read set of k values.\n");
+      return -1;
+  }
+
   if (dataset_size == 0)
     dataset_size = (unsigned int) get_total_data_vectors(dataset, total_data_files, &total_columns); // get total number of vectors in data repository
   
@@ -551,12 +571,10 @@ int main(int argc, char **argv) {
 
     index->settings->track_vector = track_vector;
     /* start kashif changes */
-    dstree_knn_query_multiple_binary_files(queries, qset_num,
-                                    min_qset_size, 
-                                    max_qset_size, num_top, index,
-                                    minimum_distance, epsilon, r_delta,
-                                    k, track_bsf, track_pruning, all_mindists,
-                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping, keyword_search);
+    dstree_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
+                                    minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
+                                    warping, keyword_search, k_values, num_k_values);
     /* end kashif changes */
   } 
   else if (mode == 2) // build the index, execute queries and store the index
@@ -611,7 +629,7 @@ int main(int argc, char **argv) {
                                     max_qset_size, num_top, index,
                                     minimum_distance, epsilon, delta,
                                     k, track_bsf, track_pruning, all_mindists,
-                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping, keyword_search)) {
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping, keyword_search, k_values, num_k_values)) {
         fprintf(stderr, "Error main.c:  Could not execute the query.\n");
         return -1;
       }

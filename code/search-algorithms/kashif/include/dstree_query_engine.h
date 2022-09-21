@@ -32,12 +32,15 @@ typedef struct query_result {
   /* start kashif changes */
   unsigned int query_vector_pos; // position of the query vector in the query set 
   struct vid *vector_id;
+  double time;
+  unsigned int num_checked_vectors;
   /* end kashif changes */
 };
 
 typedef struct bsf_snapshot {
   ts_type distance;
   double time;
+  double cpu_time;
   ts_type *series;
   unsigned long checked_nodes;
   // unsigned int pos;
