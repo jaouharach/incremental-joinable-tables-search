@@ -1,5 +1,9 @@
 {
     "files.associations": {
-        "stats.h": "c"
+        "stats.h": "c",
+        "kashif_utils.h": "c",
+        "float.h": "c",
+        "stdio.h": "c",
+        "globals.h": "c"
     }
 }

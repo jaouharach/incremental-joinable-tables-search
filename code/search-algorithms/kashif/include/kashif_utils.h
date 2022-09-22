@@ -27,7 +27,7 @@ char *make_file_path(char *result_dir, unsigned int qtable_id,
                      unsigned int qset_id, unsigned int qsize, unsigned int l,
                      unsigned int dlsize, unsigned int vector_length, unsigned int k);
 
-void get_k_values(unsigned int * k_values, char * k_values_str, unsigned int * num_k_values);
+unsigned int * get_k_values(char * k_values_str, unsigned int * num_k_values);
 
 // save query results to csv file
 enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
@@ -43,6 +43,24 @@ char *make_result_directory(char *result_dir, unsigned int total_data_files,
 int get_ndigits(unsigned int n);
 
 /* convert IEEE double precision (64 bits) to float (/double) */
+ts_type todecimal(char *s);
+int toint(char *n);
+char *get_set_bytes(FILE *f, int nvec, int start, int nbits, int vlen);
+bool is_binaryfile(const char *filename);
+int get_num_vec(FILE *f, int start, int nbits);
+unsigned long get_total_data_vectors(char *bindir,
+                unsigned int total_data_files, unsigned int * total_columns);
+unsigned int get_data_gb_size(char *dl_dir, unsigned int total_data_files);
+int get_ndigits(unsigned int n);
+int delete_directory(char * dir_path);
+struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_results, 
+                         unsigned int num_top);
+
+struct result_table *get_top_tables_by_euclidean_distance(struct query_result *knn_results, int num_knn_results, 
+                         unsigned int num_top);
+
+
+
 ts_type todecimal(char *s) {
   // printf("\ninput: %s\n", s);
   ts_type f;
@@ -193,18 +211,23 @@ unsigned int get_data_gb_size(char *dl_dir, unsigned int total_data_files) {
 }
 
 // extract k values from a string. ex: "1,3,5,10,30,50" to [1, 2, 3, 10, 30, 50]
-void get_k_values(unsigned int * k_values, char * k_values_str, unsigned int * num_k_values)
+unsigned int *  get_k_values(char * k_values_str, unsigned int * num_k_values)
 {
   // More general pattern:
   char *token, *str, *tofree;
+  unsigned int k;
+  unsigned int * k_values = NULL;
+
   tofree = str = strdup(k_values_str);  // We own str's memory now.
+
   while ((token = strsep(&str, ",")))
   {
-    unsigned int k = atoi(token);
-    if(k)
+    sscanf(token, "%u", &k);
+    printf("curr k = %u - ", k);
+    if(k > 0)
     {
       (*num_k_values) += 1;
-      k_values = (unsigned int *) realloc(k_values, sizeof(unsigned int) * (*num_k_values));
+      k_values = (unsigned int *) realloc(k_values, sizeof(*k_values) * (*num_k_values));
       if (k_values == NULL)
       {
         fprintf(stderr,"Error kashif_utils.c:  Could not allocate memory for set of k values.\n");
@@ -213,7 +236,7 @@ void get_k_values(unsigned int * k_values, char * k_values_str, unsigned int * n
       k_values[(*num_k_values) -1] = k;
     }
   }
-  
+  printf("\n");
   free(tofree);
   return k_values;
 }
@@ -299,7 +322,7 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   }
   fclose(fp);
   COUNT_OUTPUT_TIME_END
-  
+
   // add query time to file name and rename csv file
   char * new_csv_filename =  malloc(strlen(csv_file) + strlen("runtime_ndistcalc_dataaccess.csv") + 20 + 1);
   sprintf(new_csv_filename, "%s_runtime%.3f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);

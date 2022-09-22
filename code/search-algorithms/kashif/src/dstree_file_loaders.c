@@ -336,13 +336,30 @@ enum response dstree_knn_query_multiple_binary_files(
     boolean all_mindists, boolean max_policy, unsigned int nprobes,
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
-    float warping, unsigned char keyword_search, unsigned int * k_values, unsigned int num_k_values) {
+    float warping, unsigned char keyword_search, char * k_values_str) {
 
   struct bsf_snapshot **bsf_snapshots = NULL;
   unsigned int max_bsf_snapshots;
   unsigned int cur_bsf_snapshot;
   FILE *series_file = NULL;
   FILE *dataset_file = NULL;
+
+  unsigned int * k_values = NULL;
+  unsigned int num_k_values = 0;
+
+  // extract k values from string "1,3,5,10" to [1, 3, 5, 10]
+  k_values = get_k_values(k_values_str, &num_k_values);
+  printf("num k values = %u\n", num_k_values);
+
+  if (k_values == NULL)
+  {
+    fprintf(stderr,
+              "Error dstree.c:  Could not read set of k values.\n");
+      return -1;
+  }
+  for(int u = 0; u < num_k_values; u++)
+      printf(" k = %u\n", k_values[u]);
+
 
   if (track_bsf) {
     max_bsf_snapshots = 10000;
