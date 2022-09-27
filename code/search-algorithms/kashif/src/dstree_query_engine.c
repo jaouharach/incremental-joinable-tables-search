@@ -45,7 +45,6 @@ struct query_result approximate_search(ts_type *query_ts,
         node = node->right_child;
       }
     }
-
     result.distance = calculate_node_distance(index, node, query_ts_reordered,
                                               query_order, offset, bsf);
     result.node = node;
@@ -2118,12 +2117,12 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
     // IMPORTANT!!!!
     // fix this: increase found_knn and do not print until the end.
-    update_query_stats(index,q_id, found_knn, approximate_result);
-    for(int w = 0; w > k; w++)
-    {
-      knn_results[w].time += index->stats->query_total_cpu_time;
-      knn_results[w].num_checked_vectors += index->stats->query_filter_checked_ts_count;
-    }      
+    // update_query_stats(index,q_id, found_knn, approximate_result);
+    // for(int w = 0; w > k; w++)
+    // {
+    //   knn_results[w].time += index->stats->query_total_cpu_time;
+    //   knn_results[w].num_checked_vectors += index->stats->query_filter_checked_ts_count;
+    // }      
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn,qfilename);
   }
@@ -2163,6 +2162,9 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   // FILE *series_file = fopen(filename, "a");
   // FILE *dataset_file = fopen(index->settings->dataset, "rb");
 
+  double curr_k_time = 0.0;
+  unsigned int curr_k_total_checked_vector = 0u;
+
   while ((n = pqueue_pop(pq))) {
 
     // the first element of the queue is not used, thus pos-1
@@ -2177,8 +2179,11 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
         update_query_stats(index, q_id, found_knn, bsf_result);
         *total_query_set_time += index->stats->query_total_cpu_time;
-        knn_results[found_knn].time += index->stats->query_total_cpu_time;
-        knn_results[found_knn].num_checked_vectors += index->stats->query_filter_checked_ts_count;
+        curr_k_time += index->stats->query_total_cpu_time;
+        curr_k_total_checked_vector += index->stats->query_filter_checked_ts_count;
+
+        // knn_results[pos].time += index->stats->query_total_cpu_time;
+        // knn_results[pos].num_checked_vectors += index->stats->query_filter_checked_ts_count;
         // get_query_stats(index, found_knn);
         // print_query_stats(index, q_id, found_knn, qfilename);
 
@@ -2206,6 +2211,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     }
 
     if (found_knn >= k) {
+      knn_results[found_knn].time += curr_k_time;
+      knn_results[found_knn].num_checked_vectors += curr_k_total_checked_vector;
       // printf("found all kNN\n");
       // fflush(stdout);
       break;
@@ -2213,6 +2220,12 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
     if (n->node->is_leaf) // n is a leaf
     {
+      knn_results[found_knn].time += curr_k_time;
+      knn_results[found_knn].num_checked_vectors += curr_k_total_checked_vector;
+      
+      curr_k_time = 0.0;
+      curr_k_total_checked_vector = 0.0;
+
       // upon return, the queue will update the next best (k-foundkNN)th objects
       calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
                                   query_order, offset, bsf_result.distance, k,

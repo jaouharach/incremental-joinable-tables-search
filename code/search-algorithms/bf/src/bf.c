@@ -649,6 +649,10 @@ struct query_result * brute_force_exact_knn_search_optimized(char * dataset, uns
             int datasize, table_id, nsets, vector_length_in_filename;
             sscanf(dfile->d_name,"data_size%d_t%dc%d_len%d_noznorm.bin",&datasize,&table_id,&nsets,&vector_length_in_filename);
 
+            // skip query table if found in data lake
+            if(table_id == qset[0].table_id)
+                continue;
+            
             // check if vector length in file name matches vector length passed as argument
             if(vector_length_in_filename != vector_length)
             {
@@ -689,17 +693,17 @@ struct query_result * brute_force_exact_knn_search_optimized(char * dataset, uns
                     v.pos = 0;
                     set_id = set_id +  1;
 
-                    if(v.table_id == qset[0].table_id && v.set_id == qset[0].set_id)
-                    {
-                        // do not match query set to itself
-                        COUNT_PARTIAL_INPUT_TIME_START
-                        fseek(bin_file, nvec * 4 *vector_length, SEEK_CUR);
-                        COUNT_PARTIAL_INPUT_TIME_END
-                        i = 0;
-                        j = 0;
-                        total_bytes -= nvec * vector_length;
-                        continue;
-                    }
+                    // if(v.table_id == qset[0].table_id && v.set_id == qset[0].set_id)
+                    // {
+                    //     // do not match query set to itself
+                    //     COUNT_PARTIAL_INPUT_TIME_START
+                    //     fseek(bin_file, nvec * 4 *vector_length, SEEK_CUR);
+                    //     COUNT_PARTIAL_INPUT_TIME_END
+                    //     i = 0;
+                    //     j = 0;
+                    //     total_bytes -= nvec * vector_length;
+                    //     continue;
+                    // }
                 }
                 else if(i <= (unsigned int)nvec*vector_length)
                 {

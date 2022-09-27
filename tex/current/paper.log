@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  20 SEP 2022 10:54
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  26 SEP 2022 16:54
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -505,135 +505,59 @@ Package: multirow 2016/11/25 v2.2 Span multiple rows of a table
 \multirow@dima=\skip70
 \bigstrutjot=\dimen156
 )
-(/usr/share/texlive/texmf-dist/tex/latex/algorithm2e/algorithm2e.sty
-Package: algorithm2e 2017/07/18 v5.2 algorithms environments
-\c@AlgoLine=\count132
-
-(/usr/share/texlive/texmf-dist/tex/latex/base/ifthen.sty
-Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
-)
-\algocf@hangindent=\skip71
-
-(/usr/share/texlive/texmf-dist/tex/latex/ifoddpage/ifoddpage.sty
-Package: ifoddpage 2016/04/23 v1.1 Conditionals for odd/even page detection
-\c@checkoddpage=\count133
-)
-(/usr/share/texlive/texmf-dist/tex/latex/tools/xspace.sty
-Package: xspace 2014/10/28 v1.13 Space after command names (DPC,MH)
-)
-(/usr/share/texlive/texmf-dist/tex/latex/relsize/relsize.sty
-Package: relsize 2013/03/29 ver 4.1
-LaTeX Info: Redefining \larger on input line 150.
-LaTeX Info: Redefining \smaller on input line 151.
-)
-\skiptotal=\skip72
-\skiplinenumber=\skip73
-\skiprule=\skip74
-\skiphlne=\skip75
-\skiptext=\skip76
-\skiplength=\skip77
-\algomargin=\skip78
-\skipalgocfslide=\skip79
-\algowidth=\dimen157
-\inoutsize=\dimen158
-\inoutindent=\dimen159
-\interspacetitleruled=\dimen160
-\interspacealgoruled=\dimen161
-\interspacetitleboxruled=\dimen162
-\algocf@ruledwidth=\skip80
-\algocf@inoutbox=\box34
-\algocf@inputbox=\box35
-\AlCapSkip=\skip81
-\AlCapHSkip=\skip82
-\algoskipindent=\skip83
-\algocf@nlbox=\box36
-\algocf@hangingbox=\box37
-\algocf@untilbox=\box38
-\algocf@skipuntil=\skip84
-\algocf@capbox=\box39
-\algocf@lcaptionbox=\skip85
-\algoheightruledefault=\skip86
-\algoheightrule=\skip87
-\algotitleheightruledefault=\skip88
-\algotitleheightrule=\skip89
-\c@algocfline=\count134
-\c@algocfproc=\count135
-\c@algocf=\count136
-\algocf@algoframe=\box40
-\algocf@algobox=\box41
-)
-(/usr/share/texlive/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
-Package: algpseudocode 
-
-(/usr/share/texlive/texmf-dist/tex/latex/algorithmicx/algorithmicx.sty
-Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
-
-Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
-\c@ALG@line=\count137
-\c@ALG@rem=\count138
-\c@ALG@nested=\count139
-\ALG@tlm=\skip90
-\ALG@thistlm=\skip91
-\c@ALG@Lnr=\count140
-\c@ALG@blocknr=\count141
-\c@ALG@storecount=\count142
-\c@ALG@tmpcounter=\count143
-\ALG@tmplength=\skip92
-)
-Document Style - pseudocode environments for use with the `algorithmicx' style
-) (/usr/share/texlive/texmf-dist/tex/latex/caption/subcaption.sty
+(/usr/share/texlive/texmf-dist/tex/latex/caption/subcaption.sty
 Package: subcaption 2016/05/22 v1.1-161 Sub-captions (AR)
-\c@subfigure=\count144
-\c@subtable=\count145
+\c@subfigure=\count132
+\c@subtable=\count133
 )
 (/usr/share/texlive/texmf-dist/tex/generic/ulem/ulem.sty
-\UL@box=\box42
-\UL@hyphenbox=\box43
-\UL@skip=\skip93
+\UL@box=\box34
+\UL@hyphenbox=\box35
+\UL@skip=\skip71
 \UL@hook=\toks34
-\UL@height=\dimen163
-\UL@pe=\count146
-\UL@pixel=\dimen164
-\ULC@box=\box44
+\UL@height=\dimen157
+\UL@pe=\count134
+\UL@pixel=\dimen158
+\ULC@box=\box36
 Package: ulem 2012/05/18
-\ULdepth=\dimen165
+\ULdepth=\dimen159
 )
 (/usr/share/texlive/texmf-dist/tex/latex/tools/longtable.sty
 Package: longtable 2014/10/28 v4.11 Multi-page Table package (DPC)
-\LTleft=\skip94
-\LTright=\skip95
-\LTpre=\skip96
-\LTpost=\skip97
-\LTchunksize=\count147
-\LTcapwidth=\dimen166
-\LT@head=\box45
-\LT@firsthead=\box46
-\LT@foot=\box47
-\LT@lastfoot=\box48
-\LT@cols=\count148
-\LT@rows=\count149
-\c@LT@tables=\count150
-\c@LT@chunks=\count151
+\LTleft=\skip72
+\LTright=\skip73
+\LTpre=\skip74
+\LTpost=\skip75
+\LTchunksize=\count135
+\LTcapwidth=\dimen160
+\LT@head=\box37
+\LT@firsthead=\box38
+\LT@foot=\box39
+\LT@lastfoot=\box40
+\LT@cols=\count136
+\LT@rows=\count137
+\c@LT@tables=\count138
+\c@LT@chunks=\count139
 \LT@p@ftn=\toks35
 )
 (/usr/share/texlive/texmf-dist/tex/latex/tools/array.sty
 Package: array 2016/10/06 v2.4d Tabular extension package (FMi)
-\col@sep=\dimen167
-\extrarowheight=\dimen168
+\col@sep=\dimen161
+\extrarowheight=\dimen162
 \NC@list=\toks36
-\extratabsurround=\skip98
-\backup@length=\skip99
+\extratabsurround=\skip76
+\backup@length=\skip77
 )
 (/usr/share/texlive/texmf-dist/tex/latex/preprint/balance.sty
 Package: balance 1999/02/23 4.3 (PWD)
-\oldvsize=\dimen169
+\oldvsize=\dimen163
 )
 (/usr/share/texlive/texmf-dist/tex/latex/paralist/paralist.sty
 Package: paralist 2017/01/22 v2.7 Extended list environments
-\pltopsep=\skip100
-\plpartopsep=\skip101
-\plitemsep=\skip102
-\plparsep=\skip103
+\pltopsep=\skip78
+\plpartopsep=\skip79
+\plitemsep=\skip80
+\plparsep=\skip81
 \pl@lab=\toks37
 )
 (/usr/share/texlive/texmf-dist/tex/latex/tools/bm.sty
@@ -644,21 +568,21 @@ Package: bm 2017/01/16 v1.2c Bold Symbol Support (DPC/FMi)
 LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 141.
 LaTeX Info: Redefining \bm on input line 207.
 )
-\c@defn=\count152
-\c@thm=\count153
-\c@propt=\count154
+\c@defn=\count140
+\c@thm=\count141
+\c@propt=\count142
 
 (/usr/share/texlive/texmf-dist/tex/latex/tools/hhline.sty
 Package: hhline 2014/10/28 v2.03 Table rule package (DPC)
 )
 (/usr/share/texlive/texmf-dist/tex/latex/tools/tabularx.sty
 Package: tabularx 2016/02/03 v2.11 `tabularx' package (DPC)
-\TX@col@width=\dimen170
-\TX@old@table=\dimen171
-\TX@old@col=\dimen172
-\TX@target=\dimen173
-\TX@delta=\dimen174
-\TX@cols=\count155
+\TX@col@width=\dimen164
+\TX@old@table=\dimen165
+\TX@old@col=\dimen166
+\TX@target=\dimen167
+\TX@delta=\dimen168
+\TX@cols=\count143
 \TX@ftn=\toks38
 )
 (/usr/share/texlive/texmf-dist/tex/latex/ms/ragged2e.sty
@@ -667,56 +591,113 @@ Package: ragged2e 2009/05/21 v2.1 ragged2e Package (MS)
 (/usr/share/texlive/texmf-dist/tex/latex/ms/everysel.sty
 Package: everysel 2011/10/28 v1.2 EverySelectfont Package (MS)
 )
-\CenteringLeftskip=\skip104
-\RaggedLeftLeftskip=\skip105
-\RaggedRightLeftskip=\skip106
-\CenteringRightskip=\skip107
-\RaggedLeftRightskip=\skip108
-\RaggedRightRightskip=\skip109
-\CenteringParfillskip=\skip110
-\RaggedLeftParfillskip=\skip111
-\RaggedRightParfillskip=\skip112
-\JustifyingParfillskip=\skip113
-\CenteringParindent=\skip114
-\RaggedLeftParindent=\skip115
-\RaggedRightParindent=\skip116
-\JustifyingParindent=\skip117
+\CenteringLeftskip=\skip82
+\RaggedLeftLeftskip=\skip83
+\RaggedRightLeftskip=\skip84
+\CenteringRightskip=\skip85
+\RaggedLeftRightskip=\skip86
+\RaggedRightRightskip=\skip87
+\CenteringParfillskip=\skip88
+\RaggedLeftParfillskip=\skip89
+\RaggedRightParfillskip=\skip90
+\JustifyingParfillskip=\skip91
+\CenteringParindent=\skip92
+\RaggedLeftParindent=\skip93
+\RaggedRightParindent=\skip94
+\JustifyingParindent=\skip95
 )
-\c@theorem=\count156
-Package hyperref Info: Option `pdfdisplaydoctitle' set `true' on input line 133
+(/usr/share/texlive/texmf-dist/tex/latex/algorithm2e/algorithm2e.sty
+Package: algorithm2e 2017/07/18 v5.2 algorithms environments
+\c@AlgoLine=\count144
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/ifthen.sty
+Package: ifthen 2014/09/29 v1.1c Standard LaTeX ifthen package (DPC)
+)
+\algocf@hangindent=\skip96
+
+(/usr/share/texlive/texmf-dist/tex/latex/ifoddpage/ifoddpage.sty
+Package: ifoddpage 2016/04/23 v1.1 Conditionals for odd/even page detection
+\c@checkoddpage=\count145
+)
+(/usr/share/texlive/texmf-dist/tex/latex/tools/xspace.sty
+Package: xspace 2014/10/28 v1.13 Space after command names (DPC,MH)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/relsize/relsize.sty
+Package: relsize 2013/03/29 ver 4.1
+LaTeX Info: Redefining \larger on input line 150.
+LaTeX Info: Redefining \smaller on input line 151.
+)
+\skiptotal=\skip97
+\skiplinenumber=\skip98
+\skiprule=\skip99
+\skiphlne=\skip100
+\skiptext=\skip101
+\skiplength=\skip102
+\algomargin=\skip103
+\skipalgocfslide=\skip104
+\algowidth=\dimen169
+\inoutsize=\dimen170
+\inoutindent=\dimen171
+\interspacetitleruled=\dimen172
+\interspacealgoruled=\dimen173
+\interspacetitleboxruled=\dimen174
+\algocf@ruledwidth=\skip105
+\algocf@inoutbox=\box41
+\algocf@inputbox=\box42
+\AlCapSkip=\skip106
+\AlCapHSkip=\skip107
+\algoskipindent=\skip108
+\algocf@nlbox=\box43
+\algocf@hangingbox=\box44
+\algocf@untilbox=\box45
+\algocf@skipuntil=\skip109
+\algocf@capbox=\box46
+\algocf@lcaptionbox=\skip110
+\algoheightruledefault=\skip111
+\algoheightrule=\skip112
+\algotitleheightruledefault=\skip113
+\algotitleheightrule=\skip114
+\c@algocfline=\count146
+\c@algocfproc=\count147
+\c@algocf=\count148
+\algocf@algoframe=\box47
+\algocf@algobox=\box48
+)
+\c@theorem=\count149
+Package hyperref Info: Option `pdfdisplaydoctitle' set `true' on input line 131
 .
 
 Excluding comment 'screenonly' Include comment 'printonly'
 Include comment 'anonsuppress' (./paper.aux)
 \openout1 = `paper.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 131.
+LaTeX Font Info:    ... okay on input line 131.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 131.
+LaTeX Font Info:    ... okay on input line 131.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 131.
+LaTeX Font Info:    ... okay on input line 131.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 131.
+LaTeX Font Info:    ... okay on input line 131.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 131.
+LaTeX Font Info:    ... okay on input line 131.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 131.
+LaTeX Font Info:    ... okay on input line 131.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 131.
+LaTeX Font Info:    ... okay on input line 131.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 131.
+LaTeX Font Info:    ... okay on input line 131.
 <<ot1.cmap>><<oml.cmap>><<oms.cmap>><<omx.cmap>>
-LaTeX Font Info:    Try loading font information for U+msa on input line 133.
+LaTeX Font Info:    Try loading font information for U+msa on input line 131.
  (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 133.
+LaTeX Font Info:    Try loading font information for U+msb on input line 131.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Info: Redefining \microtypecontext on input line 133.
+LaTeX Info: Redefining \microtypecontext on input line 131.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -733,7 +714,7 @@ File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman
 )
 ABD: EveryShipout initializing macros
 \AtBeginShipoutBox=\box49
-Package hyperref Info: Link coloring OFF on input line 133.
+Package hyperref Info: Link coloring OFF on input line 131.
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
@@ -741,11 +722,11 @@ Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
 (/usr/share/texlive/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
 Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
-\c@section@level=\count157
+\c@section@level=\count150
 )
-LaTeX Info: Redefining \ref on input line 133.
-LaTeX Info: Redefining \pageref on input line 133.
-LaTeX Info: Redefining \nameref on input line 133.
+LaTeX Info: Redefining \ref on input line 131.
+LaTeX Info: Redefining \pageref on input line 131.
+LaTeX Info: Redefining \nameref on input line 131.
 
 (./paper.out) (./paper.out)
 \@outlinefile=\write5
@@ -754,16 +735,16 @@ LaTeX Info: Redefining \nameref on input line 133.
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count158
+\scratchcounter=\count151
 \scratchdimen=\dimen175
 \scratchbox=\box50
-\nofMPsegments=\count159
-\nofMParguments=\count160
+\nofMPsegments=\count152
+\nofMParguments=\count153
 \everyMPshowfont=\toks39
-\MPscratchCnt=\count161
+\MPscratchCnt=\count154
 \MPscratchDim=\dimen176
-\MPnumerator=\count162
-\makeMPintoPDFobject=\count163
+\MPnumerator=\count155
+\makeMPintoPDFobject=\count156
 \everyMPtoPDFconversion=\toks40
 ) (/usr/share/texlive/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
 Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
@@ -825,7 +806,7 @@ Package: ltcaption 2013/06/09 v1.4-94 longtable captions (AR)
 Package caption Info: End \AtBeginDocument code.
 
 ABD: EverySelectfont initializing macros
-LaTeX Info: Redefining \selectfont on input line 133.
+LaTeX Info: Redefining \selectfont on input line 131.
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `cmss' (encoding: OT1).
 (microtype)             For optimal results, create family-specific settings.
@@ -1036,64 +1017,98 @@ Overfull \hbox (40.90346pt too wide) in paragraph at lines 44--63
  []
 
 ) (./background.tex) (./system-architecture.tex
+Underfull \hbox (badness 1360) in paragraph at lines 59--59
+[]\OT1/cmr/bx/n/9 Algorithm 3: \OT1/cmr/m/sc/9 (+20) Kashif: Par-al-lelIn-cre-m
+en-tal-
+ []
 
-Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 3.
+<<ot1tt.cmap>>
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `cmtt' (encoding: OT1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+
+Overfull \hbox (1.4439pt too wide) in paragraph at lines 122--122
+[][]|[]$\OML/cmm/m/it/8 UpdateKnnResults\OT1/cmr/m/n/8 (-20) (\OML/cmm/m/it/8 N
+[]urr; KnnResults\OT1/cmr/m/n/8 (-20) [\OML/cmm/m/it/8 i\OT1/cmr/m/n/8 (-20) ])
+$; 
+ []
 
 ) (./demonstration.tex
+<../../img/kashif_querytime_recall_precision.png, id=49, 578.16pt x 433.62pt>
+File: ../../img/kashif_querytime_recall_precision.png Graphic file (type png)
+<use ../../img/kashif_querytime_recall_precision.png>
+Package pdftex.def Info: ../../img/kashif_querytime_recall_precision.png  used 
+on input line 6.
+(pdftex.def)             Requested size: 202.51491pt x 151.88174pt.
+
+
+Class acmart Warning: A possible image without description on input line 7.
+
 
 Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 3.
+surrounding objects on input line 8.
 
-) Processing 'acks' comment.
+)
+Underfull \vbox (badness 5787) has occurred while \output is active []
+
+ [1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
+
+] Processing 'acks' comment.
 \openout4 = `comment.cut'.
 
- Comment 'acks' writing to comment.cut.
-Straight input of comment.cut. (./comment.cut) (./paper.bbl)
 
-Package caption Warning: Unused \captionsetup[sub] on input line 41.
+Comment 'acks' writing to comment.cut. Straight input of comment.cut.
+(./comment.cut) (./paper.bbl)
+
+Class acmart Warning: Some images may lack descriptions.
+
+
+Package caption Warning: Unused \captionsetup[sub] on input line 36.
 See the caption package documentation for explanation.
 
-
-Package balance Warning: You have called \balance in second column
-(balance)                Columns might not be balanced.
-
-[1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
-
-] [2.2]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 221.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 221.
+[2.2 <../../img/kashif_querytime_recall_precision.png>] [3.3]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 219.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 219.
  (./paper.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 221.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 221.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 219.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 219.
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: 047BF8BCD4DFDE85EFED49C01C54D876;791.
+(rerunfilecheck)             Checksum: 3753B1AF20486AAE695EDA681CD651E3;782.
  ) 
 Here is how much of TeX's memory you used:
- 17349 strings out of 494847
- 252785 string characters out of 6179081
- 423091 words of memory out of 5000000
- 20128 multiletter control sequences out of 15000+600000
- 15466 words of font info for 74 fonts, out of 8000000 for 9000
+ 17047 strings out of 494847
+ 248303 string characters out of 6179081
+ 439800 words of memory out of 5000000
+ 19734 multiletter control sequences out of 15000+600000
+ 19687 words of font info for 94 fonts, out of 8000000 for 9000
  220 hyphenation exceptions out of 8191
- 60i,11n,94p,817b,396s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,24n,94p,817b,696s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
-r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share
-/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texliv
-e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf
--dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/share/texlive/texmf-dist/f
-onts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
-lic/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
-cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb
-></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></u
-sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/shar
-e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb>
-Output written on paper.pdf (2 pages, 188236 bytes).
+r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx6.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/share/texlive/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmmi9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
+12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb><
+/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/sha
+re/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texli
+ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmssbx10.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmti8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmti9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmt
+t8.pfb>
+Output written on paper.pdf (3 pages, 322236 bytes).
 PDF statistics:
- 150 PDF objects out of 1000 (max. 8388607)
- 112 compressed objects within 2 object streams
- 20 named destinations out of 1000 (max. 500000)
- 16449 words of extra memory for PDF output out of 17280 (max. 10000000)
+ 271 PDF objects out of 1000 (max. 8388607)
+ 212 compressed objects within 3 object streams
+ 80 named destinations out of 1000 (max. 500000)
+ 24138 words of extra memory for PDF output out of 24883 (max. 10000000)
 

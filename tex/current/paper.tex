@@ -5,9 +5,7 @@
 %\usepackage{algorithm}\usepackage{verbatim}
 \usepackage{graphicx}
 \usepackage{multirow}
-\usepackage[ruled,vlined,linesnumbered,noend]{algorithm2e}
-\PassOptionsToPackage{noend}{algpseudocode}
-\usepackage{algpseudocode}
+
 \pagenumbering{arabic}
 %\pagenumbering{gobble}
 %\definecolor{mygray}{rgb}{0.81, 0.81, 0.77}
@@ -32,9 +30,6 @@
 \newtheorem{propt}{Property}
 \newtheorem{lem}[thm]{Lemma}
 
-\usepackage[ruled,vlined,linesnumbered,noend]{algorithm2e}
-\PassOptionsToPackage{noend}{algpseudocode}
-\usepackage{algpseudocode}
 %\definecolor{mygray}{rgb}{0.81, 0.81, 0.77}
 \usepackage[labelfont=bf,textfont=bf]{caption}
 \usepackage[labelfont=bf,textfont=bf,singlelinecheck=off,justification=raggedright]{subcaption}
@@ -54,6 +49,12 @@
 \usepackage{amsthm}
 \usepackage{bm}
 \usepackage{tabularx,ragged2e}
+
+
+%\usepackage{algorithm}
+%\usepackage{algcompatible}
+\usepackage[ruled,vlined, linesnumbered]{algorithm2e}
+
 
 \usepackage[normalem]{ulem} 
 \graphicspath{{../../img/}}
@@ -97,9 +98,6 @@
 % text to remove for the vldb22 submission
 \newcommand{\hidevldb}[1]{}
 
-
-\SetAlFnt{\small\tt}
-\SetAlTitleFnt{\small\tt}
 %\SetAlCapFnt{\tt}
 
 %\newcommand{\myfuncsty}[1]{\textcolor{red}{\textbf{\texttt{#1}}}}

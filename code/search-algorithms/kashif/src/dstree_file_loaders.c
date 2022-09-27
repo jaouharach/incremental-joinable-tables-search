@@ -362,7 +362,7 @@ enum response dstree_knn_query_multiple_binary_files(
 
 
   if (track_bsf) {
-    max_bsf_snapshots = 10000;
+    max_bsf_snapshots = 3;
     cur_bsf_snapshot = 0;
 
     bsf_snapshots = calloc(k, sizeof(struct bsf_snapshot *));
@@ -527,6 +527,9 @@ enum response dstree_knn_query_multiple_binary_files(
           set_id += 1;
           i++;
           j = 0;
+
+          printf("\nNew Query ...\n");
+
         } else if (i <= (unsigned int)nvec * vector_length) {
           // end of vector but still in current set
           if (j > (vector_length - 1)) {
@@ -563,6 +566,7 @@ enum response dstree_knn_query_multiple_binary_files(
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
                     warping, dataset_file, series_file, &query_id);
+                printf("vector %d/%d, done.\n", query_vector.pos+1, nvec);
               } else {
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
@@ -652,6 +656,7 @@ enum response dstree_knn_query_multiple_binary_files(
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
                     warping, dataset_file, series_file, &query_id);
+                    printf("vector %d/%d, done.\n", query_vector.pos+1, nvec);
               } else {
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
@@ -709,6 +714,7 @@ enum response dstree_knn_query_multiple_binary_files(
             // End of Query set
             /* Save query results to csv file */
             query_time /= 1000000;
+            printf("Storing result to csv file...");
 
             for(int z = 0; z < num_k_values; z++)
             {
@@ -718,7 +724,7 @@ enum response dstree_knn_query_multiple_binary_files(
                                       total_data_files, dlsize, vector_length, curr_k);
 
               if(!save_to_query_result_file(query_result_file, table_id, query_vector.set_id,
-                                      k * nvec, all_knn_results, curr_k, k))
+                                      k * nvec, all_knn_results, k, curr_k))
               {
                 fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
                 exit(1);
@@ -726,30 +732,31 @@ enum response dstree_knn_query_multiple_binary_files(
               free(query_result_file);
             }
             
-            if(keyword_search)
-            {
-              // don't change these lines to allaow ui to fetch results
-                struct result_table* top = get_top_tables_by_euclidean_distance(all_knn_results, knn_array_idx, num_top);
-                for(int m = 0; m < num_top; m++)
-                {
-                  printf("table-%u- in file @@%s$ min_distance=%.3f§ num_closest=%u# total_matches=%uµ\n", top[m].table_id, top[m].raw_data_file, top[m].min_distance, top[m].num_min, top[m].total_matches);
-                }
-                printf("\nquery_time=%fsec\n", query_time);
-                free(top);
-                // don't change these lines to allaow ui to fetch results
-            } 
-            else
-            {
-                // don't change these lines to allaow ui to fetch results
-                struct result_sid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
-                for(int m = 0; m < num_top; m++)
-                {
-                  printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
-                }
-                printf("\nquery_time=%fsec\n", query_time);
-                free(top);
-                // don't change these lines to allaow ui to fetch results
-            }
+            printf("\nquery_time=%fsec\n", query_time);
+            // if(keyword_search)
+            // {
+            //   // don't change these lines to allaow ui to fetch results
+            //     struct result_table* top = get_top_tables_by_euclidean_distance(all_knn_results, knn_array_idx, num_top);
+            //     for(int m = 0; m < num_top; m++)
+            //     {
+            //       printf("table-%u- in file @@%s$ min_distance=%.3f§ num_closest=%u# total_matches=%uµ\n", top[m].table_id, top[m].raw_data_file, top[m].min_distance, top[m].num_min, top[m].total_matches);
+            //     }
+            //     printf("\nquery_time=%fsec\n", query_time);
+            //     free(top);
+            //     // don't change these lines to allaow ui to fetch results
+            // } 
+            // else
+            // {
+            //     // don't change these lines to allaow ui to fetch results
+            //     struct result_sid * top = get_top_sets(all_knn_results, knn_array_idx, num_top);
+            //     for(int m = 0; m < num_top; m++)
+            //     {
+            //       printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+            //     }
+            //     printf("\nquery_time=%fsec\n", query_time);
+            //     free(top);
+            //     // don't change these lines to allaow ui to fetch results
+            // }
             
 
             // free memory

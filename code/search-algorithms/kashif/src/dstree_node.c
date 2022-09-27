@@ -689,39 +689,41 @@ void calculate_node_knn_distance_2(
   // only print the snapshots after finished visiting leaf
   // if interested in the value of the actual neighbor, move this code inside
   // the for loop above
-  if (cur_bsf_snapshot != NULL && update_snapshots) {
-    gettimeofday(&current_time_bsf, NULL);
-    tS_bsf = partial_time_start.tv_sec * 1000000 + (partial_time_start.tv_usec);
-    tE_bsf = current_time_bsf.tv_sec * 1000000 + (current_time_bsf.tv_usec);
+
+  //temp  change
+  // if (cur_bsf_snapshot != NULL && update_snapshots) {
+  //   gettimeofday(&current_time_bsf, NULL);
+  //   tS_bsf = partial_time_start.tv_sec * 1000000 + (partial_time_start.tv_usec);
+  //   tE_bsf = current_time_bsf.tv_sec * 1000000 + (current_time_bsf.tv_usec);
 
      
-    for (int j = 0; j < k; ++j) {
-      bsf_snapshots[j][*cur_bsf_snapshot].distance = knn_results[j].distance;
-      bsf_snapshots[j][*cur_bsf_snapshot].time = tE_bsf - tS_bsf;
-      bsf_snapshots[j][*cur_bsf_snapshot].checked_nodes = checked_nodes_count;
+  //   for (int j = 0; j < k; ++j) {
+  //     bsf_snapshots[j][*cur_bsf_snapshot].distance = knn_results[j].distance;
+  //     bsf_snapshots[j][*cur_bsf_snapshot].time = tE_bsf - tS_bsf;
+  //     bsf_snapshots[j][*cur_bsf_snapshot].checked_nodes = checked_nodes_count;
 
-      if (index->settings->classify)
-        bsf_snapshots[j][*cur_bsf_snapshot].label = knn_results[j].label;
+  //     if (index->settings->classify)
+  //       bsf_snapshots[j][*cur_bsf_snapshot].label = knn_results[j].label;
 
-      if (index->settings->track_file_pos) {
-        bsf_snapshots[j][*cur_bsf_snapshot].file_pos = knn_results[j].file_pos;
-        // bsf_snapshots[j][*cur_bsf_snapshot].series = calloc (1,
-        // ts_byte_size);
-        // mempcpy(bsf_snapshots[j][*cur_bsf_snapshot].series,knn_results[j].series,ts_byte_size);
-      }
+  //     if (index->settings->track_file_pos) {
+  //       bsf_snapshots[j][*cur_bsf_snapshot].file_pos = knn_results[j].file_pos;
+  //       // bsf_snapshots[j][*cur_bsf_snapshot].series = calloc (1,
+  //       // ts_byte_size);
+  //       // mempcpy(bsf_snapshots[j][*cur_bsf_snapshot].series,knn_results[j].series,ts_byte_size);
+  //     }
 
-      if(index->settings->track_vector)
-      {
-        bsf_snapshots[j][*cur_bsf_snapshot].vector_id->table_id = knn_results[j].vector_id->table_id;
-        bsf_snapshots[j][*cur_bsf_snapshot].vector_id->set_id = knn_results[j].vector_id->set_id;
-        bsf_snapshots[j][*cur_bsf_snapshot].vector_id->pos = knn_results[j].vector_id->pos;
-        bsf_snapshots[j][*cur_bsf_snapshot].query_vector_pos = knn_results[j].query_vector_pos;
-        strcpy(bsf_snapshots[j][*cur_bsf_snapshot].vector_id->raw_data_file, 
-              knn_results[j].vector_id->raw_data_file);
-      }
-    }
-    ++(*cur_bsf_snapshot);
-  }
+  //     if(index->settings->track_vector)
+  //     {
+  //       bsf_snapshots[j][*cur_bsf_snapshot].vector_id->table_id = knn_results[j].vector_id->table_id;
+  //       bsf_snapshots[j][*cur_bsf_snapshot].vector_id->set_id = knn_results[j].vector_id->set_id;
+  //       bsf_snapshots[j][*cur_bsf_snapshot].vector_id->pos = knn_results[j].vector_id->pos;
+  //       bsf_snapshots[j][*cur_bsf_snapshot].query_vector_pos = knn_results[j].query_vector_pos;
+  //       strcpy(bsf_snapshots[j][*cur_bsf_snapshot].vector_id->raw_data_file, 
+  //             knn_results[j].vector_id->raw_data_file);
+  //     }
+  //   }
+  //   ++(*cur_bsf_snapshot);
+  // }
 
   if (node->file_buffer != NULL) {
     // clearing the data for this node

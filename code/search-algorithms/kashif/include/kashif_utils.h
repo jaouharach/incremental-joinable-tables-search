@@ -306,9 +306,11 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   unsigned int total_checked_vec = 0;
 
   // write results for a specific k value
-  for (int i = 0, j = 0; i < num_knns; i += max_k, j++)
+  printf("Total knns = %d\n.", num_knns);
+  for (int i = 0; i < num_knns; i += k)// vector counter
   {
-    for(int s = i; s < (k + (j * max_k)); s++)
+    // printf("Collect values between %d and %d\n", i, (max_k + i));
+    for(int s = i; s < (max_k + i); s++)// k counter
     {
       fprintf(fp, "\n");
       fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f, %.6f, %u", qtable_id, qset_id,
@@ -327,7 +329,7 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   char * new_csv_filename =  malloc(strlen(csv_file) + strlen("runtime_ndistcalc_dataaccess.csv") + 20 + 1);
   sprintf(new_csv_filename, "%s_runtime%.3f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
   
-  printf("[k = %u] Combined total query time  = %f\n", k, total_querytime/1000000);
+  printf("[k = %u] Combined total query time  = %f\n", max_k, total_querytime/1000000);
   int ret = rename(csv_file, new_csv_filename);
   
   free(new_csv_filename);
