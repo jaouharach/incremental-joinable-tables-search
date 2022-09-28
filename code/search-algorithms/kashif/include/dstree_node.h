@@ -129,7 +129,7 @@ void calculate_node_knn_distance_2(
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     ts_type bsf, unsigned int k, struct query_result *knn_results,
     struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
-    unsigned int *cur_size, float warping, struct vid * query_id);
+    unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_time, unsigned int * total_checked_vectors);
 /* end kashif changes */
 enum response append_ts_gt_to_child_node(struct dstree_index * index,
 					 struct dstree_node * node,

@@ -96,7 +96,7 @@ void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
                             struct query_result *knn_results, unsigned int k,
                             struct bsf_snapshot **bsf_snapshots,
                             unsigned int *cur_bsf_snapshot,
-                            unsigned int *curr_size, float warping, struct vid * query_id) {
+                            unsigned int *curr_size, float warping, struct vid * query_id, double * total_query_set_time, unsigned int * total_checked_ts) {
 
   struct query_result result;
   struct dstree_node *node = index->first_node;
@@ -114,7 +114,7 @@ void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
 
     calculate_node_knn_distance_2(index, node, query_ts_reordered, query_order,
                                 offset, bsf, k, knn_results, bsf_snapshots,
-                                cur_bsf_snapshot, curr_size, warping, query_id);
+                                cur_bsf_snapshot, curr_size, warping, query_id, total_query_set_time, total_checked_ts);
   } else {
     printf("Error in dstree_query_engine: null pointer to node.\n");
   }
@@ -2083,7 +2083,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   // return k approximate results
   approximate_knn_search_2(query_ts, query_ts_reordered, query_order, offset, bsf,
                          index, knn_results, k, bsf_snapshots, cur_bsf_snapshot,
-                         &curr_size, warping, query_id);
+                         &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
 
 
   // printf("approx: knns for vector %u\n", query_vector_pos);
@@ -2118,19 +2118,17 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     // IMPORTANT!!!!
     // fix this: increase found_knn and do not print until the end.
     // update_query_stats(index,q_id, found_knn, approximate_result);
-    // for(int w = 0; w > k; w++)
-    // {
-    //   knn_results[w].time += index->stats->query_total_cpu_time;
-    //   knn_results[w].num_checked_vectors += index->stats->query_filter_checked_ts_count;
-    // }      
+    // knn_results[found_knn].time += index->stats->query_total_cpu_time;
+    // knn_results[found_knn].num_checked_vectors += index->stats->query_filter_checked_ts_count;    
+
+    // *total_query_set_time += index->stats->query_total_cpu_time;
+    // *total_checked_ts += index->stats->query_filter_checked_ts_count;
     // get_query_stats(index, found_knn);
     // print_query_stats(index, q_id, found_knn,qfilename);
   }
-
-  // RESET_QUERY_COUNTERS()
-  /* start kashif changes */
+  
+  RESET_QUERY_COUNTERS()
   RESET_PARTIAL_COUNTERS()
-  /* end kashif changes */
   COUNT_PARTIAL_TIME_START
 
   struct query_result bsf_result = approximate_result;
@@ -2162,13 +2160,13 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   // FILE *series_file = fopen(filename, "a");
   // FILE *dataset_file = fopen(index->settings->dataset, "rb");
 
-  double curr_k_time = 0.0;
-  unsigned int curr_k_total_checked_vector = 0u;
+ 
 
   while ((n = pqueue_pop(pq))) {
-
     // the first element of the queue is not used, thus pos-1
     for (unsigned int pos = found_knn; pos < k; ++pos) {
+      double curr_k_time = 0.0;
+      unsigned int curr_k_total_checked_vector = 0u;
       bsf_result = knn_results[pos];
       // printf("n->distance = %g, bsf_result.distance = %g\n",
       // sqrt(n->distance), sqrt(bsf_result.distance));
@@ -2178,12 +2176,10 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         COUNT_PARTIAL_TIME_END
 
         update_query_stats(index, q_id, found_knn, bsf_result);
-        *total_query_set_time += index->stats->query_total_cpu_time;
         curr_k_time += index->stats->query_total_cpu_time;
         curr_k_total_checked_vector += index->stats->query_filter_checked_ts_count;
-
-        // knn_results[pos].time += index->stats->query_total_cpu_time;
-        // knn_results[pos].num_checked_vectors += index->stats->query_filter_checked_ts_count;
+        *total_query_set_time += index->stats->query_total_cpu_time;
+        *total_checked_ts += index->stats->query_filter_checked_ts_count;
         // get_query_stats(index, found_knn);
         // print_query_stats(index, q_id, found_knn, qfilename);
 
@@ -2200,19 +2196,17 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         // found_knn); fflush(stdout); reset the bsf for the next NN
         if (found_knn < k) {
           bsf_result = knn_results[found_knn];
+          knn_results[found_knn].time += curr_k_time;
+          knn_results[found_knn].num_checked_vectors += curr_k_total_checked_vector;
         }
 
-        // RESET_QUERY_COUNTERS()
-      /* start kashif changes */
+      RESET_QUERY_COUNTERS()
       RESET_PARTIAL_COUNTERS()
-      /* end kashif changes */
-        COUNT_PARTIAL_TIME_START
+      COUNT_PARTIAL_TIME_START
       }
     }
 
     if (found_knn >= k) {
-      knn_results[found_knn].time += curr_k_time;
-      knn_results[found_knn].num_checked_vectors += curr_k_total_checked_vector;
       // printf("found all kNN\n");
       // fflush(stdout);
       break;
@@ -2220,17 +2214,11 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
     if (n->node->is_leaf) // n is a leaf
     {
-      knn_results[found_knn].time += curr_k_time;
-      knn_results[found_knn].num_checked_vectors += curr_k_total_checked_vector;
-      
-      curr_k_time = 0.0;
-      curr_k_total_checked_vector = 0.0;
-
       // upon return, the queue will update the next best (k-foundkNN)th objects
       calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
                                   query_order, offset, bsf_result.distance, k,
                                   knn_results, bsf_snapshots, cur_bsf_snapshot,
-                                  &curr_size, warping, query_id);
+                                  &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
 
       // if (r_delta != FLT_MAX && (knn_results[k-1].distance  <= r_delta * (1 +
       // epsilon)))
@@ -2289,34 +2277,34 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   pqueue_free(pq);
 
   // report the elements that were not reported already
-  for (unsigned int pos = found_knn; pos < k; ++pos) {
-    bsf_result = knn_results[pos];
-    found_knn = pos + 1;
-    COUNT_PARTIAL_TIME_END
-    update_query_stats(index, q_id, found_knn, bsf_result);
-    knn_results[pos].time += index->stats->query_total_cpu_time;
-    knn_results[pos].num_checked_vectors += index->stats->query_filter_checked_ts_count;
-    *total_query_set_time += index->stats->query_total_cpu_time;
+  // for (unsigned int pos = found_knn; pos < k; ++pos) {
+  //   bsf_result = knn_results[pos];
+  //   found_knn = pos + 1;
+  //   COUNT_PARTIAL_TIME_END
+  //   update_query_stats(index, q_id, found_knn, bsf_result);
+  //   knn_results[pos].time += index->stats->query_total_cpu_time;
+  //   knn_results[pos].num_checked_vectors += index->stats->query_filter_checked_ts_count;
+  //   *total_query_set_time += index->stats->query_total_cpu_time;
 
-    // get_query_stats(index, found_knn);
-    // print_query_stats(index, q_id, found_knn, qfilename);
+  //   // get_query_stats(index, found_knn);
+  //   // print_query_stats(index, q_id, found_knn, qfilename);
 
-    // printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
-    // print_perk_progressive_bsf_snapshots(
-    //     index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
-    //     bsf_result.distance, dataset_file, series_file, series);
-    // printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+  //   // printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+  //   // print_perk_progressive_bsf_snapshots(
+  //   //     index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
+  //   //     bsf_result.distance, dataset_file, series_file, series);
+  //   // printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
 
-    // print_perk_progressive_bsf_snapshots(index,
-    // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
-    // bsf_result.distance, NULL, NULL); report all results for found_knn -
-    // last_found_knn or print their results RESET_QUERY_COUNTERS()
+  //   // print_perk_progressive_bsf_snapshots(index,
+  //   // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
+  //   // bsf_result.distance, NULL, NULL); report all results for found_knn -
+  //   // last_found_knn or print their results RESET_QUERY_COUNTERS()
     
-    /* start kashif changes */
-    RESET_PARTIAL_COUNTERS()
-    /* end kashif changes */
-    COUNT_PARTIAL_TIME_START
-  }
+  //   /* start kashif changes */
+  //   RESET_PARTIAL_COUNTERS()
+  //   /* end kashif changes */
+  //   COUNT_PARTIAL_TIME_START
+  // }
   /*
     for (int idx = 0; idx < k; ++idx)
     {
@@ -2336,7 +2324,6 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
   
   // add  query_vector time to total query_set time
-  *total_checked_ts += index->stats->query_filter_checked_ts_count;
   free(series);
 
   return knn_results;

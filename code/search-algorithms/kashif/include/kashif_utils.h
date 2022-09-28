@@ -306,17 +306,17 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   unsigned int total_checked_vec = 0;
 
   // write results for a specific k value
-  printf("Total knns = %d\n.", num_knns);
   for (int i = 0; i < num_knns; i += k)// vector counter
   {
     // printf("Collect values between %d and %d\n", i, (max_k + i));
     for(int s = i; s < (max_k + i); s++)// k counter
     {
+      // printf("k = %d, time = %f -- %f\n", s, knn_results[s].time, knn_results[s].time/1000000);
       fprintf(fp, "\n");
-      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f, %.6f, %u", qtable_id, qset_id,
+      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f, %.7f, %u", qtable_id, qset_id,
             knn_results[s].vector_id->table_id, knn_results[s].vector_id->set_id,
             knn_results[s].query_vector_pos, knn_results[s].vector_id->pos,
-            knn_results[s].distance, knn_results[s].time/1000000, k);
+            knn_results[s].distance, knn_results[s].time/1000000, max_k);
     
     total_querytime += knn_results[s].time;
     total_checked_vec += knn_results[s].num_checked_vectors;
@@ -326,8 +326,8 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   COUNT_OUTPUT_TIME_END
 
   // add query time to file name and rename csv file
-  char * new_csv_filename =  malloc(strlen(csv_file) + strlen("runtime_ndistcalc_dataaccess.csv") + 20 + 1);
-  sprintf(new_csv_filename, "%s_runtime%.3f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
+  char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 20 + 1);
+  sprintf(new_csv_filename, "%s_runtime%.4f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
   
   printf("[k = %u] Combined total query time  = %f\n", max_k, total_querytime/1000000);
   int ret = rename(csv_file, new_csv_filename);

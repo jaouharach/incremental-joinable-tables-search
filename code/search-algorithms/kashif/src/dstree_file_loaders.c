@@ -566,7 +566,7 @@ enum response dstree_knn_query_multiple_binary_files(
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
                     warping, dataset_file, series_file, &query_id);
-                printf("vector %d/%d, done.\n", query_vector.pos+1, nvec);
+                // printf("vector %d/%d, done.\n", query_vector.pos+1, nvec);
               } else {
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
@@ -656,7 +656,7 @@ enum response dstree_knn_query_multiple_binary_files(
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
                     warping, dataset_file, series_file, &query_id);
-                    printf("vector %d/%d, done.\n", query_vector.pos+1, nvec);
+                    // printf("vector %d/%d, done.\n", query_vector.pos+1, nvec);
               } else {
                 curr_knn = exact_de_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
@@ -777,7 +777,10 @@ enum response dstree_knn_query_multiple_binary_files(
           j++;
         }
       }
+      COUNT_PARTIAL_INPUT_TIME_START
       fclose(bin_file);
+      COUNT_PARTIAL_INPUT_TIME_END
+      
       /* end read binary file */
     }
   }
@@ -795,13 +798,16 @@ enum response dstree_knn_query_multiple_binary_files(
             bin_files_directory);
     return FAILURE;
   }
-  COUNT_PARTIAL_TIME_END
-  RESET_PARTIAL_COUNTERS()
+  
 
   // free memory
   COUNT_INPUT_TIME_START
   closedir(dir);
   COUNT_INPUT_TIME_END
+  
+  COUNT_PARTIAL_TIME_END
+  RESET_PARTIAL_COUNTERS()
+
   free(query_vector.values);
   free(query_vector_reordered);
   free(query_order);
@@ -1465,6 +1471,9 @@ enum response dstree_index_multiple_binary_files(const char *bin_files_directory
                 vector_length_in_filename, vector_length, bin_file_path);
         return FAILURE;
       }
+
+      RESET_PARTIAL_COUNTERS()
+      COUNT_PARTIAL_TIME_START
 
       COUNT_PARTIAL_RAND_INPUT
       COUNT_PARTIAL_INPUT_TIME_START

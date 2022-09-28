@@ -583,7 +583,7 @@ void calculate_node_knn_distance_2(
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     ts_type bsf, unsigned int k, struct query_result *knn_results,
     struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
-    unsigned int *cur_size, float warping, struct vid * query_id)
+    unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_set_time, unsigned int * total_checked_ts)
 {
   // get the k-th distance from the results queue
   ts_type kth_bsf = FLT_MAX;
@@ -677,13 +677,25 @@ void calculate_node_knn_distance_2(
         
         strcpy(object_result.vector_id->raw_data_file, index->vid_cache[(node->vid_pos) + idx].raw_data_file);
       }
-
+          
       queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
+      
       update_snapshots = true;
       
       if (index->settings->track_vector)
         free(object_result.vector_id);
-      
+
+      // update query time per k value
+      COUNT_PARTIAL_TIME_END
+
+      update_query_stats(index, 0, 0, result);
+      knn_results[(*cur_size) - 1].time += index->stats->query_total_cpu_time;
+      knn_results[(*cur_size) - 1].num_checked_vectors += index->stats->query_filter_checked_ts_count;
+      *total_query_set_time += index->stats->query_total_cpu_time;
+      *total_checked_ts += index->stats->query_filter_checked_ts_count;
+
+      RESET_PARTIAL_COUNTERS()
+      COUNT_PARTIAL_TIME_START
     }
   }
   // only print the snapshots after finished visiting leaf
@@ -1175,8 +1187,6 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
 
       /* end kashif changes */
-
-
       q[j].distance = q[j - 1].distance;
       q[j].node = q[j - 1].node;
       q[j].label = q[j - 1].label;

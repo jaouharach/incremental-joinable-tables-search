@@ -193,7 +193,7 @@ void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
                             struct query_result *knn_results, unsigned int k,
                             struct bsf_snapshot **bsf_snapshots,
                             unsigned int *cur_bsf_snapshot,
-                            unsigned int *curr_size, float warping, struct vid * query_id);
+                            unsigned int *curr_size, float warping, struct vid * query_id, double * total_query_set_time, unsigned int * total_checked_ts);
 void exact_de_progressive_knn_search(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,
     unsigned int offset, struct dstree_index *index, ts_type minimum_distance,
