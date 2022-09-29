@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  28 SEP 2022 11:23
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  29 SEP 2022 12:33
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1017,7 +1017,7 @@ Overfull \hbox (40.90346pt too wide) in paragraph at lines 45--64
  []
 
 ) (./background.tex) (./system-architecture.tex
-Underfull \hbox (badness 1360) in paragraph at lines 58--58
+Underfull \hbox (badness 1360) in paragraph at lines 57--57
 []\OT1/cmr/bx/n/9 Algorithm 3: \OT1/cmr/m/sc/9 (+20) Kashif: Par-al-lelIn-cre-m
 en-tal-
  []
@@ -1028,7 +1028,14 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-Overfull \hbox (1.4439pt too wide) in paragraph at lines 120--120
+Overfull \hbox (1.91989pt too wide) in paragraph at lines 78--78
+[][]|[]$\OML/cmm/m/it/8 ArrayCopy\OT1/cmr/m/n/8 (-20) (\OML/cmm/m/it/8 KnnResut
+ls\OT1/cmr/m/n/8 (-20) [\OML/cmm/m/it/8 i\OT1/cmr/m/n/8 (-20) ]\OML/cmm/m/it/8 
+; []\OT1/cmr/m/n/8 (-20) (\OML/cmm/m/it/8 q[]\OT1/cmr/m/n/8 (-20) ))$; 
+ []
+
+
+Overfull \hbox (1.4439pt too wide) in paragraph at lines 119--119
 [][]|[]$\OML/cmm/m/it/8 UpdateKnnResults\OT1/cmr/m/n/8 (-20) (\OML/cmm/m/it/8 N
 []urr; KnnResults\OT1/cmr/m/n/8 (-20) [\OML/cmm/m/it/8 i\OT1/cmr/m/n/8 (-20) ])
 $; 
@@ -1067,6 +1074,10 @@ Class acmart Warning: Some images may lack descriptions.
 Package caption Warning: Unused \captionsetup[sub] on input line 36.
 See the caption package documentation for explanation.
 
+
+Package balance Warning: You have called \balance in second column
+(balance)                Columns might not be balanced.
+
 [2.2 <../../img/kashif_querytime_recall_precision.png>] [3.3]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 219.
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 219.
@@ -1077,9 +1088,9 @@ Package rerunfilecheck Info: File `paper.out' has not changed.
 (rerunfilecheck)             Checksum: 3753B1AF20486AAE695EDA681CD651E3;782.
  ) 
 Here is how much of TeX's memory you used:
- 17051 strings out of 494847
- 248384 string characters out of 6179081
- 439800 words of memory out of 5000000
+ 17049 strings out of 494847
+ 248358 string characters out of 6179081
+ 426800 words of memory out of 5000000
  19738 multiletter control sequences out of 15000+600000
  20289 words of font info for 96 fonts, out of 8000000 for 9000
  220 hyphenation exceptions out of 8191
@@ -1105,10 +1116,10 @@ ublic/amsfonts/cm/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
 msfonts/cm/cmti8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
 /cm/cmti9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmt
 t8.pfb>
-Output written on paper.pdf (3 pages, 321828 bytes).
+Output written on paper.pdf (3 pages, 322387 bytes).
 PDF statistics:
- 268 PDF objects out of 1000 (max. 8388607)
- 209 compressed objects within 3 object streams
- 78 named destinations out of 1000 (max. 500000)
+ 266 PDF objects out of 1000 (max. 8388607)
+ 207 compressed objects within 3 object streams
+ 76 named destinations out of 1000 (max. 500000)
  25162 words of extra memory for PDF output out of 29859 (max. 10000000)
 

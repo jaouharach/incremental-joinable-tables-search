@@ -34,27 +34,26 @@
 \begin{algorithm}
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
 	\KwIn{A sequence of query vectors $Q = \{q_{1}, ..., q_{n}\}, k$ and the recall threashold $r_{th}$.}
-	\KwOut{$k * n$ Nearest vectors to the the query vectors.}
+%	\KwOut{$k * n$ Nearest vectors to the the query vectors.}
 	\vspace{.2cm}
 	\textbf{Shared Array} $AllKnnResults[n][k] \gets \{\{+\infty_{1}, ..., +\infty_{k}\}_{q_{1}}, ..., \{+\infty_{1}, ..., +\infty_{k}\}_{q_{n}}\}$;\\
 	\textbf{Shared Boolead} $Finished \gets False$;\\
 	\textbf{Float} $CurrentRecall \gets 0$;\\
-	\textbf{Barrier} $SendUpdatesBarrier$ {\it for workerThread};\\
-	\textbf{Barrier} $GetUpdatesBarrier$ {\it for CoordinatorThread};\\
+	\textbf{Barrier} $UpdateKnnsBarrier$ {\it for workerThread and CoordinatorThread};\\
 	
 	\vspace{.2cm}
 	
 	
-	initialize {\it WorkerThread};\\
+	initialize one {\it WorkerThread};\\
 	{\it WorkerThread} runs an instance of {\sc ExactKnnSearch$(Q, k)$};\\
 	\SetKwRepeat{Do}{do}{while}	
 	\Do{!$Finished$ and $CurrentRecall < r_{th}$;}
 	{ 
-		$CoordinatorThread$ blocks on $GetUpdatesBarrier$;\\
+		$CoordinatorThread$ blocks on $UpdateKnnsBarrier$;\\
 		$CurrentRecall \gets ComputeRecall(AllKnnResults)$;
 	}
 	$Finished \gets True$;\\
-	\KwRet{$AllKnnResutls$;}
+%	\KwRet{$AllKnnResutls$;}
 	\caption{{\sc Kashif: ParallelIncrementalQueryAnswering}}
 	\label{algo:query_answering}
 \end{algorithm}
@@ -64,7 +63,7 @@
 \begin{algorithm}
 	\DontPrintSemicolon
 	\KwIn{A sequence of query vectors $Q = \{q_{1}, ..., q_{n}\}, k$.}
-	\KwOut{$k * n$ Nearest vectors to the the query vectors.}
+%	\KwOut{$k * n$ Nearest vectors to the the query vectors.}
 	\vspace{.2cm}
 	\textbf{Array} $KnnResults[n][k] \gets \{\{+\infty_{1}, ..., +\infty_{k}\}_{q_{1}}, ..., \{+\infty_{1}, ..., +\infty_{k}\}_{q_{n}}\}$;\\
 	\textbf{Queue} $pq_{1}, ..., pq_{n}$;\\
@@ -73,10 +72,10 @@
 	\tcc{perform heuristic search and update knn results in global array}
 	\ForEach{$q_i \in Q$}
 	{%
-		$ArrayCopy(KnnResutls[i], \text{\sc HeuristicKnnSearch} (q_{i})$;\\
+		$ArrayCopy(KnnResutls[i], \text{\sc HeuristicKnnSearch} (q_{i}))$;\\
 		$ArrayCopy(AllKnnResults[i], KnnResutls[i])$;
 	}
- 	{\it WorkerThread} reaches $SendUpdatesBarrier$; \\
+ 	{\it WorkerThread} reaches $UpdateKnnsBarrier$; \\
  	
  	\tcc{initialize priority queues}
  	\ForEach {$q_{i} \in  Q$}
@@ -104,7 +103,7 @@
  				{
  					\If {$D_{lb}(N_{child}, q_{i}) < KnnResults[i][k-1]$}
  					{
- 						$pq_i.Add(N_{child},D_{lb}(N_{child}, q[i]))$;\\	
+ 						$pq_i.Add(N_{child},D_{lb}(N_{child}, q_i))$;\\	
  					}	
  				}
  			}
@@ -115,7 +114,7 @@
  		{
  			$ArrayCopy(AllKnnResults[i], KnnResutls[i])$;\\	
  		}
- 	 	{\it WorkerThread} reaches SendUpdatesBarrier; \\
+ 	 	{\it WorkerThread} reaches $UpdateKnnsBarrier$; \\
  	}
  	$Finished \gets True$;\\
 	\caption{{\sc ExactKnnSearch}}

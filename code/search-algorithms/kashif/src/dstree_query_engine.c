@@ -2163,10 +2163,10 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
  
 
   while ((n = pqueue_pop(pq))) {
+    double curr_k_time = 0.0;
+    unsigned int curr_k_total_checked_vector = 0u;
     // the first element of the queue is not used, thus pos-1
     for (unsigned int pos = found_knn; pos < k; ++pos) {
-      double curr_k_time = 0.0;
-      unsigned int curr_k_total_checked_vector = 0u;
       bsf_result = knn_results[pos];
       // printf("n->distance = %g, bsf_result.distance = %g\n",
       // sqrt(n->distance), sqrt(bsf_result.distance));
@@ -2196,8 +2196,6 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         // found_knn); fflush(stdout); reset the bsf for the next NN
         if (found_knn < k) {
           bsf_result = knn_results[found_knn];
-          knn_results[found_knn].time += curr_k_time;
-          knn_results[found_knn].num_checked_vectors += curr_k_total_checked_vector;
         }
 
       RESET_QUERY_COUNTERS()
@@ -2220,6 +2218,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
                                   knn_results, bsf_snapshots, cur_bsf_snapshot,
                                   &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
 
+      knn_results[curr_size - 1].time += curr_k_time;
+      knn_results[curr_size - 1].num_checked_vectors += curr_k_total_checked_vector;
       // if (r_delta != FLT_MAX && (knn_results[k-1].distance  <= r_delta * (1 +
       // epsilon)))
       //  break;

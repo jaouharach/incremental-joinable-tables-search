@@ -362,7 +362,7 @@ enum response dstree_knn_query_multiple_binary_files(
 
 
   if (track_bsf) {
-    max_bsf_snapshots = 3;
+    max_bsf_snapshots = 0;
     cur_bsf_snapshot = 0;
 
     bsf_snapshots = calloc(k, sizeof(struct bsf_snapshot *));

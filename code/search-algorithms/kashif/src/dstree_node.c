@@ -630,9 +630,9 @@ void calculate_node_knn_distance_2(
         
       if(index->vid_cache[(node->vid_pos) + idx].table_id == query_id->table_id)
         continue;
+
     struct query_result result;
     result = knn_results[k - 1];
-
     kth_bsf = result.distance;
 
     //(sid) warping distance here
@@ -674,12 +674,13 @@ void calculate_node_knn_distance_2(
         object_result.vector_id->table_id = index->vid_cache[(node->vid_pos) + idx].table_id;
         object_result.vector_id->set_id = index->vid_cache[(node->vid_pos) + idx].set_id;
         object_result.vector_id->pos = index->vid_cache[(node->vid_pos) + idx].pos;
-        
+        object_result.time = 0;
+        object_result.num_checked_vectors = 0;
         strcpy(object_result.vector_id->raw_data_file, index->vid_cache[(node->vid_pos) + idx].raw_data_file);
       }
           
-      queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
-      
+      int stored_at = queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
+      // printf("bsf stored at %d,\n", stored_at);
       update_snapshots = true;
       
       if (index->settings->track_vector)
@@ -689,8 +690,8 @@ void calculate_node_knn_distance_2(
       COUNT_PARTIAL_TIME_END
 
       update_query_stats(index, 0, 0, result);
-      knn_results[(*cur_size) - 1].time += index->stats->query_total_cpu_time;
-      knn_results[(*cur_size) - 1].num_checked_vectors += index->stats->query_filter_checked_ts_count;
+      knn_results[stored_at].time += index->stats->query_total_cpu_time;
+      knn_results[stored_at].num_checked_vectors += index->stats->query_filter_checked_ts_count;
       *total_query_set_time += index->stats->query_total_cpu_time;
       *total_checked_ts += index->stats->query_filter_checked_ts_count;
 
@@ -1139,9 +1140,11 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
   size_t i;
   size_t newsize;
 
+  int stored_at = 0;
   /* the queue is full, ovewrite last element*/
   if (*cur_size == k)
   {
+    stored_at = k - 1;
     q[k - 1].distance = d.distance;
     q[k - 1].node = d.node;
     q[k - 1].label = d.label;
@@ -1149,11 +1152,14 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
     q[k - 1].vector_id->table_id = d.vector_id->table_id;
     q[k - 1].vector_id->set_id = d.vector_id->set_id;
     q[k - 1].vector_id->pos = d.vector_id->pos;
+    q[k - 1].time += d.time;
+    q[k - 1].num_checked_vectors += d.num_checked_vectors;
     // q[k - 1].query_vector_pos = d.query_vector_pos; // because query pos is set at the beginning 
     strcpy(q[k - 1].vector_id->raw_data_file, d.vector_id->raw_data_file);
   }
   else
   {
+    stored_at = *cur_size;
     q[*cur_size].distance = d.distance;
     q[*cur_size].node = d.node;
     q[*cur_size].label = d.label;
@@ -1161,6 +1167,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
     q[*cur_size].vector_id->table_id = d.vector_id->table_id;
     q[*cur_size].vector_id->set_id = d.vector_id->set_id;
     q[*cur_size].vector_id->pos = d.vector_id->pos;
+    q[*cur_size].time = d.time;
+    q[*cur_size].num_checked_vectors = d.num_checked_vectors;
     // q[*cur_size].query_vector_pos = d.query_vector_pos; // because query pos is set at the beginning 
     strcpy(q[*cur_size].vector_id->raw_data_file, d.vector_id->raw_data_file);
 
@@ -1183,9 +1191,12 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       temp.vector_id->table_id = q[j].vector_id->table_id;
       temp.vector_id->set_id = q[j].vector_id->set_id;
       temp.vector_id->pos = q[j].vector_id->pos;
+      temp.time = q[j].time;
+      temp.num_checked_vectors = q[j].num_checked_vectors;
       // temp.query_vector_pos = q[j].query_vector_pos; // because query pos is set at the beginning 
       strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
-
+      if(j == stored_at)
+        stored_at --;
       /* end kashif changes */
       q[j].distance = q[j - 1].distance;
       q[j].node = q[j - 1].node;
@@ -1195,6 +1206,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[j].vector_id->table_id = q[j - 1].vector_id->table_id;
       q[j].vector_id->set_id = q[j - 1].vector_id->set_id;
       q[j].vector_id->pos = q[j - 1].vector_id->pos;
+      q[j].time = q[j - 1].time;
+      q[j].num_checked_vectors = q[j - 1].num_checked_vectors;
       // q[j].query_vector_pos = q[j - 1].query_vector_pos; // because query pos is set at the beginning 
       strcpy(q[j].vector_id->raw_data_file, q[j - 1].vector_id->raw_data_file);
 
@@ -1205,6 +1218,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[j - 1].vector_id->table_id = temp.vector_id->table_id;
       q[j - 1].vector_id->set_id = temp.vector_id->set_id;
       q[j - 1].vector_id->pos = temp.vector_id->pos;
+      q[j - 1].time = temp.time;
+      q[j - 1].num_checked_vectors = temp.num_checked_vectors;
       // q[j - 1].query_vector_pos = temp.query_vector_pos; // because query pos is set at the beginning 
       strcpy(q[j - 1].vector_id->raw_data_file, temp.vector_id->raw_data_file);
       --j;
@@ -1213,7 +1228,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
   }
   
   free(temp.vector_id);
-  return 0;
+  return stored_at;
 }
 
 /* start kashif changes */
