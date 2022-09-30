@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
   static unsigned int data_gb_size = 0; // datalake size in GB
   unsigned int num_k_values = 0;
   char * k_values_str = "";
+  char * ground_truth_dir = "";
   /* end kashif changes */
 
   // printf("new code\n");
@@ -123,7 +124,8 @@ int main(int argc, char **argv) {
         {"top", required_argument, 0, '#'}, // maxmum query set set size (number of vectors)
         {"track-vector", no_argument, 0, '*'},
         {"keyword-search", no_argument, 0, ':'},
-        {"k-values", required_argument, 0, ';'}
+        {"k-values", required_argument, 0, ';'},
+        {"ground-truth-dir", required_argument, 0, '&'}
         /* end kashif changes */
     };
 
@@ -330,6 +332,9 @@ int main(int argc, char **argv) {
       k_values_str = optarg;
       break;
 
+    case '&':
+      ground_truth_dir = optarg;
+      break;
     /* end kashif changes */
     default:
       exit(-1);
@@ -563,7 +568,7 @@ int main(int argc, char **argv) {
     dstree_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
-                                    warping, keyword_search, k_values_str);
+                                    warping, keyword_search, k_values_str, ground_truth_dir);
     /* end kashif changes */
   } 
   else if (mode == 2) // build the index, execute queries and store the index
@@ -618,7 +623,8 @@ int main(int argc, char **argv) {
                                     max_qset_size, num_top, index,
                                     minimum_distance, epsilon, delta,
                                     k, track_bsf, track_pruning, all_mindists,
-                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, warping, keyword_search, k_values_str)) {
+                                    max_policy, nprobes, incremental, result_dir, 
+                                    total_data_files, data_gb_size, warping, keyword_search, k_values_str, ground_truth_dir)) {
         fprintf(stderr, "Error main.c:  Could not execute the query.\n");
         return -1;
       }

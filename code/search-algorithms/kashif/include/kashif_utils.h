@@ -58,8 +58,9 @@ struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_re
 
 struct result_table *get_top_tables_by_euclidean_distance(struct query_result *knn_results, int num_knn_results, 
                          unsigned int num_top);
-
-
+int get_ground_truth_file(char * ground_truth_dir, int query_table_id, int query_set_id, char * ground_truth_file);
+struct query_result * get_ground_truth_results(char * ground_truth_file, int total_results);
+float compute_recall(char * ground_truth_dir, struct query_result * knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id);
 
 ts_type todecimal(char *s) {
   // printf("\ninput: %s\n", s);
@@ -561,4 +562,142 @@ struct result_table *get_top_tables_by_euclidean_distance(struct query_result *k
   }
 
   return distinct_tables;
+}
+
+int  get_ground_truth_file(char * ground_truth_dir, int query_table_id, int query_set_id, char * ground_truth_file)
+{
+  char queryid[255] = "";
+  char *ret;
+  char buffer[80];
+  struct dirent *dfile;
+  DIR *dir = opendir(ground_truth_dir);
+
+  if (!dir)
+  {
+    fprintf(stderr, "Error in dstree_file_loaders.c: Unable to open directory stream! %s", ground_truth_dir);
+    exit(1);
+  }
+  snprintf(queryid, 12, "TQ%d_Q%d", query_table_id, query_set_id);
+
+  while ((dfile = readdir(dir)) != NULL)
+  {
+    ret = strstr(dfile->d_name, queryid);
+    if(ret)
+    {
+      strcat(ground_truth_file, ground_truth_dir);
+      strcat(ground_truth_file, "/");
+      strcat(ground_truth_file, dfile->d_name);
+      break;
+    }
+  }
+  FILE * file = fopen(ground_truth_file, "r");
+  int num_lines = 0;
+  // read file and count number of lines
+  while (fgets(buffer, 80, file)) {
+      num_lines++;
+  }
+  return num_lines - 1; // dont count reader
+}
+
+struct query_result * get_ground_truth_results(char * ground_truth_file, int total_results)
+{
+  char buffer[80];
+  FILE * file = fopen(ground_truth_file, "r");
+  struct query_result * ground_truth_results = malloc(sizeof(struct query_result) * total_results);
+  if(ground_truth_results == NULL)
+  {
+    fprintf(stderr, "Error in kashif_utile.h: Could'nt allocate memory for ground_truth_results");
+    return 1;
+  }
+  for(int r = 0; r < total_results; r++)
+  {
+    ground_truth_results[r].vector_id = malloc(sizeof(struct vid));
+    if(ground_truth_results[r].vector_id == NULL)
+    {
+      fprintf(stderr, "Error in kashif_utile.h: Could'nt allocate memory for ground_truth_results");
+      return 1;
+    }
+  }
+
+  int i = 0, header = 1;;
+  while (fgets(buffer, 80, file)) {
+      if(header == 1)
+      {
+        header = 0;
+        continue;
+      }
+
+      // If you need all the values in a row
+      char *token = strtok(buffer, ",");
+      int col = 0;
+      int table_id = 0, set_id = 0, vector_pos = 0, query_vector_pos = 0;
+
+      while (token) {
+          // Just printing each integer here but handle as needed
+          if(col == 1)
+          {
+              sscanf(token, " %d:%d", &table_id, &set_id);
+          }
+          else if (col == 2)
+              query_vector_pos = atoi(token);
+          else if (col == 3)
+              vector_pos = atoi(token);
+          token = strtok(NULL, ",");
+          col++;
+      }
+
+      // printf("table: %d,  set: %d, vector: %d\n", table_id, set_id, vector_pos);
+      ground_truth_results[i].vector_id->table_id = table_id;
+      ground_truth_results[i].vector_id->set_id = set_id;
+      ground_truth_results[i].vector_id->pos = vector_pos;
+      ground_truth_results[i].query_vector_pos = query_vector_pos;
+      i++;
+  }
+  return ground_truth_results;
+}
+
+float compute_recall(char * ground_truth_dir, struct query_result * knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id)
+{
+  char ground_truth_file[255] = "";
+  int  num_gt_results = get_ground_truth_file(ground_truth_dir, query_table_id, query_set_id, ground_truth_file);
+  struct query_result * ground_truth_results = get_ground_truth_results(ground_truth_file, num_gt_results);
+
+  int * exact_results_counter = calloc(num_query_vectors, sizeof(int));
+  float num_matches = 0;
+  int num_knn_results = num_query_vectors * k;
+
+  printf("total vectors: %d\n", num_query_vectors);
+  for(int j = 0; j < num_knn_results; j++)
+  {
+    for(int i = 0; i < num_gt_results; i++)
+    {
+      if(ground_truth_results[i].vector_id->table_id == knn_results[j].vector_id->table_id
+        && ground_truth_results[i].vector_id->set_id == knn_results[j].vector_id->set_id
+        && ground_truth_results[i].query_vector_pos == knn_results[j].query_vector_pos
+        && ground_truth_results[i].vector_id->pos == knn_results[j].vector_id->pos)
+      {
+        num_matches++;
+        break;
+      }
+    }
+  }
+
+  for(int i = 0; i < num_gt_results; i++)
+  {
+    if(exact_results_counter[ground_truth_results[i].query_vector_pos] < k)
+    {
+      // printf("incr at %d\n", ground_truth_results[i].query_vector_pos);
+      exact_results_counter[ground_truth_results[i].query_vector_pos]++;
+    }
+  }
+
+  float exact_result_total_rows = 0.0;
+  for(int i = 0; i < num_query_vectors; i++)
+  {
+    exact_result_total_rows += exact_results_counter[i];
+  }
+  
+  printf("%f / %f\n", num_matches, (float)num_gt_results);
+  printf("precision = %f\n", num_matches/exact_result_total_rows);
+  return num_matches/(float)num_gt_results;
 }

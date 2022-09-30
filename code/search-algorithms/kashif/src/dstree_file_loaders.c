@@ -336,7 +336,7 @@ enum response dstree_knn_query_multiple_binary_files(
     boolean all_mindists, boolean max_policy, unsigned int nprobes,
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
-    float warping, unsigned char keyword_search, char * k_values_str) {
+    float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir) {
 
   struct bsf_snapshot **bsf_snapshots = NULL;
   unsigned int max_bsf_snapshots;
@@ -524,12 +524,12 @@ enum response dstree_knn_query_multiple_binary_files(
           query_vector.table_id = table_id;
           query_vector.set_id = set_id;
           query_vector.pos = 0;
+
+          printf("\nQuery (%d, %d) ...\n", table_id, set_id);
+
           set_id += 1;
           i++;
           j = 0;
-
-          printf("\nNew Query ...\n");
-
         } else if (i <= (unsigned int)nvec * vector_length) {
           // end of vector but still in current set
           if (j > (vector_length - 1)) {
@@ -733,6 +733,13 @@ enum response dstree_knn_query_multiple_binary_files(
             }
             
             printf("\nquery_time=%fsec\n", query_time);
+            printf("computing recall...\n");
+
+            // compute recall
+            float recall = compute_recall(ground_truth_dir, all_knn_results, nvec, k, query_vector.table_id, query_vector.set_id);
+
+            printf("\nrecall=%f\n", recall);
+
             // if(keyword_search)
             // {
             //   // don't change these lines to allaow ui to fetch results
