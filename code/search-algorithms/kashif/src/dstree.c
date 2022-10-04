@@ -72,6 +72,7 @@ int main(int argc, char **argv) {
   static unsigned int total_columns = 0; // number of columns to be indexed
   unsigned char track_vector = 0;
   unsigned char keyword_search = 0;
+  unsigned char parallel = 0; // parallel incremental query answering
   unsigned int qset_num = 3;
   unsigned int min_qset_size = 5;
   unsigned int max_qset_size = 10;
@@ -125,7 +126,8 @@ int main(int argc, char **argv) {
         {"track-vector", no_argument, 0, '*'},
         {"keyword-search", no_argument, 0, ':'},
         {"k-values", required_argument, 0, ';'},
-        {"ground-truth-dir", required_argument, 0, '&'}
+        {"ground-truth-dir", required_argument, 0, '&'},
+        {"parallel", required_argument, 0, '-'}
         /* end kashif changes */
     };
 
@@ -335,6 +337,11 @@ int main(int argc, char **argv) {
     case '&':
       ground_truth_dir = optarg;
       break;
+
+    case '-':
+      parallel = 1;
+      break;
+
     /* end kashif changes */
     default:
       exit(-1);
@@ -565,10 +572,21 @@ int main(int argc, char **argv) {
 
     index->settings->track_vector = track_vector;
     /* start kashif changes */
-    dstree_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
+
+    if(incremental && parallel)
+      dstree_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
                                     warping, keyword_search, k_values_str, ground_truth_dir);
+    else
+    {
+      printf("Start query anwsering ...\n");
+      dstree_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
+                                    minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
+                                    warping, keyword_search, k_values_str, ground_truth_dir);
+    }
+    
     /* end kashif changes */
   } 
   else if (mode == 2) // build the index, execute queries and store the index

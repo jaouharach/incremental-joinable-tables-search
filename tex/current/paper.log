@@ -1,11 +1,11 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.8.4)  29 SEP 2022 12:33
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.10.3)  4 OCT 2022 10:26
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
 **paper.tex
 (./paper.tex
 LaTeX2e <2017-04-15>
-Babel <3.18> and hyphenation patterns for 7 language(s) loaded.
+Babel <3.18> and hyphenation patterns for 9 language(s) loaded.
 (./acmart.cls
 Document Class: acmart 2020/02/22 v1.70 Typesetting articles for the Associatio
 n for Computing Machinery
@@ -1088,10 +1088,10 @@ Package rerunfilecheck Info: File `paper.out' has not changed.
 (rerunfilecheck)             Checksum: 3753B1AF20486AAE695EDA681CD651E3;782.
  ) 
 Here is how much of TeX's memory you used:
- 17049 strings out of 494847
- 248358 string characters out of 6179081
- 426800 words of memory out of 5000000
- 19738 multiletter control sequences out of 15000+600000
+ 17049 strings out of 494838
+ 248358 string characters out of 6178780
+ 426872 words of memory out of 5000000
+ 19743 multiletter control sequences out of 15000+600000
  20289 words of font info for 96 fonts, out of 8000000 for 9000
  220 hyphenation exceptions out of 8191
  60i,24n,94p,817b,696s stack positions out of 5000i,500n,10000p,200000b,80000s

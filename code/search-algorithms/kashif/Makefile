@@ -334,7 +334,7 @@ lib_libdstree_a_SOURCES = src/pqueue.c src/dstree_file_loaders.c  src/dstree_ind
 lib_libdstree_a_CFLAGS = -I/opt/local/include -Iinclude 
 bin_dstree_SOURCES = src/dstree.c
 bin_dstree_CFLAGS = -I/opt/local/include -Iinclude -I/usr/local/include/ 
-bin_dstree_LDADD = -lreadline -L$/lib  -ldstree -lm
+bin_dstree_LDADD = -lreadline -L$/lib  -ldstree -lm -lpthread
 bin_dstree_LDFLAGS = -L/opt/local/lib -Llib/ -Wl,-rpath,-r/lib
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am

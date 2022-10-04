@@ -20,6 +20,7 @@
 #include "../include/dstree_index.h"
 #include "../include/dstree_node.h"
 #include "../include/dstree_query_engine.h"
+#include <pthread.h>
 
 #include "../include/pqueue.h"
 #ifdef VALUES
@@ -115,6 +116,35 @@ void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
     calculate_node_knn_distance_2(index, node, query_ts_reordered, query_order,
                                 offset, bsf, k, knn_results, bsf_snapshots,
                                 cur_bsf_snapshot, curr_size, warping, query_id, total_query_set_time, total_checked_ts);
+  } else {
+    printf("Error in dstree_query_engine: null pointer to node.\n");
+  }
+}
+
+void approximate_knn_search_para_incr(ts_type *query_ts, ts_type *query_ts_reordered,
+                            int *query_order, unsigned int offset, ts_type bsf,
+                            struct dstree_index *index,
+                            struct query_result *knn_results, unsigned int k,
+                            unsigned int *curr_size, float warping, struct vid * query_id, 
+                            double * total_query_set_time, unsigned int * total_checked_ts) {
+
+  struct query_result result;
+  struct dstree_node *node = index->first_node;
+  // ts_type bsf = FLT_MAX;  //no bsf known so far
+  
+  if (node != NULL) {
+    // Traverse tree
+    while (!node->is_leaf) {
+      if (node_split_policy_route_to_left(node, query_ts)) {
+        node = node->left_child;
+      } else {
+        node = node->right_child;
+      }
+    }
+
+    calculate_node_knn_distance_para_incr(index, node, query_ts_reordered, query_order,
+                                offset, bsf, k, knn_results, curr_size, warping, query_id, 
+                                total_query_set_time, total_checked_ts);
   } else {
     printf("Error in dstree_query_engine: null pointer to node.\n");
   }
@@ -2080,16 +2110,13 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     knn_results[idx].num_checked_vectors = 0;
   }
 
+  printf("Start approximate search ...\n");
   // return k approximate results
   approximate_knn_search_2(query_ts, query_ts_reordered, query_order, offset, bsf,
                          index, knn_results, k, bsf_snapshots, cur_bsf_snapshot,
                          &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
 
-
-  // printf("approx: knns for vector %u\n", query_vector_pos);
-  // for(int j = 0; j <index->settings->timeseries_size; j++)
-  //   printf("%.3f - ", query_ts[j]);
-  // printf("\n");
+  printf("End approximate search ...\n");
 
   // set the approximate result to be the first item in the queue
   struct query_result approximate_result = knn_results[0];
@@ -2133,6 +2160,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
   struct query_result bsf_result = approximate_result;
 
+  printf("Init priority queue ...\n");
+
   pqueue_t *pq = pqueue_init(index->first_node->node_size, cmp_pri, get_pri,
                              set_pri, get_pos, set_pos);
 
@@ -2160,7 +2189,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   // FILE *series_file = fopen(filename, "a");
   // FILE *dataset_file = fopen(index->settings->dataset, "rb");
 
- 
+  printf("Start exact search ...\n");
 
   while ((n = pqueue_pop(pq))) {
     double curr_k_time = 0.0;
@@ -2212,6 +2241,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
     if (n->node->is_leaf) // n is a leaf
     {
+      printf("New knns  at %s...\n",n->node->filename);
       // upon return, the queue will update the next best (k-foundkNN)th objects
       calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
                                   query_order, offset, bsf_result.distance, k,
@@ -2328,6 +2358,301 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
 
   return knn_results;
 }
+
+// parallel incremental query answering
+void exact_de_parallel_incr_knn_search(void * parameters)
+{
+  // read parameters
+  struct worker_param * param = (struct worker_param *)parameters;
+  ts_type ** query_ts_arr = param->query_ts_arr;
+  ts_type ** query_ts_reordered_arr = param->query_ts_reordered_arr;
+  int ** query_order_arr = param->query_order_arr;
+  unsigned int offset = param->offset;
+  struct dstree_index *index = param->index;
+  ts_type minimum_distance = param->minimum_distance;
+  ts_type epsilon = param->epsilon;
+  ts_type r_delta = param->r_delta;
+  unsigned int k = param->k;
+  unsigned int q_id = param->q_id;
+  char ** qfilename_arr = param->qfilename_arr;
+  double * total_query_set_time = param->total_query_set_time;
+  unsigned int * total_checked_ts = param->total_checked_ts;
+  struct bsf_snapshot *** bsf_snapshots_arr = param->bsf_snapshots_arr;
+  unsigned int **cur_bsf_snapshot_arr = param->cur_bsf_snapshot_arr;
+  float warping = param->warping;
+  FILE ** dataset_file_arr = param->dataset_file_arr;
+  FILE ** series_file_arr = param->series_file_arr;
+  struct vid * query_id_arr = param->query_id_arr;
+  unsigned int num_query_vectors = param->num_query_vectors;
+  pthread_barrier_t * knn_update_barrier = param->knn_update_barrier;
+  struct query_result **global_knn_results = param->global_knn_results;
+  char * finished = param->finished;
+  // for(int v = 0; v < num_query_vectors; v++)
+  // {
+  //   printf("+++ vector %d (%u, %u, %u):\n(", v+1, query_id_arr[v].table_id, query_id_arr[v].set_id, query_id_arr[v].pos);
+  //   for(int d = 0; d < index->settings->timeseries_size; d++)
+  //     printf("%f - ", query_ts_arr[v][d]);
+  //   printf(")\n-> re-ordered vector :\n(");
+  //   for(int d = 0; d < index->settings->timeseries_size; d++)
+  //     printf("%f - ", query_ts_reordered_arr[v][d]);
+  //   printf(")\n-> query vector order:\n(");
+  //   for(int d = 0; d < index->settings->timeseries_size; d++)
+  //     printf("%d - ", query_order_arr[v][d]);
+  //   printf(")\n");
+  // }
+
+  // init variables
+  unsigned int * curr_size = (unsigned int *)calloc(num_query_vectors, sizeof(int));
+  ts_type * bsf = (ts_type *) malloc(sizeof(ts_type) * num_query_vectors);
+  ts_type * kth_bsf = (ts_type *) malloc(sizeof(ts_type) * num_query_vectors);
+  ts_type * temp_bsf = (ts_type *) malloc(sizeof(ts_type) * num_query_vectors);
+  unsigned int * found_knn =  (unsigned int *)calloc(num_query_vectors, sizeof(int)); // the next NN found by incremental search
+  struct query_result **knn_results = malloc(num_query_vectors * sizeof(struct query_result *));
+   // array of all knn results for all vectors
+  struct query_result *bsf_result_arr = malloc(sizeof(struct query_result) * num_query_vectors);
+  // array of priority queues
+  pqueue_t **pq_arr = (pqueue_t **)malloc(sizeof(pqueue_t *) * num_query_vectors);
+
+  if(curr_size == NULL || bsf == NULL || kth_bsf == NULL || temp_bsf == NULL || found_knn == NULL || knn_results == NULL || pq_arr == NULL)
+  {
+    fprintf(stderr, "Error in dstree_query_engine.c: Couldn't allocate memory for parallel iqa variables.");
+    exit(1);
+  }
+  for(int i = 0; i < num_query_vectors; i++)
+  {
+    bsf[i] = FLT_MAX;
+    kth_bsf[i] = FLT_MAX;
+    temp_bsf[i] = FLT_MAX;
+  }
+
+  for (int q = 0; q < num_query_vectors; ++q) 
+  { 
+    knn_results[q] = calloc(k, sizeof(struct query_result));
+    if(knn_results[q]  == NULL)
+    {
+      fprintf(stderr, "Error in dstree_query_engine.c: Couldn't allocate memory for parallel iqa results.");
+      exit(1);
+    }
+    for(int idx = 0; idx < k; idx++)
+    {
+      knn_results[q][idx].node = NULL;
+      knn_results[q][idx].distance = FLT_MAX;
+      knn_results[q][idx].vector_id = malloc(sizeof(struct vid));
+      if(knn_results[q][idx].vector_id  == NULL)
+      {
+        fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for parallel iqa result ids.");
+        exit(1);
+      }
+      knn_results[q][idx].vector_id->table_id = -1;
+      knn_results[q][idx].vector_id->set_id = -1;
+      knn_results[q][idx].vector_id->pos = -1;
+      knn_results[q][idx].query_vector_pos = query_id_arr[q].pos;
+      knn_results[q][idx].time = 0;
+      knn_results[q][idx].num_checked_vectors = 0;
+    }
+  }
+
+  
+  // find approximate results
+  for(int q = 0; q < num_query_vectors; q++)
+  {
+    ts_type * query_ts = query_ts_arr[q];
+    ts_type * query_ts_reordered = query_ts_reordered_arr[q];
+    int * query_order = query_order_arr[q];
+
+    approximate_knn_search_para_incr(query_ts, query_ts_reordered, query_order, offset, bsf[q],
+                        index, knn_results[q], k, &curr_size[q], warping, &query_id_arr[q], 
+                        total_query_set_time, total_checked_ts);
+  }
+
+  // update global knn results
+  for(int q = 0; q < num_query_vectors; q++)
+  {
+    for(int x = 0; x < k; x++)
+    {
+      global_knn_results[q][x].node = knn_results[q][x].node;
+      global_knn_results[q][x].max_distance = knn_results[q][x].max_distance;
+      global_knn_results[q][x].pqueue_position = knn_results[q][x].pqueue_position;
+      global_knn_results[q][x].file_pos = knn_results[q][x].file_pos;
+      global_knn_results[q][x].label = knn_results[q][x].label;
+
+      global_knn_results[q][x].vector_id->table_id = knn_results[q][x].vector_id->table_id;
+      global_knn_results[q][x].vector_id->set_id = knn_results[q][x].vector_id->set_id;
+      global_knn_results[q][x].vector_id->pos = knn_results[q][x].vector_id->pos;
+
+      global_knn_results[q][x].distance = knn_results[q][x].distance;
+      global_knn_results[q][x].query_vector_pos = knn_results[q][x].query_vector_pos;
+      global_knn_results[q][x].time = knn_results[q][x].time;
+    }
+  }
+
+  // worker thread reaches barrier
+  pthread_barrier_wait(knn_update_barrier);
+
+  for (int q = 0; q < num_query_vectors; ++q) 
+  { 
+    for(int idx = 0; idx < k; idx++)
+    {
+      free(knn_results[q][idx].vector_id);
+    }
+    free(knn_results[q]);
+  }
+
+  free(knn_results);
+  free(curr_size);
+  free(bsf);
+  free(kth_bsf);
+  free(temp_bsf);
+  free(found_knn); // the next NN found by incremental search
+  free(bsf_result_arr);
+  free(pq_arr);
+
+  *finished = 1;
+  
+  return NULL;
+
+  /* (todo: update global knn results) */
+  
+  // initialize priority queues and bsf
+  for(int q = 0; q < num_query_vectors; q++)
+  {
+    pq_arr[q] = pqueue_init(index->first_node->node_size, cmp_pri, get_pri, set_pri, get_pos, set_pos);
+    
+    // Add the root to the priority queue
+    struct query_result *root_pq_item = malloc(sizeof(struct query_result));
+    root_pq_item->node = index->first_node;
+    root_pq_item->distance =
+        calculate_node_min_distance(index, index->first_node, query_ts_arr[q], warping);
+
+    // initialize the lb distance to be the distance of the query to the root.
+    pqueue_insert(pq_arr[q], root_pq_item);
+
+    bsf_result_arr[q] = knn_results[q][0];
+  }
+
+  // struct query_result *n;
+  // struct query_result temp;
+
+  // while ((n = pqueue_pop(pq))) {
+  //   double curr_k_time = 0.0;
+  //   unsigned int curr_k_total_checked_vector = 0u;
+  //   // the first element of the queue is not used, thus pos-1
+  //   for (unsigned int pos = found_knn; pos < k; ++pos) {
+  //     bsf_result = knn_results[pos];
+  //     // printf("n->distance = %g, bsf_result.distance = %g\n",
+  //     // sqrt(n->distance), sqrt(bsf_result.distance));
+  //     if (n->distance > bsf_result.distance) // add epsilon+1
+  //     {
+  //       found_knn = pos + 1;
+  //       COUNT_PARTIAL_TIME_END
+
+  //       update_query_stats(index, q_id, found_knn, bsf_result);
+  //       curr_k_time += index->stats->query_total_cpu_time;
+  //       curr_k_total_checked_vector += index->stats->query_filter_checked_ts_count;
+  //       *total_query_set_time += index->stats->query_total_cpu_time;
+  //       *total_checked_ts += index->stats->query_filter_checked_ts_count;
+  //       // get_query_stats(index, found_knn);
+  //       // print_query_stats(index, q_id, found_knn, qfilename);
+
+
+  //       // printf("-- start knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+  //       // print_perk_progressive_bsf_snapshots(
+  //       //     index, q_id, found_knn, qfilename, bsf_snapshots, *cur_bsf_snapshot,
+  //       //     bsf_result.distance, dataset_file, series_file, series);
+  //       // printf("-- end knn -- -- --- -- -- -- -- -- -- -- -- --\n");
+
+  //       // print_perk_progressive_bsf_snapshots(index,
+  //       // q_id,found_knn,qfilename,bsf_snapshots, *cur_bsf_snapshot,
+  //       // bsf_result.distance, NULL, NULL); printf("found NN = %u\n",
+  //       // found_knn); fflush(stdout); reset the bsf for the next NN
+  //       if (found_knn < k) {
+  //         bsf_result = knn_results[found_knn];
+  //       }
+
+  //     RESET_QUERY_COUNTERS()
+  //     RESET_PARTIAL_COUNTERS()
+  //     COUNT_PARTIAL_TIME_START
+  //     }
+  //   }
+
+  //   if (found_knn >= k) {
+  //     // printf("found all kNN\n");
+  //     // fflush(stdout);
+  //     break;
+  //   }
+
+  //   if (n->node->is_leaf) // n is a leaf
+  //   {
+  //     // upon return, the queue will update the next best (k-foundkNN)th objects
+  //     calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
+  //                                 query_order, offset, bsf_result.distance, k,
+  //                                 knn_results, bsf_snapshots, cur_bsf_snapshot,
+  //                                 &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
+
+  //     knn_results[curr_size - 1].time += curr_k_time;
+  //     knn_results[curr_size - 1].num_checked_vectors += curr_k_total_checked_vector;
+  //     // if (r_delta != FLT_MAX && (knn_results[k-1].distance  <= r_delta * (1 +
+  //     // epsilon)))
+  //     //  break;
+
+  //     // increase the number of visited leaves
+  //   }
+  //   // If it is an intermediate node calculate mindist for children
+  //   // and push them in the queue
+  //   else // n is an internal node
+  //   {
+  //     temp = knn_results[k - 1];
+  //     kth_bsf = temp.distance;
+
+  //     ts_type child_distance;
+  //     child_distance = calculate_node_min_distance(index, n->node->left_child,
+  //                                                  query_ts, warping);
+
+  //     // mindist_result_left->node->parent = n->node;
+  //     // if (child_distance < bsf_result.distance/(1 + epsilon) )
+  //     // if ((child_distance < kth_bsf/(1+epsilon)) &&
+  //     if ((child_distance < kth_bsf) &&
+  //         (n->node->left_child != approximate_result.node)) // add epsilon
+  //     {
+  //       struct query_result *mindist_result_left =
+  //           malloc(sizeof(struct query_result));
+  //       mindist_result_left->node = n->node->left_child;
+  //       mindist_result_left->distance = child_distance;
+  //       pqueue_insert(pq, mindist_result_left);
+  //     }
+
+  //     child_distance = calculate_node_min_distance(index, n->node->right_child,
+  //                                                  query_ts, warping);
+
+  //     // if (child_distance < bsf_result.distance/(1 + epsilon) )
+  //     // if ((child_distance < kth_bsf/(1+epsilon))  &&
+  //     if ((child_distance < kth_bsf) &&
+  //         (n->node->right_child != approximate_result.node)) // add epsilon
+  //     {
+  //       struct query_result *mindist_result_right =
+  //           malloc(sizeof(struct query_result));
+  //       mindist_result_right->node = n->node->right_child;
+  //       mindist_result_right->distance = child_distance;
+  //       pqueue_insert(pq, mindist_result_right);
+  //     }
+  //   }
+  //   // Free the node currently popped.
+  //   // if(n != do_not_remove)
+  //   free(n);
+  // }
+  // // Free the nodes that were not popped.
+  // while ((n = pqueue_pop(pq))) {
+  //   free(n);
+  // }
+  // // Free the priority queue.
+  // pqueue_free(pq);
+
+  // free(series);
+
+  // return knn_results;
+  return NULL;
+}
+
 
 struct query_result *exact_de_knn_search_2(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,
