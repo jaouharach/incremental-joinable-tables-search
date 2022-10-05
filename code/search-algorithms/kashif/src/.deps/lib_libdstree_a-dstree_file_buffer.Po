@@ -80,6 +80,9 @@ src/lib_libdstree_a-dstree_file_buffer.o: src/dstree_file_buffer.c \
  src/../include/dstree_file_buffer_manager.h \
  src/../include/dstree_file_buffer.h src/../include/pqueue.h \
  src/../include/dstree_query_engine.h \
+ /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h /usr/include/stdint.h \
+ /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h \
  src/../include/dstree_file_buffer_manager.h \
  src/../include/dstree_index.h src/../include/calc_utils.h
 
@@ -276,6 +279,14 @@ src/../include/dstree_file_buffer.h:
 src/../include/pqueue.h:
 
 src/../include/dstree_query_engine.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h:
+
+/usr/include/stdint.h:
+
+/usr/include/x86_64-linux-gnu/bits/wchar.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
 
 src/../include/dstree_file_buffer_manager.h:
 

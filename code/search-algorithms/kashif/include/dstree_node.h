@@ -19,7 +19,7 @@
 #include "dstree_file_buffer.h"
 #include "pqueue.h"
 #include "dstree_query_engine.h"
-
+#include <stdint.h>
 
 /* start kashif changes */
 // vector id
@@ -28,6 +28,14 @@ struct vid {
   unsigned int set_id;
   unsigned int pos;
   char raw_data_file[300]; // name of the raw (bin) file where vector is store
+};
+
+struct result_vid { 
+  unsigned int table_id; // max = 4,294,967,295, must change type if dataset contains more that 4,294,967,295 tables
+  uint16_t set_id; // max = 65535, must change type if dataset tables contain more than 65535 columns
+  uint16_t pos; // max = 65535, must change type if dataset columns contain more than 65535 cells (vectors)
+  uint8_t qpos; // max = 255, must change type if query column contain more than 255 cells (vectors)
+  float time; 
 };
 
 // result set id
@@ -128,7 +136,7 @@ void calculate_node_knn_distance_2(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     ts_type bsf, unsigned int k, struct query_result *knn_results,
-    struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
+    // struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
     unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_time, unsigned int * total_checked_vectors);
 
 void calculate_node_knn_distance_para_incr(

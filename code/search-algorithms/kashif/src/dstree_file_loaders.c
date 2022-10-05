@@ -339,9 +339,9 @@ enum response dstree_knn_query_multiple_binary_files(
     unsigned int dlsize, // total disk size of data files indexed in dstree
     float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir) {
 
-  struct bsf_snapshot **bsf_snapshots = NULL;
-  unsigned int max_bsf_snapshots;
-  unsigned int cur_bsf_snapshot;
+  // struct bsf_snapshot **bsf_snapshots = NULL;
+  // unsigned int max_bsf_snapshots;
+  // unsigned int cur_bsf_snapshot;
   FILE *series_file = NULL;
   FILE *dataset_file = NULL;
 
@@ -360,26 +360,6 @@ enum response dstree_knn_query_multiple_binary_files(
   }
   for(int u = 0; u < num_k_values; u++)
       printf(" k = %u\n", k_values[u]);
-
-
-  if (track_bsf) {
-    max_bsf_snapshots = 0;
-    cur_bsf_snapshot = 0;
-
-    bsf_snapshots = calloc(k, sizeof(struct bsf_snapshot *));
-    for (unsigned int i = 0; i < k; ++i) {
-      bsf_snapshots[i] = calloc(max_bsf_snapshots, sizeof(struct bsf_snapshot));
-      for (unsigned int j = 0; j < max_bsf_snapshots; ++j) {
-        bsf_snapshots[i][j].distance = FLT_MAX;
-        bsf_snapshots[i][j].time = FLT_MAX;
-        bsf_snapshots[i][j].series = NULL;
-        bsf_snapshots[i][j].checked_nodes = -1;
-        bsf_snapshots[i][j].label = 0;
-        bsf_snapshots[i][j].vector_id = malloc(sizeof(struct vid));
-        bsf_snapshots[i][j].query_vector_pos = -1;
-      }
-    }
-  }
 
   int vector_length = index->settings->timeseries_size;
   int opened_files = 0, qvectors_loaded = 0;
@@ -417,7 +397,7 @@ enum response dstree_knn_query_multiple_binary_files(
   
 
   // initialize list of all knn results (from all query vectors in query set)
-  struct query_result *all_knn_results = NULL;
+  struct result_vid *all_knn_results = NULL;
   struct query_result *curr_knn = NULL;
   struct vid *top_matches;
   struct vid query_id;
@@ -513,10 +493,7 @@ enum response dstree_knn_query_multiple_binary_files(
           total_checked_ts = 0;
           qset_num--;
 
-          all_knn_results = malloc(k * nvec * sizeof(struct query_result));
-          for (int knn = 0; knn < (k * nvec); knn++) {
-            all_knn_results[knn].vector_id = malloc(sizeof(struct vid));
-          }
+          all_knn_results = malloc(k * nvec * sizeof(struct result_vid));
 
           knn_array_idx = 0;
           RESET_QUERY_COUNTERS()
@@ -536,26 +513,14 @@ enum response dstree_knn_query_multiple_binary_files(
           if (j > (vector_length - 1)) {
             j = 0;
             
-            // printf("-- vector %u\n", query_vector.pos);
-
-            // printf("before reorder\n");
-            // for(int j = 0; j <index->settings->timeseries_size; j++)
-            //   printf("%.3f - ", query_vector.values[j]);
-            // printf("\n");
             /*run query vector in dstree */
             reorder_query(query_vector.values, query_vector_reordered,
                           query_order, vector_length);
             qvectors_loaded += 1;
-            // printf("after reorder\n");
-            // for(int j = 0; j <index->settings->timeseries_size; j++)
-            //   printf("%.3f - ", query_vector.values[j]);
-            // printf("\n");
 
             // perform extact knn search
             // with incremental answering
             if (track_bsf) {
-              cur_bsf_snapshot = 0;
-
               query_id.table_id = query_vector.table_id;
               query_id.set_id = query_vector.set_id;
               query_id.pos = query_vector.pos;
@@ -565,51 +530,18 @@ enum response dstree_knn_query_multiple_binary_files(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
-                    &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
+                    &total_checked_ts,
                     warping, dataset_file, series_file, &query_id);
-                // printf("vector %d/%d, done.\n", query_vector.pos+1, nvec);
-              } else {
-                curr_knn = exact_de_progressive_knn_search_2(
-                    query_vector.values, query_vector_reordered, query_order,
-                    offset, index, minimum_distance, epsilon, r_delta, k,
-                    qvectors_loaded, bin_file_path, &query_time,
-                    &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot, query_vector.pos);
-              }
-              for (unsigned int b = 0; b < k; ++b) {
-                for (unsigned int f = 0; f < max_bsf_snapshots; ++f) {
-                  bsf_snapshots[b][f].distance = FLT_MAX;
-                  bsf_snapshots[b][f].time = FLT_MAX;
-                  bsf_snapshots[b][f].series = NULL;
-                  bsf_snapshots[b][f].checked_nodes = -1;
-                  bsf_snapshots[b][f].label = 0;
-                  bsf_snapshots[b][f].vector_id->table_id = -1;
-                  bsf_snapshots[b][f].vector_id->set_id = -1;
-                  bsf_snapshots[b][f].vector_id->pos = -1;
-                  bsf_snapshots[b][f].query_vector_pos = -1;
-                  strcpy(bsf_snapshots[b][f].vector_id->raw_data_file, "");
-                }
-              }
+              } 
             }
-            // without incremental answering
-            else {
-              curr_knn = exact_de_knn_search_2(
-                  query_vector.values, query_vector_reordered, query_order,
-                  offset, index, minimum_distance, epsilon, r_delta, k,
-                  qvectors_loaded, bin_file_path, &query_time,
-                  &total_checked_ts, query_vector.pos);
-            }
-
             // copy new knn(s) to knn_results array
             // printf("end of query for vector sent %u received %u\n", query_vector.pos, curr_knn[0].vector_id->pos);
             for (int t = 0; t < k; t++) 
             {
-              all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
-              all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
-              all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
-              all_knn_results[knn_array_idx].query_vector_pos = curr_knn[t].query_vector_pos;
-              strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file, curr_knn[t].vector_id->raw_data_file);
-              // printf("match in file %s\n", (all_knn_results[knn_array_idx].vector_id->raw_data_file));
-              all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
+              all_knn_results[knn_array_idx].table_id = curr_knn[t].vector_id->table_id;
+              all_knn_results[knn_array_idx].set_id = curr_knn[t].vector_id->set_id;
+              all_knn_results[knn_array_idx].pos = curr_knn[t].vector_id->pos;
+              all_knn_results[knn_array_idx].qpos = curr_knn[t].query_vector_pos;
               all_knn_results[knn_array_idx].time = curr_knn[t].time;
               knn_array_idx++;
             }
@@ -644,7 +576,7 @@ enum response dstree_knn_query_multiple_binary_files(
             // perform extact knn search
             // with incremental answering
             if (track_bsf) {
-              cur_bsf_snapshot = 0;
+              // cur_bsf_snapshot = 0;
 
               query_id.table_id = query_vector.table_id;
               query_id.set_id = query_vector.set_id;
@@ -655,50 +587,19 @@ enum response dstree_knn_query_multiple_binary_files(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
-                    &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot,
+                    &total_checked_ts, 
                     warping, dataset_file, series_file, &query_id);
-                    // printf("vector %d/%d, done.\n", query_vector.pos+1, nvec);
-              } else {
-                curr_knn = exact_de_progressive_knn_search_2(
-                    query_vector.values, query_vector_reordered, query_order,
-                    offset, index, minimum_distance, epsilon, r_delta, k,
-                    qvectors_loaded, bin_file_path, &query_time,
-                    &total_checked_ts, bsf_snapshots, &cur_bsf_snapshot, query_vector.pos);
-              }
-              for (unsigned int b = 0; b < k; ++b) {
-                for (unsigned int f = 0; f < max_bsf_snapshots; ++f) {
-                  bsf_snapshots[b][f].distance = FLT_MAX;
-                  bsf_snapshots[b][f].time = FLT_MAX;
-                  bsf_snapshots[b][f].series = NULL;
-                  bsf_snapshots[b][f].checked_nodes = -1;
-                  bsf_snapshots[b][f].label = 0;
-                  bsf_snapshots[b][f].vector_id->table_id = -1;
-                  bsf_snapshots[b][f].vector_id->set_id = -1;
-                  bsf_snapshots[b][f].vector_id->pos = -1;
-                  bsf_snapshots[b][f].query_vector_pos = -1;
-                  strcpy(bsf_snapshots[b][f].vector_id->raw_data_file, "");
-                }
-              }
+              } 
             }
-            // without incremental answering
-            else {
-              curr_knn = exact_de_knn_search_2(
-                  query_vector.values, query_vector_reordered, query_order,
-                  offset, index, minimum_distance, epsilon, r_delta, k,
-                  qvectors_loaded, bin_file_path, &query_time,
-                  &total_checked_ts, query_vector.pos);
-            }
+            
             // append new knn(s) to knn_results array
             // printf("end of query for vector sent %u received %u\n", query_vector.pos, curr_knn[0].vector_id->pos);
             for (int t = 0; t < k; t++) {
-              all_knn_results[knn_array_idx].vector_id->table_id = curr_knn[t].vector_id->table_id;
-              all_knn_results[knn_array_idx].vector_id->set_id = curr_knn[t].vector_id->set_id;
-              all_knn_results[knn_array_idx].vector_id->pos = curr_knn[t].vector_id->pos;
-              all_knn_results[knn_array_idx].query_vector_pos = curr_knn[t].query_vector_pos;
-              strcpy(all_knn_results[knn_array_idx].vector_id->raw_data_file,  curr_knn[t].vector_id->raw_data_file);
-              all_knn_results[knn_array_idx].distance = curr_knn[t].distance;
+              all_knn_results[knn_array_idx].table_id = curr_knn[t].vector_id->table_id;
+              all_knn_results[knn_array_idx].set_id = curr_knn[t].vector_id->set_id;
+              all_knn_results[knn_array_idx].pos = curr_knn[t].vector_id->pos;
+              all_knn_results[knn_array_idx].qpos = curr_knn[t].query_vector_pos;
               all_knn_results[knn_array_idx].time = curr_knn[t].time;
-
               knn_array_idx++;
             }
             query_vector.pos = 0;
@@ -765,14 +666,11 @@ enum response dstree_knn_query_multiple_binary_files(
             //     free(top);
             //     // don't change these lines to allaow ui to fetch results
             // }
-            
 
             // free memory
-            for (int knn = 0; knn < (k * nvec); knn++)
-              free(all_knn_results[knn].vector_id);
-            free(all_knn_results);
+            printf("Freeing knn array ...\n");
+              free(all_knn_results);
             
-
             RESET_PARTIAL_COUNTERS()
             COUNT_PARTIAL_TIME_START
 
@@ -821,19 +719,6 @@ enum response dstree_knn_query_multiple_binary_files(
   free(query_order);
   free(results_dir);
 
-  if (track_bsf) {
-    for (unsigned int i = 0; i < k; ++i) {
-      for (unsigned int j = 0; j < max_bsf_snapshots; ++j) {
-        if (bsf_snapshots[i][j].series != NULL)
-          free(bsf_snapshots[i][j].series);
-
-        if (bsf_snapshots[i][j].vector_id != NULL)
-          free(bsf_snapshots[i][j].vector_id);
-      }
-      free(bsf_snapshots[i]);
-    }
-    free(bsf_snapshots);
-  }
 
   return SUCCESS;
 }

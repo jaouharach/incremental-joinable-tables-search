@@ -95,8 +95,8 @@ void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
                             int *query_order, unsigned int offset, ts_type bsf,
                             struct dstree_index *index,
                             struct query_result *knn_results, unsigned int k,
-                            struct bsf_snapshot **bsf_snapshots,
-                            unsigned int *cur_bsf_snapshot,
+                            // struct bsf_snapshot **bsf_snapshots,
+                            // unsigned int *cur_bsf_snapshot,
                             unsigned int *curr_size, float warping, struct vid * query_id, double * total_query_set_time, unsigned int * total_checked_ts) {
 
   struct query_result result;
@@ -114,8 +114,10 @@ void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
     }
 
     calculate_node_knn_distance_2(index, node, query_ts_reordered, query_order,
-                                offset, bsf, k, knn_results, bsf_snapshots,
-                                cur_bsf_snapshot, curr_size, warping, query_id, total_query_set_time, total_checked_ts);
+                                offset, bsf, k, knn_results, 
+                                // bsf_snapshots,
+                                // cur_bsf_snapshot, 
+                                curr_size, warping, query_id, total_query_set_time, total_checked_ts);
   } else {
     printf("Error in dstree_query_engine: null pointer to node.\n");
   }
@@ -2081,8 +2083,10 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     unsigned int offset, struct dstree_index *index, ts_type minimum_distance,
     ts_type epsilon, ts_type r_delta, unsigned int k, unsigned int q_id,
     char *qfilename, double *total_query_set_time,
-    unsigned int *total_checked_ts, struct bsf_snapshot **bsf_snapshots,
-    unsigned int *cur_bsf_snapshot, float warping, FILE *dataset_file,
+    unsigned int *total_checked_ts, 
+    // struct bsf_snapshot **bsf_snapshots,
+    // unsigned int *cur_bsf_snapshot, 
+    float warping, FILE *dataset_file,
     FILE *series_file,struct vid * query_id)
 {
 
@@ -2113,11 +2117,11 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   printf("Start approximate search ...\n");
   // return k approximate results
   approximate_knn_search_2(query_ts, query_ts_reordered, query_order, offset, bsf,
-                         index, knn_results, k, bsf_snapshots, cur_bsf_snapshot,
+                         index, knn_results, k, 
+                        //  bsf_snapshots, cur_bsf_snapshot,
                          &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
 
   printf("End approximate search ...\n");
-
   // set the approximate result to be the first item in the queue
   struct query_result approximate_result = knn_results[0];
   // struct query_result bsf_result = approximate_result;
@@ -2161,7 +2165,6 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   struct query_result bsf_result = approximate_result;
 
   printf("Init priority queue ...\n");
-
   pqueue_t *pq = pqueue_init(index->first_node->node_size, cmp_pri, get_pri,
                              set_pri, get_pos, set_pos);
 
@@ -2245,7 +2248,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
       // upon return, the queue will update the next best (k-foundkNN)th objects
       calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
                                   query_order, offset, bsf_result.distance, k,
-                                  knn_results, bsf_snapshots, cur_bsf_snapshot,
+                                  knn_results, 
+                                  // bsf_snapshots, cur_bsf_snapshot,
                                   &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
 
       knn_results[curr_size - 1].time += curr_k_time;

@@ -32,7 +32,7 @@ unsigned int * get_k_values(char * k_values_str, unsigned int * num_k_values);
 // save query results to csv file
 enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
                                         unsigned int qset_id, int num_knns,
-                                        struct query_result *knn_results, unsigned int k, unsigned int max_k);
+                                        struct result_vid *knn_results, unsigned int k, unsigned int max_k);
 
 // create experiment results dir
 char *make_result_directory(char *result_dir, unsigned int total_data_files,
@@ -59,8 +59,8 @@ struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_re
 struct result_table *get_top_tables_by_euclidean_distance(struct query_result *knn_results, int num_knn_results, 
                          unsigned int num_top);
 int get_ground_truth_file(char * ground_truth_dir, int query_table_id, int query_set_id, char * ground_truth_file);
-struct query_result * get_ground_truth_results(char * ground_truth_file, int total_results);
-float compute_recall(char * ground_truth_dir, struct query_result * knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id);
+struct result_vid * get_ground_truth_results(char * ground_truth_file, int total_results);
+float compute_recall(char * ground_truth_dir, struct result_vid * knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id);
 
 ts_type todecimal(char *s) {
   // printf("\ninput: %s\n", s);
@@ -288,7 +288,7 @@ char *make_file_path(char *result_dir, unsigned int qtable_id,
 // save query results to csv file
 enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
                                         unsigned int qset_id, int num_knns,
-                                        struct query_result *knn_results, unsigned int k, unsigned int max_k) {
+                                        struct result_vid *knn_results, unsigned int k, unsigned int max_k) {
   FILE *fp;
   int i, j;
   COUNT_OUTPUT_TIME_START
@@ -305,7 +305,7 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   fprintf(fp, "TQ:Q, TS:S, q_pos, s_pos, q, s, d, time, k");
   double total_querytime = 0;
   unsigned int total_checked_vec = 0;
-
+ 
   // write results for a specific k value
   for (int i = 0; i < num_knns; i += k)// vector counter
   {
@@ -314,17 +314,18 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
     {
       // printf("k = %d, time = %f -- %f\n", s, knn_results[s].time, knn_results[s].time/1000000);
       fprintf(fp, "\n");
-      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %.3f, %.7f, %u", qtable_id, qset_id,
-            knn_results[s].vector_id->table_id, knn_results[s].vector_id->set_id,
-            knn_results[s].query_vector_pos, knn_results[s].vector_id->pos,
-            knn_results[s].distance, knn_results[s].time/1000000, max_k);
+      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], na, %.7f, %u", qtable_id, qset_id,
+            knn_results[s].table_id, knn_results[s].set_id,
+            knn_results[s].qpos, knn_results[s].pos, knn_results[s].time/1000000, max_k);
     
     total_querytime += knn_results[s].time;
-    total_checked_vec += knn_results[s].num_checked_vectors;
+    // total_checked_vec += knn_results[s].num_checked_vectors;
     }
   }
   fclose(fp);
   COUNT_OUTPUT_TIME_END
+
+  total_checked_vec = 0;
 
   // add query time to file name and rename csv file
   char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 20 + 1);
@@ -599,25 +600,17 @@ int  get_ground_truth_file(char * ground_truth_dir, int query_table_id, int quer
   return num_lines - 1; // dont count reader
 }
 
-struct query_result * get_ground_truth_results(char * ground_truth_file, int total_results)
+struct result_vid * get_ground_truth_results(char * ground_truth_file, int total_results)
 {
   char buffer[80];
   FILE * file = fopen(ground_truth_file, "r");
-  struct query_result * ground_truth_results = malloc(sizeof(struct query_result) * total_results);
+  struct result_vid * ground_truth_results = malloc(sizeof(struct result_vid) * total_results);
   if(ground_truth_results == NULL)
   {
     fprintf(stderr, "Error in kashif_utile.h: Could'nt allocate memory for ground_truth_results");
     return 1;
   }
-  for(int r = 0; r < total_results; r++)
-  {
-    ground_truth_results[r].vector_id = malloc(sizeof(struct vid));
-    if(ground_truth_results[r].vector_id == NULL)
-    {
-      fprintf(stderr, "Error in kashif_utile.h: Could'nt allocate memory for ground_truth_results");
-      return 1;
-    }
-  }
+  
 
   int i = 0, header = 1;;
   while (fgets(buffer, 80, file)) {
@@ -647,20 +640,20 @@ struct query_result * get_ground_truth_results(char * ground_truth_file, int tot
       }
 
       // printf("table: %d,  set: %d, vector: %d\n", table_id, set_id, vector_pos);
-      ground_truth_results[i].vector_id->table_id = table_id;
-      ground_truth_results[i].vector_id->set_id = set_id;
-      ground_truth_results[i].vector_id->pos = vector_pos;
-      ground_truth_results[i].query_vector_pos = query_vector_pos;
+      ground_truth_results[i].table_id = table_id;
+      ground_truth_results[i].set_id = set_id;
+      ground_truth_results[i].pos = vector_pos;
+      ground_truth_results[i].qpos = query_vector_pos;
       i++;
   }
   return ground_truth_results;
 }
 
-float compute_recall(char * ground_truth_dir, struct query_result * knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id)
+float compute_recall(char * ground_truth_dir, struct result_vid * knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id)
 {
   char ground_truth_file[255] = "";
   int  num_gt_results = get_ground_truth_file(ground_truth_dir, query_table_id, query_set_id, ground_truth_file);
-  struct query_result * ground_truth_results = get_ground_truth_results(ground_truth_file, num_gt_results);
+  struct result_vid * ground_truth_results = get_ground_truth_results(ground_truth_file, num_gt_results);
 
   int * exact_results_counter = calloc(num_query_vectors, sizeof(int));
   float num_matches = 0;
@@ -671,10 +664,10 @@ float compute_recall(char * ground_truth_dir, struct query_result * knn_results,
   {
     for(int i = 0; i < num_gt_results; i++)
     {
-      if(ground_truth_results[i].vector_id->table_id == knn_results[j].vector_id->table_id
-        && ground_truth_results[i].vector_id->set_id == knn_results[j].vector_id->set_id
-        && ground_truth_results[i].query_vector_pos == knn_results[j].query_vector_pos
-        && ground_truth_results[i].vector_id->pos == knn_results[j].vector_id->pos)
+      if(ground_truth_results[i].table_id == knn_results[j].table_id
+        && ground_truth_results[i].set_id == knn_results[j].set_id
+        && ground_truth_results[i].qpos == knn_results[j].qpos
+        && ground_truth_results[i].pos == knn_results[j].pos)
       {
         num_matches++;
         break;
@@ -684,10 +677,10 @@ float compute_recall(char * ground_truth_dir, struct query_result * knn_results,
 
   for(int i = 0; i < num_gt_results; i++)
   {
-    if(exact_results_counter[ground_truth_results[i].query_vector_pos] < k)
+    if(exact_results_counter[ground_truth_results[i].qpos] < k)
     {
       // printf("incr at %d\n", ground_truth_results[i].query_vector_pos);
-      exact_results_counter[ground_truth_results[i].query_vector_pos]++;
+      exact_results_counter[ground_truth_results[i].qpos]++;
     }
   }
 
