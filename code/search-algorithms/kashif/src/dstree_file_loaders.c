@@ -8,6 +8,7 @@
 //  Based on isax code written by Zoumpatianos on 3/12/12.
 //  Copyright 2012 University of Trento. All rights reserved.
 //
+#define _XOPEN_SOURCE 600 /* to avoid error with pthread_barried_t undefined */
 
 #include "../include/dstree_file_loaders.h"
 #include "../config.h"
@@ -397,11 +398,10 @@ enum response dstree_knn_query_multiple_binary_files(
   
 
   // initialize list of all knn results (from all query vectors in query set)
-  struct result_vid *all_knn_results = NULL;
+  struct result_vid **all_knn_results = NULL;
   struct query_result *curr_knn = NULL;
   struct vid *top_matches;
   struct vid query_id;
-  int knn_array_idx = 0;
 
   // max k values for which we must save results
   unsigned int max_k = k_values[num_k_values - 1];
@@ -493,9 +493,11 @@ enum response dstree_knn_query_multiple_binary_files(
           total_checked_ts = 0;
           qset_num--;
 
-          all_knn_results = malloc(k * nvec * sizeof(struct result_vid));
-
-          knn_array_idx = 0;
+          all_knn_results = malloc(nvec * sizeof(struct result_vid *));
+          for(int q = 0; q < nvec; q++)
+          {
+            all_knn_results[q] = calloc(k, sizeof(struct result_vid));
+          }
           RESET_QUERY_COUNTERS()
 
           // set new set id
@@ -531,28 +533,22 @@ enum response dstree_knn_query_multiple_binary_files(
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts,
-                    warping, dataset_file, series_file, &query_id);
+                    warping, dataset_file, series_file, &query_id, nvec);
               } 
             }
             // copy new knn(s) to knn_results array
             // printf("end of query for vector sent %u received %u\n", query_vector.pos, curr_knn[0].vector_id->pos);
+            // printf("Retreiving %dnn results...\n", k);
             for (int t = 0; t < k; t++) 
             {
-              all_knn_results[knn_array_idx].table_id = curr_knn[t].vector_id->table_id;
-              all_knn_results[knn_array_idx].set_id = curr_knn[t].vector_id->set_id;
-              all_knn_results[knn_array_idx].pos = curr_knn[t].vector_id->pos;
-              all_knn_results[knn_array_idx].qpos = curr_knn[t].query_vector_pos;
-              all_knn_results[knn_array_idx].time = curr_knn[t].time;
-              knn_array_idx++;
+              all_knn_results[query_vector.pos][t].table_id = curr_knn[t].vector_id->table_id;
+              all_knn_results[query_vector.pos][t].set_id = curr_knn[t].vector_id->set_id;
+              all_knn_results[query_vector.pos][t].pos = curr_knn[t].vector_id->pos;
+              all_knn_results[query_vector.pos][t].qpos = curr_knn[t].query_vector_pos;
+              all_knn_results[query_vector.pos][t].time = curr_knn[t].time;
             }
             query_vector.pos += 1;
-            // printf("next query %u\n", query_vector.pos);
-            if (knn_array_idx > (k * nvec)) {
-              fprintf(stderr, "Error in dstree_file_loaders.c: Storing more results "
-                     "that expected!");
-              exit(1);
-            }
-
+            
             for (int t = 0; t < k; t++)
               free(curr_knn[t].vector_id);
             free(curr_knn);
@@ -588,19 +584,20 @@ enum response dstree_knn_query_multiple_binary_files(
                     offset, index, minimum_distance, epsilon, r_delta, k,
                     qvectors_loaded, bin_file_path, &query_time,
                     &total_checked_ts, 
-                    warping, dataset_file, series_file, &query_id);
+                    warping, dataset_file, series_file, &query_id, nvec);
               } 
             }
             
             // append new knn(s) to knn_results array
             // printf("end of query for vector sent %u received %u\n", query_vector.pos, curr_knn[0].vector_id->pos);
+            // printf("Retreiving %dnn results...\n", k);
             for (int t = 0; t < k; t++) {
-              all_knn_results[knn_array_idx].table_id = curr_knn[t].vector_id->table_id;
-              all_knn_results[knn_array_idx].set_id = curr_knn[t].vector_id->set_id;
-              all_knn_results[knn_array_idx].pos = curr_knn[t].vector_id->pos;
-              all_knn_results[knn_array_idx].qpos = curr_knn[t].query_vector_pos;
-              all_knn_results[knn_array_idx].time = curr_knn[t].time;
-              knn_array_idx++;
+              all_knn_results[query_vector.pos][t].table_id = curr_knn[t].vector_id->table_id;
+              all_knn_results[query_vector.pos][t].set_id = curr_knn[t].vector_id->set_id;
+              all_knn_results[query_vector.pos][t].pos = curr_knn[t].vector_id->pos;
+              all_knn_results[query_vector.pos][t].qpos = curr_knn[t].query_vector_pos;
+              all_knn_results[query_vector.pos][t].time = curr_knn[t].time;
+              
             }
             query_vector.pos = 0;
 
@@ -608,15 +605,10 @@ enum response dstree_knn_query_multiple_binary_files(
               free(curr_knn[t].vector_id);
             free(curr_knn);
             
-            if (knn_array_idx > (k * nvec)) {
-              fprintf(stderr, "Error in dstree_file_loaders.c: Storing more results "
-                     "that expected!");
-              exit(1);
-            }
             // End of Query set
             /* Save query results to csv file */
             query_time /= 1000000;
-            printf("Storing result to csv file...");
+            printf("Storing result to csv file...\n");
 
             for(int z = 0; z < num_k_values; z++)
             {
@@ -626,7 +618,7 @@ enum response dstree_knn_query_multiple_binary_files(
                                       total_data_files, dlsize, vector_length, curr_k);
 
               if(!save_to_query_result_file(query_result_file, table_id, query_vector.set_id,
-                                      k * nvec, all_knn_results, k, curr_k))
+                                      nvec, all_knn_results, curr_k))
               {
                 fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
                 exit(1);
@@ -669,7 +661,11 @@ enum response dstree_knn_query_multiple_binary_files(
 
             // free memory
             printf("Freeing knn array ...\n");
-              free(all_knn_results);
+            for(int q = 0; q < nvec; q++)
+            {
+              free(all_knn_results[q]);
+            }
+            free(all_knn_results);
             
             RESET_PARTIAL_COUNTERS()
             COUNT_PARTIAL_TIME_START
@@ -714,6 +710,7 @@ enum response dstree_knn_query_multiple_binary_files(
   COUNT_PARTIAL_TIME_END
   RESET_PARTIAL_COUNTERS()
 
+  free(k_values);
   free(query_vector.values);
   free(query_vector_reordered);
   free(query_order);
@@ -789,14 +786,13 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
   
 
   // initialize list of all knn results (from all query vectors in query set)
-  struct query_result **all_knn_results = NULL;
+  struct result_vid **all_knn_results = NULL;
   struct query_result *curr_knn = NULL;
   ts_type ** query_vectors = NULL; // query column
   struct vid * query_id_arr = NULL;
   ts_type ** query_vectors_reordered = NULL;
   int **query_order_arr = NULL;
 
-  int knn_array_idx = 0;
   // max k values for which we must save results
   unsigned int max_k = k_values[num_k_values - 1];
 
@@ -896,24 +892,24 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             exit(1);
           }
           // set new set id
-          for(int v = 0; v < nvec; v++)
+          for(int q = 0; q < nvec; q++)
           {
-            query_vectors[v] = calloc(1, sizeof(ts_type) * vector_length);
-            query_vectors_reordered[v] = calloc(1, sizeof(ts_type) * vector_length);
-            query_order_arr[v] = calloc(1, sizeof(int) * vector_length);
+            query_vectors[q] = calloc(1, sizeof(ts_type) * vector_length);
+            query_vectors_reordered[q] = calloc(1, sizeof(ts_type) * vector_length);
+            query_order_arr[q] = calloc(1, sizeof(int) * vector_length);
             
-            if(query_vectors_reordered[v] == NULL || query_order_arr[v] == NULL)
+            if(query_vectors_reordered[q] == NULL || query_order_arr[q] == NULL)
             {
               fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for query vectors.");
               exit(1);
             }
 
-            query_id_arr[v].table_id = table_id;
-            query_id_arr[v].set_id = set_id;
-            query_id_arr[v].pos = v;
+            query_id_arr[q].table_id = table_id;
+            query_id_arr[q].set_id = set_id;
+            query_id_arr[q].pos = q;
           }
 
-          all_knn_results = malloc(k * nvec * sizeof(struct query_result *));
+          all_knn_results = malloc(k * nvec * sizeof(struct result_vid *));
           if(all_knn_results == NULL)
           {
             fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for knn results.");
@@ -922,7 +918,7 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
 
           for (int q = 0, i = 1; q < nvec; ++q) 
           { 
-            all_knn_results[q] = calloc(k, sizeof(struct query_result));
+            all_knn_results[q] = calloc(k, sizeof(struct result_vid));
             if(all_knn_results[q]  == NULL)
             {
               fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for parallel iqa results.");
@@ -930,25 +926,15 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             }
             for(int idx = 0; idx < k; idx++)
             {
-              all_knn_results[q][idx].node = NULL;
-              all_knn_results[q][idx].distance = FLT_MAX;
-              all_knn_results[q][idx].vector_id = malloc(sizeof(struct vid));
-              if(all_knn_results[q][idx].vector_id  == NULL)
-              {
-                fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for parallel iqa result ids.");
-                exit(1);
-              }
-              all_knn_results[q][idx].vector_id->table_id = -1;
-              all_knn_results[q][idx].vector_id->set_id = -1;
-              all_knn_results[q][idx].vector_id->pos = -1;
-              all_knn_results[q][idx].query_vector_pos = query_id_arr[q].pos;
+              all_knn_results[q][idx].table_id = -1;
+              all_knn_results[q][idx].set_id = -1;
+              all_knn_results[q][idx].pos = -1;
+              all_knn_results[q][idx].qpos = query_id_arr[q].pos;
               all_knn_results[q][idx].time = 0;
-              all_knn_results[q][idx].num_checked_vectors = 0;
             }
           }
 
           curr_vector = 0;
-          knn_array_idx = 0;
           // RESET_QUERY_COUNTERS()
           
           printf("\nQuery (%d, %d) ...\n", table_id, set_id);
@@ -1022,25 +1008,27 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             // initialize barrier
             pthread_barrier_init(&knn_update_barrier, NULL, THREAD_NUMS);
 
-            while(finished != 1)
+            while(finished == 0)
             {
               printf("coordinator_thread:\t (Zzz)\twaiting...\n");
               pthread_barrier_wait(&knn_update_barrier);
               printf("coordinator_thread:\t (!)\treceived new knn results\n");
               // print approx results
-              for(int q = 0; q < nvec; q++)
-              {
-                printf("knns results for vector: (%u, %u, %u)\n", query_id_arr[q].table_id, query_id_arr[q].set_id, query_id_arr[q].pos);
-                for(int x = 0; x < k; x++)
-                {
-                  if(all_knn_results[q][x].distance != FLT_MAX)
-                    printf("%dnn: v = (%u, %u, %u), d = %f\n", x, all_knn_results[q][x].vector_id->table_id, all_knn_results[q][x].vector_id->set_id, all_knn_results[q][x].vector_id->pos, all_knn_results[q][x].distance);
-                  else
-                    printf("%dnn: v = (-, -, -), d = FLT_MAX\n", x);
+              // for(int q = 0; q < nvec; q++)
+              // {
+              //   printf("knns results for vector: (%u, %u, %u)\n", query_id_arr[q].table_id, query_id_arr[q].set_id, query_id_arr[q].pos);
+              //   for(int x = 0; x < k; x++)
+              //   {
+              //     if(all_knn_results[q][x].pos != -1)
+              //       printf("%dnn: v = (%u, %u, %u), d = na\n", x, all_knn_results[q][x].table_id, all_knn_results[q][x].set_id, all_knn_results[q][x].pos);
+              //     else
+              //       printf("%dnn: v = (na, na, na), d = na\n", x);
 
-                }
-              }
+              //   }
+              // }
             }
+            printf("coordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", table_id, set_id);
+
             pthread_join(worker_thread, NULL); 
 
             // (todo) store query results
@@ -1048,22 +1036,44 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             // query_time /= 1000000;
             // printf("\nquery_time=%fsec\n", query_time);
 
+            double query_time = 1.0;
+            printf("Storing result to csv file...\n");
+
+            for(int z = 0; z < num_k_values; z++)
+            {
+              unsigned int curr_k = k_values[z];
+              
+              char *query_result_file = make_file_path(results_dir, query_id_arr[0].table_id, query_id_arr[0].set_id, nvec,
+                                      total_data_files, dlsize, vector_length, curr_k);
+
+              if(!save_to_query_result_file(query_result_file, query_id_arr[0].table_id, query_id_arr[0].set_id,
+                                      nvec, all_knn_results, curr_k))
+              {
+                fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
+                exit(1);
+              }
+              free(query_result_file);
+            }
+
 
             // (todo) compute recall
             // float recall = compute_recall(ground_truth_dir, all_knn_results, nvec, k, query_vector.table_id, query_vector.set_id);
             // printf("\nrecall=%f\n", recall);
 
-
             // free memory
-            // free query vectors
-            free(param);
+            // kill worker thread and destroy barrier
+            pthread_cancel(worker_thread);
             pthread_barrier_destroy(&knn_update_barrier);
 
-            for(int v = 0; v < nvec; v++)
+            // free worker parameters
+            free(param);
+
+            // free query vectors
+            for(int q = 0; q < nvec; q++)
             {
-              free(query_vectors[v]);
-              free(query_vectors_reordered[v]);
-              free(query_order_arr[v]);
+              free(query_vectors[q]);
+              free(query_vectors_reordered[q]);
+              free(query_order_arr[q]);
             }
             free(query_id_arr);
             free(query_vectors);
@@ -1078,14 +1088,9 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             // free knn results
             for (int q = 0, i = 1; q < nvec; ++q) 
             { 
-              for(int idx = 0; idx < k; idx++)
-              {
-                free(all_knn_results[q][idx].vector_id);
-              }
               free(all_knn_results[q]);
             }
             free(all_knn_results);
-            
 
             // RESET_PARTIAL_COUNTERS()
             // COUNT_PARTIAL_TIME_START
@@ -1093,6 +1098,9 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             i = 0;
             j = 0;
             nvec = 0u;
+            finished = 0;
+            table_id = 0;
+            set_id = 0;
             continue;
           }
           i++;

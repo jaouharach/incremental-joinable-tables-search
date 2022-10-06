@@ -43,14 +43,14 @@ typedef struct worker_param {
   unsigned int num_query_vectors;
 
   pthread_barrier_t * knn_update_barrier;
-  struct query_result **global_knn_results;
+  struct result_vid **global_knn_results;
   char * finished;
 };
 
 typedef struct query_result {
   ts_type distance;
   struct dstree_node *node;
-  ts_type max_distance;
+  ts_type max_distance; 
   size_t pqueue_position;
   // unsigned char label;
   label_type label;
@@ -253,7 +253,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     // struct bsf_snapshot **bsf_snapshots,
     // unsigned int *cur_bsf_snapshot, 
     float warping, FILE *dataset_file,
-    FILE *series_file,struct vid * query_id);
+    FILE *series_file,struct vid * query_id, unsigned int num_query_vectors);
 
 struct query_result * exact_de_progressive_knn_search_2(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,
