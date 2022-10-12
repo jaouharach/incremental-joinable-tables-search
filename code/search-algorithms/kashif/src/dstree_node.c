@@ -578,7 +578,7 @@ enum response update_node_statistics(struct dstree_node *node,
  */
 
 /* start kashif changes */
-void calculate_node_knn_distance_2(
+int calculate_node_knn_distance_2(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     ts_type bsf, unsigned int k, struct query_result *knn_results,
@@ -588,6 +588,7 @@ void calculate_node_knn_distance_2(
   // get the k-th distance from the results queue
   ts_type kth_bsf = FLT_MAX;
   ts_type distance = FLT_MAX;
+  int num_nn = 0;
 
   unsigned int ts_byte_size =
       sizeof(ts_type) * index->settings->timeseries_size;
@@ -627,7 +628,8 @@ void calculate_node_knn_distance_2(
 
   for (unsigned int idx = 0; idx < node->file_buffer->buffered_list_size;
        ++idx) {
-        
+      
+      // skip query table if found in index
       if(index->vid_cache[(node->vid_pos) + idx].table_id == query_id->table_id)
         continue;
 
@@ -654,6 +656,7 @@ void calculate_node_knn_distance_2(
 
     if (distance <= kth_bsf) // (tmp change) <= instead of <
     {
+      num_nn++;
       struct query_result object_result; // =  malloc(sizeof(struct query_result));
       object_result.node = node;
       object_result.distance = distance;
@@ -680,7 +683,7 @@ void calculate_node_knn_distance_2(
       }
           
       int stored_at = queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
-      // printf("bsf stored at %d,\n", stored_at);
+      printf("NN stored at %d, ", stored_at+1);
       update_snapshots = true;
       
       if (index->settings->track_vector)
@@ -748,6 +751,8 @@ void calculate_node_knn_distance_2(
 
   node->file_buffer->buffered_list = NULL;
   node->file_buffer->buffered_list_size = 0;
+  //  printf("total added nn = %d\n", num_nn);
+  return num_nn;
 }
 
 
@@ -1320,6 +1325,12 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
     while (j > 0 && ((q[j - 1]).distance > q[j].distance)) {
       /* start kashif changes */
       // temp = q[j];
+
+      if(stored_at == j)
+        stored_at = j - 1;
+      else if (stored_at = (j - 1))
+        stored_at = j;
+
       temp.distance = q[j].distance;
       temp.node = q[j].node;
       temp.label = q[j].label;
@@ -1331,8 +1342,7 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       temp.num_checked_vectors = q[j].num_checked_vectors;
       // temp.query_vector_pos = q[j].query_vector_pos; // because query pos is set at the beginning 
       strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
-      if(j == stored_at)
-        stored_at --;
+      
       /* end kashif changes */
       q[j].distance = q[j - 1].distance;
       q[j].node = q[j - 1].node;

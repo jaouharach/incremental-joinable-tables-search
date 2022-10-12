@@ -114,7 +114,7 @@ void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
       }
     }
 
-    calculate_node_knn_distance_2(index, node, query_ts_reordered, query_order,
+    calculate_node_knn_distance_para_incr(index, node, query_ts_reordered, query_order,
                                 offset, bsf, k, knn_results, 
                                 // bsf_snapshots,
                                 // cur_bsf_snapshot, 
@@ -2115,13 +2115,14 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     knn_results[idx].num_checked_vectors = 0;
   }
 
-  printf("\nquery_engine:\t\t (*)\tapproximate search, q: %d/%d...", query_id->pos+1, num_query_vectors);
+  // printf("\nquery_engine:\t\t (*)\tapproximate search, q: %d/%d...", query_id->pos+1, num_query_vectors);
   // return k approximate results
   approximate_knn_search_2(query_ts, query_ts_reordered, query_order, offset, bsf,
                          index, knn_results, k, 
                         //  bsf_snapshots, cur_bsf_snapshot,
                          &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
 
+  printf("curr size = %d\n", curr_size);
   // set the approximate result to be the first item in the queue
   struct query_result approximate_result = knn_results[0];
   // struct query_result bsf_result = approximate_result;
@@ -2181,6 +2182,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   root_pq_item->distance =
       calculate_node_min_distance(index, index->first_node, query_ts, warping);
 
+  printf("min dist to root = %f\n", root_pq_item->distance);
   // initialize the lb distance to be the distance of the query to the root.
 
   pqueue_insert(pq, root_pq_item);
@@ -2188,12 +2190,29 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
   struct query_result *n;
   struct query_result temp;
 
+  // printf("pq :\n");
+  // int l = 0;
+  // while ((n = pqueue_pop(pq))){
+  //   printf("pq %d, node size = %u-- ", l, n->node->node_size);
+  //   l++;
+  // }
+  // if(!(n = pqueue_peek(pq)))
+  // {
+  //   printf("empty\n");
+  // }
+  // else 
+  //   printf("not empty\n");
+  //   exit(1);
+
   // FILE *series_file = fopen(filename, "a");
   // FILE *dataset_file = fopen(index->settings->dataset, "rb");
 
-  printf("\nquery_engine:\t\t (*)\texact search...");
-
-  while ((n = pqueue_pop(pq))) {
+  // printf("\nquery_engine:\t\t (*)\texact search...");
+  bool empty_queues = false;
+  int iter = 0, num_new_nn = 0;
+  printf("(***) iteration %d\n", iter);
+  while (!empty_queues) {
+    n = pqueue_pop(pq);
     double curr_k_time = 0.0;
     unsigned int curr_k_total_checked_vector = 0u;
     // the first element of the queue is not used, thus pos-1
@@ -2206,6 +2225,11 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         found_knn = pos + 1;
         COUNT_PARTIAL_TIME_END
 
+        printf("(---) end of iteration %d, nb new nns %d\n", iter, num_new_nn);
+        num_new_nn = 0;
+        iter++;
+        printf("(***) iteration %d\n", iter);
+        
         update_query_stats(index, q_id, found_knn, bsf_result);
         curr_k_time += index->stats->query_total_cpu_time;
         curr_k_total_checked_vector += index->stats->query_filter_checked_ts_count;
@@ -2238,19 +2262,22 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     if (found_knn >= k) {
       // printf("found all kNN\n");
       // fflush(stdout);
+      printf("(---) end of iteration %d, nb new nns %d, all NN are found\n", iter, num_new_nn);
+      num_new_nn = 0;
       break;
     }
 
     if (n->node->is_leaf) // n is a leaf
     {
-      // printf("New knns  at %s...\n",n->node->filename);
+      printf("New knns  at %s... found_nn = %d\n",n->node->filename, found_knn);
       // upon return, the queue will update the next best (k-foundkNN)th objects
-      calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
+      int nn = calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
                                   query_order, offset, bsf_result.distance, k,
                                   knn_results, 
                                   // bsf_snapshots, cur_bsf_snapshot,
                                   &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
-
+      printf("(!) %d Were inserted...\n", nn);
+      num_new_nn += nn;
       knn_results[curr_size - 1].time += curr_k_time;
       knn_results[curr_size - 1].num_checked_vectors += curr_k_total_checked_vector;
       // if (r_delta != FLT_MAX && (knn_results[k-1].distance  <= r_delta * (1 +
@@ -2263,6 +2290,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     // and push them in the queue
     else // n is an internal node
     {
+      printf("Not a leaf  at %s... found_nn = %d\n",n->node->filename, found_knn);
+
       temp = knn_results[k - 1];
       kth_bsf = temp.distance;
 
@@ -2281,6 +2310,7 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         mindist_result_left->node = n->node->left_child;
         mindist_result_left->distance = child_distance;
         pqueue_insert(pq, mindist_result_left);
+            // printf("insert left child -\n");
       }
 
       child_distance = calculate_node_min_distance(index, n->node->right_child,
@@ -2296,12 +2326,20 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
         mindist_result_right->node = n->node->right_child;
         mindist_result_right->distance = child_distance;
         pqueue_insert(pq, mindist_result_right);
+            // printf("insert right child -\n");
       }
     }
     // Free the node currently popped.
     // if(n != do_not_remove)
     free(n);
+    empty_queues = true;
+      if((n = pqueue_peek(pq))) // continue if at least one queue is not empty
+        empty_queues = false;
+    
   }
+  printf("(---) end of iteration %d, nb new nns %d (end)\n", iter, num_new_nn);
+  num_new_nn = 0;
+
   // Free the nodes that were not popped.
   while ((n = pqueue_pop(pq))) {
     free(n);
@@ -2406,7 +2444,7 @@ void exact_de_parallel_incr_knn_search(void * parameters)
   // }
 
   // init variables
-  unsigned int * curr_size = (unsigned int *)calloc(num_query_vectors, sizeof(int));
+  unsigned int * curr_size = (unsigned int *)calloc(num_query_vectors, sizeof(unsigned int));
   ts_type * bsf = (ts_type *) malloc(sizeof(ts_type) * num_query_vectors);
   ts_type * temp_bsf = (ts_type *) malloc(sizeof(ts_type) * num_query_vectors);
   unsigned int * found_knn =  (unsigned int *)calloc(num_query_vectors, sizeof(int)); // the next NN found by incremental search
@@ -2462,15 +2500,16 @@ void exact_de_parallel_incr_knn_search(void * parameters)
     ts_type * query_ts_reordered = query_ts_reordered_arr[q];
     int * query_order = query_order_arr[q];
 
-    printf("\rworked_thread:\t\t (*)\tapproximate search, q: %d/%d...", q+1, num_query_vectors);
-    fflush(stdout);
-    approximate_knn_search_para_incr(query_ts, query_ts_reordered, query_order, offset, bsf[q],
+    // printf("\rworked_thread:\t\t (*)\tapproximate search, q: %d/%d...", q+1, num_query_vectors);
+    // fflush(stdout);
+    // printf("[q: %d] ---> approximate search\n", q+1);
+    approximate_knn_search_2(query_ts, query_ts_reordered, query_order, offset, bsf[q],
                         index, knn_results[q], k, &curr_size[q], warping, &query_id_arr[q], 
                         total_query_set_time, total_checked_ts);
   }
 
   // update global knn results
-  printf("\nworked_thread:\t\t (*)\tupdate global knn results...\n");
+  // printf("\nworked_thread:\t\t (*)\tupdate global knn results...\n");
   for(int q = 0; q < num_query_vectors; q++)
   {
     for(int x = 0; x < k; x++)
@@ -2490,9 +2529,19 @@ void exact_de_parallel_incr_knn_search(void * parameters)
 
 
   // initialize priority queues and bsf
-  printf("worked_thread:\t\t (*)\tinit pqs...\n");
+  printf("worked_thread:\t\t (*)\tstart exact search...\n");
+  
+  
+  bool empty_queues = false;
+  struct query_result *n, *n_tmp;
+  struct query_result temp;
+  ts_type  kth_bsf;
+  
+
   for(int q = 0; q < num_query_vectors; q++)
   {
+    bsf_result_arr[q] = knn_results[q][0];
+
     pq_arr[q] = pqueue_init(index->first_node->node_size, cmp_pri, get_pri, set_pri, get_pos, set_pos);
     
     // Add the root to the priority queue
@@ -2501,131 +2550,186 @@ void exact_de_parallel_incr_knn_search(void * parameters)
     root_pq_item->distance =
         calculate_node_min_distance(index, index->first_node, query_ts_arr[q], warping);
 
+    if(q == 0)
+    printf("q: %d, min dist to root = %f\n", q+1, root_pq_item->distance);
+
     // initialize the lb distance to be the distance of the query to the root.
     pqueue_insert(pq_arr[q], root_pq_item);
 
-    bsf_result_arr[q] = knn_results[q][0];
+    // printf("pq :\n");
+    // int l = 0;
+    // while ((n = pqueue_pop(pq_arr[q]))){
+    // printf("pq %d, node size = %u-- ", l, n->node->node_size);
+    //   l++;
+    // }
+    // if(!(n = pqueue_peek(pq_arr[q])))
+    // {
+    //   printf("empty\n");
+    // }
+    // else 
+    //   printf("not empty\n");
+
+    // exit(1);
+    
   }
 
-  bool empty_queues = true;
-  struct query_result *n;
-  struct query_result temp;
-  ts_type  kth_bsf;
-  
   unsigned int iteration = 0;
+  bool iter_done = false;
   // struct query_result approximate_result = knn_results[q][0];
-  do {
+  while(!empty_queues) 
+  {
     for(int q = 0; q < num_query_vectors; q++)
     {
-      if(!(n = pqueue_peek(pq_arr[q])))
-      {
-        printf("worked_thread:\t\t (!)\tempty pqueue, q: %d\n", q+1);
-        continue;
-      }
+      iter_done = false;
+      // if (found_knn[q] >= k) {
+      //   // printf("found all kNN\n");
+      //   // fflush(stdout);
+      //   printf("[q: %d] --->(X) all knn are found\n", q+1, found_knn[q]);
+      //   continue;
+      // }
         
-      printf("\rworked_thread:\t\t (*)\tknn search, it: %d q: %d/%d...\n", iteration+1, q+1, num_query_vectors);
-      fflush(stdout);
+      // printf("\rworked_thread:\t\t (*)\tknn search, iter: %d q: %d/%d...", iteration+1, q+1, num_query_vectors);
+      // fflush(stdout);
       // double curr_k_time = 0.0;
       // unsigned int curr_k_total_checked_vector = 0u;
 
-      n = pqueue_pop(pq_arr[q]);
+      if((n = pqueue_pop(pq_arr[q]))){
+        // the first element of the queue is not used, thus pos-1
+        for (unsigned int pos = found_knn[q]; pos < k; ++pos) {
+          bsf_result_arr[q] = knn_results[q][pos];
+          // printf("n->distance = %g, bsf_result.distance = %g\n",
+          // sqrt(n->distance), sqrt(bsf_result.distance));
+          if (n->distance > bsf_result_arr[q].distance) // add epsilon+1
+          {
+            found_knn[q] = pos + 1;
+            iter_done = true;
+            // COUNT_PARTIAL_TIME_END
+            
+            // update_query_stats(index, q_id, found_knn, bsf_result);
+            // curr_k_time += index->stats->query_total_cpu_time;
+            // curr_k_total_checked_vector += index->stats->query_filter_checked_ts_count;
+            // *total_query_set_time += index->stats->query_total_cpu_time;
+            // *total_checked_ts += index->stats->query_filter_checked_ts_count;
+            // get_query_stats(index, found_knn);
+            // print_query_stats(index, q_id, found_knn, qfilename);
 
-      // the first element of the queue is not used, thus pos-1
-      for (unsigned int pos = found_knn[q]; pos < k; ++pos) {
-        bsf_result_arr[q] = knn_results[q][pos];
-        // printf("n->distance = %g, bsf_result.distance = %g\n",
-        // sqrt(n->distance), sqrt(bsf_result.distance));
-        if (n->distance > bsf_result_arr[q].distance) // add epsilon+1
+            if (found_knn[q] < k) {
+              bsf_result_arr[q] = knn_results[q][found_knn[q]];
+              // printf("[q: %d] ---> find next knn at %d\n", q+1, found_knn[q]);
+            }
+
+          // RESET_QUERY_COUNTERS()
+          // RESET_PARTIAL_COUNTERS()
+          // COUNT_PARTIAL_TIME_START
+          }
+        }
+
+        if (found_knn[q] >= k) {
+          // printf("found all kNN\n");
+          // fflush(stdout);
+          printf("[q: %d] --->X all knn are found\n", q+1, found_knn[q]);
+          // while ((n_tmp = pqueue_pop(pq_arr[q]))) {
+          //   free(n_tmp);
+          // }
+          continue;
+        }
+        // else
+        // {
+        //   bsf_result_arr[q] = knn_results[q][found_knn[q]];
+        //   printf("[q: %d] ---> find next knn at %d\n", q+1, found_knn[q]);
+            
+        // }
+
+        if (n->node->is_leaf) // n is a leaf
         {
-          found_knn[q] = pos + 1;
-          // COUNT_PARTIAL_TIME_END
+          if(q == 0)
+          printf("New knns  at %s... found_nn = %d\n",n->node->filename, found_knn[q]);
 
-          // update_query_stats(index, q_id, found_knn, bsf_result);
-          // curr_k_time += index->stats->query_total_cpu_time;
-          // curr_k_total_checked_vector += index->stats->query_filter_checked_ts_count;
-          // *total_query_set_time += index->stats->query_total_cpu_time;
-          // *total_checked_ts += index->stats->query_filter_checked_ts_count;
-          // get_query_stats(index, found_knn);
-          // print_query_stats(index, q_id, found_knn, qfilename);
+          // upon return, the queue will update the next best (k-foundkNN)th objects
+          // printf("[q: %d] ---> exact seach at node %s,  found_nn = %d", q+1, n->node->filename, found_knn[q]);
 
-          if (found_knn[q] < k) {
-            bsf_result_arr[q] = knn_results[q][found_knn[q]];
+          int nn = calculate_node_knn_distance_2(index, n->node, query_ts_reordered_arr[q],
+                                      query_order_arr[q], offset, bsf_result_arr[q].distance, k, knn_results[q],
+                                      //  bsf_snapshots, cur_bsf_snapshot,
+                                      &curr_size[q], warping, &query_id_arr[q], total_query_set_time, total_checked_ts);
+          if(q == 0)
+          printf("(!) %d Were inserted...\n", nn);
+          // knn_results[curr_size - 1].time += curr_k_time;
+          // knn_results[curr_size - 1].num_checked_vectors += curr_k_total_checked_vector;
+          // if (r_delta != FLT_MAX && (knn_results[k-1].distance  <= r_delta * (1 +
+          // epsilon)))
+          //  break;
+
+          // increase the number of visited leaves
+        }
+        // If it is an intermediate node calculate mindist for children
+        // and push them in the queue
+        else // n is an internal node
+        {
+          if(q == 0)
+          printf("\nNot a leaf  at %s... found_nn = %d\n",n->node->filename, found_knn[q]);
+
+          temp = knn_results[q][k - 1];
+          kth_bsf = temp.distance;
+
+          ts_type child_distance;
+          child_distance = calculate_node_min_distance(index, n->node->left_child,
+                                                      query_ts_arr[q], warping);
+
+          // mindist_result_left->node->parent = n->node;
+          // if (child_distance < bsf_result.distance/(1 + epsilon) )
+          // if ((child_distance < kth_bsf/(1+epsilon)) &&
+          if ((child_distance < kth_bsf) &&
+              (n->node->left_child != knn_results[q][0].node)) // add epsilon
+          {
+            struct query_result *mindist_result_left =
+                malloc(sizeof(struct query_result));
+            mindist_result_left->node = n->node->left_child;
+            mindist_result_left->distance = child_distance;
+            pqueue_insert(pq_arr[q], mindist_result_left);
+            // if(q == 0)
+            // printf("insert left child -\n");
           }
 
-        // RESET_QUERY_COUNTERS()
-        // RESET_PARTIAL_COUNTERS()
-        // COUNT_PARTIAL_TIME_START
+          child_distance = calculate_node_min_distance(index, n->node->right_child,
+                                                      query_ts_arr[q], warping);
+
+          // if (child_distance < bsf_result.distance/(1 + epsilon) )
+          // if ((child_distance < kth_bsf/(1+epsilon))  &&
+          if ((child_distance < kth_bsf) &&
+              (n->node->right_child != knn_results[q][0].node)) // add epsilon
+          {
+            struct query_result *mindist_result_right =
+                malloc(sizeof(struct query_result));
+            mindist_result_right->node = n->node->right_child;
+            mindist_result_right->distance = child_distance;
+            pqueue_insert(pq_arr[q], mindist_result_right);
+            // if(q == 0)
+            // printf("insert right child -\n");
+          }
+
         }
+        // Free the node currently popped.
+        // if(n != do_not_remove)
+        free(n);
       }
-
-      if (found_knn[q] >= k) {
-        // printf("found all kNN\n");
-        // fflush(stdout);
-        break;
-      }
-
-      if (n->node->is_leaf) // n is a leaf
-      {
-        // upon return, the queue will update the next best (k-foundkNN)th objects
-        calculate_node_knn_distance_2(index, n->node, query_ts_reordered_arr[q],
-                                    query_order_arr[q], offset, bsf_result_arr[q].distance, k, knn_results[q],
-                                    //  bsf_snapshots, cur_bsf_snapshot,
-                                    &curr_size[q], warping, &query_id_arr[q], total_query_set_time, total_checked_ts);
-
-        // knn_results[curr_size - 1].time += curr_k_time;
-        // knn_results[curr_size - 1].num_checked_vectors += curr_k_total_checked_vector;
-        // if (r_delta != FLT_MAX && (knn_results[k-1].distance  <= r_delta * (1 +
-        // epsilon)))
-        //  break;
-
-        // increase the number of visited leaves
-      }
-      // If it is an intermediate node calculate mindist for children
-      // and push them in the queue
-      else // n is an internal node
-      {
-        temp = knn_results[q][k - 1];
-        kth_bsf = temp.distance;
-
-        ts_type child_distance;
-        child_distance = calculate_node_min_distance(index, n->node->left_child,
-                                                    query_ts_arr[q], warping);
-
-        // mindist_result_left->node->parent = n->node;
-        // if (child_distance < bsf_result.distance/(1 + epsilon) )
-        // if ((child_distance < kth_bsf/(1+epsilon)) &&
-        if ((child_distance < kth_bsf) &&
-            (n->node->left_child != knn_results[q][0].node)) // add epsilon
-        {
-          struct query_result *mindist_result_left =
-              malloc(sizeof(struct query_result));
-          mindist_result_left->node = n->node->left_child;
-          mindist_result_left->distance = child_distance;
-          pqueue_insert(pq_arr[q], mindist_result_left);
-        }
-
-        child_distance = calculate_node_min_distance(index, n->node->right_child,
-                                                    query_ts_arr[q], warping);
-
-        // if (child_distance < bsf_result.distance/(1 + epsilon) )
-        // if ((child_distance < kth_bsf/(1+epsilon))  &&
-        if ((child_distance < kth_bsf) &&
-            (n->node->right_child != knn_results[q][0].node)) // add epsilon
-        {
-          struct query_result *mindist_result_right =
-              malloc(sizeof(struct query_result));
-          mindist_result_right->node = n->node->right_child;
-          mindist_result_right->distance = child_distance;
-          pqueue_insert(pq_arr[q], mindist_result_right);
-        }
-      }
-      // Free the node currently popped.
-      // if(n != do_not_remove)
-      free(n);
+      // else 
+      // if(q == 0)
+      //   printf("q: %d, empty queue.", q+1);
     }
+    // check if all pqueues are empty
+    empty_queues = true;
+    for(int q = 0; q < num_query_vectors; q++)
+      if((n = pqueue_peek(pq_arr[q])))
+      {
+        // continue if at least one queue is not empty
+        empty_queues = false;
+        break;
+      } 
 
     // update global knn array (seen by the cooredinator)
-    printf("\nworked_thread:\t\t (*)\tupdate global knn results...\n");
+    // printf("\nworked_thread:\t\t (*)\tupdate global knn results...\n");
+    
     for(int q = 0; q < num_query_vectors; q++)
     {
       for(int x = 0; x < k; x++)
@@ -2639,19 +2743,14 @@ void exact_de_parallel_incr_knn_search(void * parameters)
         global_knn_results[q][x].time = knn_results[q][x].time;
       }
     }
-
+    
     // worker thread reaches barrier
     pthread_barrier_wait(knn_update_barrier);
 
-    // check if all pqueues are empty
-    empty_queues = true;
-    for(int q = 0; q < num_query_vectors; q++)
-      if((n = pqueue_peek(pq_arr[q]))) // continue if at least one queue is not empty
-        empty_queues = false;
-
     iteration++;
-  } while (!empty_queues); // and not finished
+  } // and not finished
 
+  *finished = 1;
   // Free the nodes that were not popped.
   for(int q = 0; q < num_query_vectors; q++)
   {
@@ -2678,9 +2777,9 @@ void exact_de_parallel_incr_knn_search(void * parameters)
   free(found_knn);
   free(bsf_result_arr);
   free(pq_arr);
-
-  *finished = 1;
   
+  // printf("worked_thread:\t ($)\tjob done.\n");
+
   return NULL;
 }
 

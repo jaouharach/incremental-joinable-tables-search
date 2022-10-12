@@ -214,31 +214,30 @@ unsigned int get_data_gb_size(char *dl_dir, unsigned int total_data_files) {
 // extract k values from a string. ex: "1,3,5,10,30,50" to [1, 2, 3, 10, 30, 50]
 unsigned int *  get_k_values(char * k_values_str, unsigned int * num_k_values)
 {
-  // More general pattern:
-  char *token, *str, *tofree;
   unsigned int k;
   unsigned int * k_values = NULL;
 
-  tofree = str = strdup(k_values_str);  // We own str's memory now.
+  char *pt;
+  pt = strtok (k_values_str,",");
+  while (pt != NULL) {
+      k = atoi(pt);
+      printf("k = %u - ", k);
 
-  while ((token = strsep(&str, ",")))
-  {
-    sscanf(token, "%u", &k);
-    printf("curr k = %u - ", k);
-    if(k > 0)
-    {
-      (*num_k_values) += 1;
-      k_values = (unsigned int *) realloc(k_values, sizeof(*k_values) * (*num_k_values));
-      if (k_values == NULL)
+      if(k > 0)
       {
-        fprintf(stderr,"Error kashif_utils.c:  Could not allocate memory for set of k values.\n");
-          return -1;
+        (*num_k_values) += 1;
+        k_values = (unsigned int *) realloc(k_values, sizeof(*k_values) * (*num_k_values));
+        if (k_values == NULL)
+        {
+          fprintf(stderr,"Error kashif_utils.c:  Could not allocate memory for set of k values.\n");
+            return -1;
+        }
+        k_values[(*num_k_values) -1] = k;
       }
-      k_values[(*num_k_values) -1] = k;
-    }
+      pt = strtok (NULL, ",");
   }
+
   printf("\n");
-  free(tofree);
   return k_values;
 }
 

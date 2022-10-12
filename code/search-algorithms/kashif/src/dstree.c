@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
   unsigned int num_top = 3;           // number top sets to be returned
   static unsigned int data_gb_size = 0; // datalake size in GB
   unsigned int num_k_values = 0;
-  char * k_values_str = "";
+  char * k_values_str = "1,3,5,10,30,50,100,300,500,1000,3000,5000";
   char * ground_truth_dir = "";
   /* end kashif changes */
 

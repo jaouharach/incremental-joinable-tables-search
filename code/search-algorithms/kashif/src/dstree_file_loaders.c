@@ -485,8 +485,25 @@ enum response dstree_knn_query_multiple_binary_files(
             j = 0;
             total_bytes -= (nvec * vector_length);
             nvec = 0u;
+            set_id += 1;
             continue;
           }
+
+          // temp change
+          // if(table_id == 69)
+          // if((set_id == 0 || set_id == 1))
+          // {
+          //   printf("skip curr col\n");
+          //   // COUNT_PARTIAL_INPUT_TIME_START
+          //   fseek(bin_file, nvec * 4 * vector_length, SEEK_CUR);
+          //   // COUNT_PARTIAL_INPUT_TIME_END
+          //   i = 0;
+          //   j = 0;
+          //   total_bytes -= (nvec * vector_length);
+          //   nvec = 0u;
+          //   set_id += 1;
+          //   continue;
+          // }
           found_query = true;
 
           query_time = 0.0;
@@ -872,6 +889,7 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             j = 0;
             total_bytes -= (nvec * vector_length);
             nvec = 0u;
+            set_id += 1;
             continue;
           }
 
@@ -1010,9 +1028,9 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
 
             while(finished == 0)
             {
-              printf("coordinator_thread:\t (Zzz)\twaiting...\n");
+              // printf("coordinator_thread:\t (Zzz)\twaiting...\n");
               pthread_barrier_wait(&knn_update_barrier);
-              printf("coordinator_thread:\t (!)\treceived new knn results\n");
+              // printf("coordinator_thread:\t (!)\treceived new knn results\n");
               // print approx results
               // for(int q = 0; q < nvec; q++)
               // {
@@ -1027,9 +1045,9 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
               //   }
               // }
             }
-            printf("coordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", table_id, set_id);
+            printf("coordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", table_id, set_id-1);
 
-            pthread_join(worker_thread, NULL); 
+            // pthread_join(worker_thread, NULL); 
 
             // (todo) store query results
             // (todo) get query time
@@ -1062,8 +1080,8 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
 
             // free memory
             // kill worker thread and destroy barrier
-            pthread_cancel(worker_thread);
-            pthread_barrier_destroy(&knn_update_barrier);
+            // pthread_cancel(worker_thread);
+            // pthread_barrier_destroy(&knn_update_barrier);
 
             // free worker parameters
             free(param);
@@ -1099,8 +1117,6 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             j = 0;
             nvec = 0u;
             finished = 0;
-            table_id = 0;
-            set_id = 0;
             continue;
           }
           i++;
