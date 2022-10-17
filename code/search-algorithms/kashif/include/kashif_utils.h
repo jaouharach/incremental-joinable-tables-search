@@ -61,6 +61,9 @@ struct result_table *get_top_tables_by_euclidean_distance(struct query_result *k
 int get_ground_truth_file(char * ground_truth_dir, int query_table_id, int query_set_id, char * ground_truth_file);
 struct result_vid * get_ground_truth_results(char * ground_truth_file, int total_results);
 float compute_recall(char * ground_truth_dir, struct result_vid ** knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id);
+int compute_one_query_vector_recall(struct result_vid * ground_truth_results, int  num_gt_results, struct query_result * knn_results, 
+                              int first_nn, int last_nn, int8_t * recall_row);
+float compute_recall_from_matrix(int8_t ** recall_matrix, int num_query_vectors, int k, int num_ground_truth_results);
 
 ts_type todecimal(char *s) {
   // printf("\ninput: %s\n", s);
@@ -698,4 +701,38 @@ float compute_recall(char * ground_truth_dir, struct result_vid ** knn_results, 
   free(exact_results_counter);
   free(ground_truth_results);
   return num_matches/(float)num_gt_results;
+}
+
+int compute_one_query_vector_recall(struct result_vid * ground_truth_results, int  num_gt_results, struct query_result * knn_results, 
+                              int first_nn, int last_nn, int8_t * recall_row)
+{
+  int found_matches = 0;
+  for(int x = first_nn; x < last_nn; x++) // iterate over the nn returned by incremental search
+    for(int i = 0; i < num_gt_results; i++)
+    {
+      if(ground_truth_results[i].table_id == knn_results[x].vector_id->table_id
+        && ground_truth_results[i].set_id == knn_results[x].vector_id->set_id
+        && ground_truth_results[i].qpos == knn_results[x].query_vector_pos
+        && ground_truth_results[i].pos == knn_results[x].vector_id->pos)
+      {
+        // update recall matrix
+        recall_row[x] = 1;
+        found_matches ++;
+        break;
+      }
+    }
+
+  return found_matches;
+}
+
+float compute_recall_from_matrix(int8_t ** recall_matrix, int num_query_vectors, int k, int num_ground_truth_results)
+{
+  float num_matches = 0.0;
+  for(int q = 0; q < num_query_vectors; q++)
+    for(int r = 0; r < k; r++)
+    {
+      num_matches += recall_matrix[q][r];
+    }
+
+  return num_matches / num_ground_truth_results;
 }

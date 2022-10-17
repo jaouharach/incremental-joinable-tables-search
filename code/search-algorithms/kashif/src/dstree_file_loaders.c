@@ -804,6 +804,8 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
 
   // initialize list of all knn results (from all query vectors in query set)
   struct result_vid **all_knn_results = NULL;
+  int8_t ** recall_matrix = NULL; // recall matrix
+
   struct query_result *curr_knn = NULL;
   ts_type ** query_vectors = NULL; // query column
   struct vid * query_id_arr = NULL;
@@ -928,7 +930,9 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
           }
 
           all_knn_results = malloc(k * nvec * sizeof(struct result_vid *));
-          if(all_knn_results == NULL)
+          recall_matrix = malloc(k * nvec * sizeof(int8_t *));
+          // interval where recall should be updated [start, end[ end not included
+          if(all_knn_results == NULL || recall_matrix == NULL)
           {
             fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for knn results.");
             exit(1);
@@ -937,7 +941,8 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
           for (int q = 0, i = 1; q < nvec; ++q) 
           { 
             all_knn_results[q] = calloc(k, sizeof(struct result_vid));
-            if(all_knn_results[q]  == NULL)
+            recall_matrix[q] = calloc(k, sizeof(int8_t));
+            if(all_knn_results[q] == NULL || recall_matrix[q] == NULL)
             {
               fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for parallel iqa results.");
               exit(1);
@@ -992,6 +997,13 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             curr_vector = 0;
 
             // (todo) perform extact parallel incremental knn search in 
+
+
+            // load ground truth results
+            char ground_truth_file[255] = "";
+            int  num_gt_results = get_ground_truth_file(ground_truth_dir, query_id_arr[0].table_id, query_id_arr[0].set_id, ground_truth_file);
+            struct result_vid * ground_truth_results = get_ground_truth_results(ground_truth_file, num_gt_results);
+
             // setup param
             struct worker_param * param = malloc(sizeof(struct worker_param));
             if(param == NULL)
@@ -1018,6 +1030,9 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             param->total_query_set_time = &total_query_time;
             param->warping = warping;
             param->global_knn_results = all_knn_results;
+            param->ground_truth_results = ground_truth_results;
+            param->num_gt_results = num_gt_results;
+            param->global_recall_matrix = recall_matrix;
             param->finished = &finished;
             param->knn_update_barrier = &knn_update_barrier;
 
@@ -1030,7 +1045,11 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
             {
               // printf("coordinator_thread:\t (Zzz)\twaiting...\n");
               pthread_barrier_wait(&knn_update_barrier);
-              // printf("coordinator_thread:\t (!)\treceived new knn results\n");
+              printf("coordinator_thread:\t (!)\treceived new knn results\n");
+              // compute current recall
+              float recall_from_matrix = compute_recall_from_matrix(recall_matrix, nvec, k, num_gt_results);
+              printf("coordinator_thread:\t (!)\tcurrent recall =%f\n", recall_from_matrix);
+
               // print approx results
               // for(int q = 0; q < nvec; q++)
               // {
@@ -1075,14 +1094,16 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
 
 
             // (todo) compute recall
-            // float recall = compute_recall(ground_truth_dir, all_knn_results, nvec, k, query_vector.table_id, query_vector.set_id);
-            // printf("\nrecall=%f\n", recall);
-
+            float recall = compute_recall(ground_truth_dir, all_knn_results, nvec, k, query_id_arr[0].table_id, query_id_arr[0].set_id);
+            printf("\nrecall=%f\n", recall);
+            
             // free memory
             // kill worker thread and destroy barrier
             // pthread_cancel(worker_thread);
             // pthread_barrier_destroy(&knn_update_barrier);
 
+            // free ground truth results
+            free(ground_truth_results);
             // free worker parameters
             free(param);
 

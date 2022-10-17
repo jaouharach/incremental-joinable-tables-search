@@ -44,6 +44,10 @@ typedef struct worker_param {
 
   pthread_barrier_t * knn_update_barrier;
   struct result_vid **global_knn_results;
+  struct result_vid * ground_truth_results;
+  unsigned int num_gt_results;
+  int8_t ** global_recall_matrix;
+  
   char * finished;
 };
 

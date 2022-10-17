@@ -683,7 +683,7 @@ int calculate_node_knn_distance_2(
       }
           
       int stored_at = queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
-      printf("NN stored at %d, ", stored_at+1);
+      // printf("NN stored at %d, ", stored_at+1);
       update_snapshots = true;
       
       if (index->settings->track_vector)
