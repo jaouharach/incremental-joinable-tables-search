@@ -130,6 +130,13 @@ dstree_leaf_node_init(struct dstree_index_settings *settings) {
 
   /* start kashif changes */
   node->vid = calloc(settings->max_leaf_size, sizeof(struct vid));
+
+  if (pthread_mutex_init(&node->lock, NULL) != 0) 
+  {
+		fprintf(stderr, "error: could not initialize mutex lock.\n");
+    return NULL;
+	}
+  
   /* end kashif changes */
   return node;
 }
@@ -756,7 +763,7 @@ int calculate_node_knn_distance_2(
 }
 
 
-void calculate_node_knn_distance_para_incr(
+int calculate_node_knn_distance_para_incr(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     unsigned int k, struct query_result *knn_results,
@@ -765,6 +772,7 @@ void calculate_node_knn_distance_para_incr(
   // get the k-th distance from the results queue
   ts_type kth_bsf = FLT_MAX;
   ts_type distance = FLT_MAX;
+  unsigned int num_nn = 0;
 
   unsigned int ts_byte_size =
       sizeof(ts_type) * index->settings->timeseries_size;
@@ -779,6 +787,7 @@ void calculate_node_knn_distance_para_incr(
 
   // TEST THAT DATA IS FULLY IN MEM
   // If the leaf's data is in disk, load it
+  pthread_mutex_lock(&node->lock);
   if (node->file_buffer->buffered_list_size == 0) {
     COUNT_LOADED_NODE
     COUNT_LOADED_TS(node->node_size)
@@ -831,6 +840,7 @@ void calculate_node_knn_distance_para_incr(
 
     if (distance <= kth_bsf) // (tmp change) <= instead of <
     {
+      num_nn++;
       struct query_result object_result; // =  malloc(sizeof(struct query_result));
       object_result.node = node;
       object_result.distance = distance;
@@ -887,6 +897,9 @@ void calculate_node_knn_distance_para_incr(
 
   node->file_buffer->buffered_list = NULL;
   node->file_buffer->buffered_list_size = 0;
+
+  pthread_mutex_unlock(&node->lock);
+  return num_nn;
 }
 
 

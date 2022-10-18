@@ -3021,8 +3021,8 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
           // upon return, the queue will update the next best (k-foundkNN)th objects
           // printf("[q: %d] ---> exact seach at node %s,  found_nn = %d", q+1, n->node->filename, found_knn[q]);
 
-          int nn = calculate_node_knn_distance_2(index, n->node, query_ts_reordered,
-                                      query_order, offset, bsf_result.distance, k, knn_results,
+          int nn = calculate_node_knn_distance_para_incr(index, n->node, query_ts_reordered,
+                                      query_order, offset, k, knn_results,
                                       //  bsf_snapshots, cur_bsf_snapshot,
                                       &curr_size, warping, query_id, total_query_set_time, total_checked_ts);
           

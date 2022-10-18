@@ -29,6 +29,7 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <pthread.h>
 
 /**
  This function initializes the settings of a dstree index
@@ -769,6 +770,10 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
   {
     free(node->vid);
     node->vid = NULL;
+  }
+  if(node->is_leaf)
+  {
+    pthread_mutex_destroy(&node->lock);
   }
   /* end kashif changes */
 
@@ -1980,6 +1985,7 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
     fread(index->fp_cache, sizeof(unsigned int), dataset_size, index->fp_file);
   }
 
+  /* start kashif changes */
   if (index->settings->track_vector)
   {
     // open vid.idx
@@ -2012,6 +2018,7 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
     // fclose(sc_file);
   }
 
+  /* end kashif changes */
 
   index->first_node = dstree_node_read(index, file);
   COUNT_PARTIAL_INPUT_TIME_START

@@ -41,6 +41,7 @@ enum response delete_file_buffer(struct dstree_index * index,struct dstree_node 
 //enum response get_all_time_series_in_node(struct dstree_index * index, struct dstree_node * node);
 ts_type ** get_all_time_series_in_node(struct dstree_index * index, struct dstree_node * node);
 
-
-
+/* start kashif changes */
+ts_type ** get_all_time_series_in_node_mutex(struct dstree_index * index, struct dstree_node * node);
+/* end kashif changes */
 #endif				   

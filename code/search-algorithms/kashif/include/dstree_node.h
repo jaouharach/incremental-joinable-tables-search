@@ -20,6 +20,7 @@
 #include "pqueue.h"
 #include "dstree_query_engine.h"
 #include <stdint.h>
+#include <pthread.h>
 
 /* start kashif changes */
 // vector id
@@ -97,6 +98,7 @@ struct dstree_node {
   /* start kashif changes */
   unsigned int vid_pos;
   struct vid * vid;
+  pthread_mutex_t lock;
   /* end kashif changes */
 };
 struct dstree_node * dstree_root_node_init(struct dstree_index_settings * settings) ;
@@ -139,7 +141,7 @@ int calculate_node_knn_distance_2(
     // struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
     unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_time, unsigned int * total_checked_vectors);
 
-void calculate_node_knn_distance_para_incr(
+int calculate_node_knn_distance_para_incr(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     unsigned int k, struct query_result *knn_results,

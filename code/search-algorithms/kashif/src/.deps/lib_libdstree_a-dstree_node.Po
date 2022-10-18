@@ -81,7 +81,10 @@ src/lib_libdstree_a-dstree_node.o: src/dstree_node.c \
  src/../include/pqueue.h src/../include/dstree_query_engine.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h src/../config.h \
+ /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h /usr/include/pthread.h \
+ /usr/include/sched.h /usr/include/x86_64-linux-gnu/bits/sched.h \
+ /usr/include/x86_64-linux-gnu/bits/cpu-set.h \
+ /usr/include/x86_64-linux-gnu/bits/setjmp.h src/../config.h \
  src/../globals.h src/../include/dstree_index.h \
  src/../include/dstree_query_engine.h src/../include/pqueue.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed/limits.h \
@@ -289,6 +292,16 @@ src/../include/dstree_query_engine.h:
 /usr/include/x86_64-linux-gnu/bits/wchar.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdint-uintn.h:
+
+/usr/include/pthread.h:
+
+/usr/include/sched.h:
+
+/usr/include/x86_64-linux-gnu/bits/sched.h:
+
+/usr/include/x86_64-linux-gnu/bits/cpu-set.h:
+
+/usr/include/x86_64-linux-gnu/bits/setjmp.h:
 
 src/../config.h:
 
