@@ -110,11 +110,11 @@ ts_type ** get_all_time_series_in_node(struct dstree_index * index, struct dstre
  
      for (int i = 0 ; i < idx; ++i)
      {
-         ret[i+(node->file_buffer->disk_count)] = calloc(ts_length, sizeof(ts_type));
-	 for(int j=0; j<ts_length; ++j)
-         {
-	   ret[i+(node->file_buffer->disk_count)][j] = node->file_buffer->buffered_list[i][j];
-         }
+        ret[i+(node->file_buffer->disk_count)] = calloc(ts_length, sizeof(ts_type));
+        for(int j=0; j<ts_length; ++j)
+        {
+            ret[i+(node->file_buffer->disk_count)][j] = node->file_buffer->buffered_list[i][j];
+        }
      }
 
      //this should be equal to old size + disk_count
@@ -138,11 +138,11 @@ ts_type ** get_all_time_series_in_node(struct dstree_index * index, struct dstre
 
      for (int i = 0 ; i < idx; ++i)
      {
-         ret[i] = calloc(ts_length, sizeof(ts_type));
-	 for(int j=0; j<ts_length; ++j)
-         {
-	   ret[i][j] = node->file_buffer->buffered_list[i][j];
-         }
+        ret[i] = calloc(ts_length, sizeof(ts_type));
+	      for(int j=0; j<ts_length; ++j)
+        {
+          ret[i][j] = node->file_buffer->buffered_list[i][j];
+        }
      }    
   }
   return ret;

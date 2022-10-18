@@ -28,7 +28,7 @@ struct vid {
   unsigned int set_id;
   unsigned int pos;
   char raw_data_file[300]; // name of the raw (bin) file where vector is store
-};
+} vid;
 
 struct result_vid { 
   unsigned int table_id; // max = 4,294,967,295, must change type if dataset contains more that 4,294,967,295 tables
@@ -36,7 +36,7 @@ struct result_vid {
   uint16_t pos; // max = 65535, must change type if dataset columns contain more than 65535 cells (vectors)
   uint8_t qpos; // max = 255, must change type if query column contain more than 255 cells (vectors)
   float time; 
-};
+} result_vid;
 
 // result set id
 struct result_sid { 
@@ -142,7 +142,7 @@ int calculate_node_knn_distance_2(
 void calculate_node_knn_distance_para_incr(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
-    ts_type bsf, unsigned int k, struct query_result *knn_results,
+    unsigned int k, struct query_result *knn_results,
     unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_time, unsigned int * total_checked_vectors);
 /* end kashif changes */
 enum response append_ts_gt_to_child_node(struct dstree_index * index,

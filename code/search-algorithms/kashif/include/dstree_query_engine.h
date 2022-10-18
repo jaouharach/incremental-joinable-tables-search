@@ -19,7 +19,7 @@
 #include "dstree_node.h"
 #include "pqueue.h"
 
-typedef struct worker_param {
+typedef struct single_worker_param {
   ts_type **query_ts_arr;
   ts_type **query_ts_reordered_arr;
   int **query_order_arr;
@@ -27,28 +27,52 @@ typedef struct worker_param {
 
   unsigned int offset;
   struct dstree_index *index;
-  ts_type minimum_distance;
   ts_type epsilon;
   ts_type r_delta;
   unsigned int k;
   unsigned int q_id;
-  char **qfilename_arr;
   double *total_query_set_time;
   unsigned int *total_checked_ts;
-  struct bsf_snapshot ***bsf_snapshots_arr;
-  unsigned int **cur_bsf_snapshot_arr;
   float warping;
   FILE **dataset_file_arr;
   FILE **series_file_arr;
   unsigned int num_query_vectors;
 
-  pthread_barrier_t * knn_update_barrier;
-  struct result_vid **global_knn_results;
+  // struct result_vid **global_knn_results;
   struct result_vid * ground_truth_results;
   unsigned int num_gt_results;
   int8_t ** global_recall_matrix;
   
   char * finished;
+  pthread_barrier_t * knn_update_barrier;
+};
+
+typedef struct worker_param {
+  int8_t worker_id;
+  ts_type *query_ts;
+  ts_type *query_ts_reordered;
+  int *query_order;
+  struct vid *query_id;
+
+  unsigned int offset;
+  struct dstree_index *index;
+  ts_type epsilon;
+  ts_type r_delta;
+  unsigned int k;
+  unsigned int q_id;
+  double *total_query_set_time;
+  unsigned int *total_checked_ts;
+  float warping;
+  FILE *dataset_file;
+  FILE *series_file;
+
+  // struct result_vid **global_knn_results;
+  struct result_vid * ground_truth_results;
+  unsigned int num_gt_results;
+  int8_t ** global_recall_matrix;
+  
+  char * finished;
+  pthread_barrier_t * knn_update_barrier;
 };
 
 typedef struct query_result {
@@ -220,7 +244,7 @@ void exact_de_incr_progressive_knn_search(
 
 /* start kashif changes */
 void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
-                            int *query_order, unsigned int offset, ts_type bsf,
+                            int *query_order, unsigned int offset,
                             struct dstree_index *index,
                             struct query_result *knn_results, unsigned int k,
                             // struct bsf_snapshot **bsf_snapshots,
@@ -267,7 +291,8 @@ struct query_result * exact_de_progressive_knn_search_2(
     struct bsf_snapshot **bsf_snapshots,
     unsigned int *cur_bsf_snapshot, unsigned int query_vector_pos);
 
-void exact_de_parallel_incr_knn_search(void * parameters);
+void exact_de_parallel_single_thread_incr_knn_search(void * parameters);
+void exact_de_parallel_multi_thread_incr_knn_search(void * parameters);
 /* end kashif changes */
 
 #endif
