@@ -134,18 +134,24 @@ void calculate_node_knn_distance (struct dstree_index *index, struct dstree_node
 				  unsigned int * cur_size,
 				  float warping);
 /* start kashif changes */
+int thread_queue_bounded_sorted_insert(struct dstree_index * index, struct query_result *q, struct query_result d,
+                                unsigned int *cur_size, unsigned int k, unsigned int thread_id);
 int calculate_node_knn_distance_2(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
-    ts_type bsf, unsigned int k, struct query_result *knn_results,
+    unsigned int k, struct query_result *knn_results,
     // struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
-    unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_time, unsigned int * total_checked_vectors);
+    unsigned int *cur_size, float warping, struct vid * query_id, 
+    double * total_query_time, unsigned int * total_checked_vectors,
+    unsigned int approx);
 
 int calculate_node_knn_distance_para_incr(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     unsigned int k, struct query_result *knn_results,
-    unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_time, unsigned int * total_checked_vectors);
+    unsigned int *cur_size, float warping, struct vid * query_id,
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int thread_id, unsigned int approx);
 /* end kashif changes */
 enum response append_ts_gt_to_child_node(struct dstree_index * index,
 					 struct dstree_node * node,

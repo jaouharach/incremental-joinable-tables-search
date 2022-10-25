@@ -588,9 +588,11 @@ enum response update_node_statistics(struct dstree_node *node,
 int calculate_node_knn_distance_2(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
-    ts_type bsf, unsigned int k, struct query_result *knn_results,
+    unsigned int k, struct query_result *knn_results,
     // struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
-    unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_set_time, unsigned int * total_checked_ts)
+    unsigned int *cur_size, float warping, struct vid * query_id, 
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int approx)
 {
   // get the k-th distance from the results queue
   ts_type kth_bsf = FLT_MAX;
@@ -695,58 +697,18 @@ int calculate_node_knn_distance_2(
       
       if (index->settings->track_vector)
         free(object_result.vector_id);
+      
 
-      // update query time per k value
-      COUNT_PARTIAL_TIME_END
+      if(approx == 0 && knn_results[stored_at].approx == 1)
+      {
+        knn_results[stored_at].approx = 0; // overwrite result that was found in approximate search
+      }
 
-      update_query_stats(index, 0, 0, result);
-      knn_results[stored_at].time += index->stats->query_total_cpu_time;
-      knn_results[stored_at].num_checked_vectors += index->stats->query_filter_checked_ts_count;
-      *total_query_set_time += index->stats->query_total_cpu_time;
-      *total_checked_ts += index->stats->query_filter_checked_ts_count;
+      knn_results[stored_at].num_checked_vectors = checked_ts_count;
+     
 
-      RESET_PARTIAL_COUNTERS()
-      COUNT_PARTIAL_TIME_START
     }
   }
-  // only print the snapshots after finished visiting leaf
-  // if interested in the value of the actual neighbor, move this code inside
-  // the for loop above
-
-  //temp  change
-  // if (cur_bsf_snapshot != NULL && update_snapshots) {
-  //   gettimeofday(&current_time_bsf, NULL);
-  //   tS_bsf = partial_time_start.tv_sec * 1000000 + (partial_time_start.tv_usec);
-  //   tE_bsf = current_time_bsf.tv_sec * 1000000 + (current_time_bsf.tv_usec);
-
-     
-  //   for (int j = 0; j < k; ++j) {
-  //     bsf_snapshots[j][*cur_bsf_snapshot].distance = knn_results[j].distance;
-  //     bsf_snapshots[j][*cur_bsf_snapshot].time = tE_bsf - tS_bsf;
-  //     bsf_snapshots[j][*cur_bsf_snapshot].checked_nodes = checked_nodes_count;
-
-  //     if (index->settings->classify)
-  //       bsf_snapshots[j][*cur_bsf_snapshot].label = knn_results[j].label;
-
-  //     if (index->settings->track_file_pos) {
-  //       bsf_snapshots[j][*cur_bsf_snapshot].file_pos = knn_results[j].file_pos;
-  //       // bsf_snapshots[j][*cur_bsf_snapshot].series = calloc (1,
-  //       // ts_byte_size);
-  //       // mempcpy(bsf_snapshots[j][*cur_bsf_snapshot].series,knn_results[j].series,ts_byte_size);
-  //     }
-
-  //     if(index->settings->track_vector)
-  //     {
-  //       bsf_snapshots[j][*cur_bsf_snapshot].vector_id->table_id = knn_results[j].vector_id->table_id;
-  //       bsf_snapshots[j][*cur_bsf_snapshot].vector_id->set_id = knn_results[j].vector_id->set_id;
-  //       bsf_snapshots[j][*cur_bsf_snapshot].vector_id->pos = knn_results[j].vector_id->pos;
-  //       bsf_snapshots[j][*cur_bsf_snapshot].query_vector_pos = knn_results[j].query_vector_pos;
-  //       strcpy(bsf_snapshots[j][*cur_bsf_snapshot].vector_id->raw_data_file, 
-  //             knn_results[j].vector_id->raw_data_file);
-  //     }
-  //   }
-  //   ++(*cur_bsf_snapshot);
-  // }
 
   if (node->file_buffer != NULL) {
     // clearing the data for this node
@@ -762,12 +724,127 @@ int calculate_node_knn_distance_2(
   return num_nn;
 }
 
+/* start kashif changes */
+int thread_queue_bounded_sorted_insert(struct dstree_index * index, struct query_result *q, struct query_result d,
+                                unsigned int *cur_size, unsigned int k, unsigned int thread_id) {
+  struct query_result temp;
+  temp.vector_id = malloc(sizeof(struct vid));
+  if (temp.vector_id == NULL)
+  {
+      printf("Error in dstree_node.c: Couldn't allocate memory for temp query result.");
+      exit(1);
+  }
+  size_t i;
+  size_t newsize;
+  
+  /* the queue is full, ovewrite last element*/
+  if (*cur_size == k)
+  {
+    q[k - 1].distance = d.distance;
+    q[k - 1].approx = d.approx;
+    q[k - 1].vector_id->table_id = d.vector_id->table_id;
+    q[k - 1].vector_id->set_id = d.vector_id->set_id;
+    q[k - 1].vector_id->pos = d.vector_id->pos;
+    q[k - 1].query_vector_pos = d.query_vector_pos;
+    strcpy(q[k - 1].vector_id->raw_data_file, d.vector_id->raw_data_file);
+    
+
+    COUNT_THREAD_PARTIAL_TIME_END(thread_id)
+    update_thread_query_stats(index, thread_id);
+    q[k - 1].time = index->stats->thread_query_total_cpu_time[thread_id];
+    RESET_THREAD_QUERY_COUNTERS(thread_id)
+    RESET_THREAD_PARTIAL_COUNTERS(thread_id)
+    COUNT_THREAD_PARTIAL_TIME_START(thread_id)
+  }
+  else
+  {
+    q[*cur_size].distance = d.distance;
+    q[*cur_size].approx = d.approx;
+    q[*cur_size].vector_id->table_id = d.vector_id->table_id;
+    q[*cur_size].vector_id->set_id = d.vector_id->set_id;
+    q[*cur_size].vector_id->pos = d.vector_id->pos;
+    q[*cur_size].query_vector_pos = d.query_vector_pos;
+    strcpy(q[*cur_size].vector_id->raw_data_file, d.vector_id->raw_data_file);
+
+    COUNT_THREAD_PARTIAL_TIME_END(thread_id)
+    update_thread_query_stats(index, thread_id);
+    q[*cur_size].time = index->stats->thread_query_total_cpu_time[thread_id];
+    RESET_THREAD_QUERY_COUNTERS(thread_id)
+    RESET_THREAD_PARTIAL_COUNTERS(thread_id)
+    COUNT_THREAD_PARTIAL_TIME_START(thread_id)
+
+    ++(*cur_size);
+  }
+
+  unsigned int idx, j;
+
+  idx = 1;
+
+  while (idx < *cur_size) {
+    j = idx;
+    while (j > 0 && ((q[j - 1]).distance > q[j].distance)) {
+      /* start kashif changes */
+      // temp = q[j];
+      temp.distance = q[j].distance;
+      // temp.time = q[j].time;
+      temp.approx = q[j].approx;
+      temp.vector_id->table_id = q[j].vector_id->table_id;
+      temp.vector_id->set_id = q[j].vector_id->set_id;
+      temp.vector_id->pos = q[j].vector_id->pos;
+      temp.query_vector_pos = q[j].query_vector_pos;
+      strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
+
+      /* end kashif changes */
+
+
+      q[j].distance = q[j - 1].distance;
+      // q[j].time = q[j - 1].time;
+      q[j].approx = q[j - 1].approx;
+      q[j].vector_id->table_id = q[j - 1].vector_id->table_id;
+      q[j].vector_id->set_id = q[j - 1].vector_id->set_id;
+      q[j].vector_id->pos = q[j - 1].vector_id->pos;
+      q[j].query_vector_pos = q[j - 1].query_vector_pos;
+      strcpy(q[j].vector_id->raw_data_file, q[j - 1].vector_id->raw_data_file);
+      
+      // COUNT_THREAD_PARTIAL_TIME_END(thread_id)
+      // update_thread_query_stats(index, thread_id);
+      // q[j].time = index->stats->thread_query_total_cpu_time[thread_id];
+      // RESET_THREAD_QUERY_COUNTERS(thread_id)
+      // RESET_THREAD_PARTIAL_COUNTERS(thread_id)
+      // COUNT_THREAD_PARTIAL_TIME_START(thread_id)
+
+      q[j - 1].distance = temp.distance;
+      // q[j - 1].time = temp.time;
+      q[j - 1].approx = temp.approx;
+      q[j - 1].vector_id->table_id = temp.vector_id->table_id;
+      q[j - 1].vector_id->set_id = temp.vector_id->set_id;
+      q[j - 1].vector_id->pos = temp.vector_id->pos;
+      q[j - 1].query_vector_pos = temp.query_vector_pos;
+      strcpy(q[j - 1].vector_id->raw_data_file, temp.vector_id->raw_data_file);
+
+      // COUNT_THREAD_PARTIAL_TIME_END(thread_id)
+      // update_thread_query_stats(index, thread_id);
+      // q[j - 1].time = index->stats->thread_query_total_cpu_time[thread_id];
+      // RESET_THREAD_QUERY_COUNTERS(thread_id)
+      // RESET_THREAD_PARTIAL_COUNTERS(thread_id)
+      // COUNT_THREAD_PARTIAL_TIME_START(thread_id)
+      --j;
+    }
+    ++idx;
+  }
+  
+  free(temp.vector_id);
+  return 0;
+}
+/* end kashif changes */
 
 int calculate_node_knn_distance_para_incr(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     unsigned int k, struct query_result *knn_results,
-    unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_set_time, unsigned int * total_checked_ts)
+    unsigned int *cur_size, float warping, struct vid * query_id,
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int thread_id, unsigned int approx)
 {
   // get the k-th distance from the results queue
   ts_type kth_bsf = FLT_MAX;
@@ -782,28 +859,34 @@ int calculate_node_knn_distance_para_incr(
   // which count the number of leaves and time series that were not found in
   // memory and had to be retrieved from disk
   // checked_nodes = loaded_nodes + nodes_in_memory
-  COUNT_CHECKED_NODE
-  COUNT_CHECKED_TS(node->node_size)
+  COUNT_THREAD_CHECKED_NODE(thread_id)
+  COUNT_THREAD_CHECKED_TS(node->node_size,thread_id)
 
   // TEST THAT DATA IS FULLY IN MEM
   // If the leaf's data is in disk, load it
-  pthread_mutex_lock(&node->lock);
-  if (node->file_buffer->buffered_list_size == 0) {
-    COUNT_LOADED_NODE
-    COUNT_LOADED_TS(node->node_size)
-    COUNT_PARTIAL_LOAD_NODE_TIME_START
 
-    node->file_buffer->buffered_list = get_all_time_series_in_node(index, node);
-    node->file_buffer->buffered_list_size = node->file_buffer->disk_count;
+  if (node->file_buffer->buffered_list_size == 0)
+  {
+    pthread_mutex_lock(&node->lock);
+    if (node->file_buffer->buffered_list_size == 0) {
+      COUNT_THREAD_LOADED_NODE(thread_id) 
+      COUNT_THREAD_LOADED_TS(node->node_size,thread_id)
+      // COUNT_PARTIAL_LOAD_NODE_TIME_START
 
-    if (node->file_buffer->buffered_list == NULL) {
-      fprintf(stderr,
-              "Error in dstree_index.c:  Could not retrieve all time series "
-              "for node %s.\n",
-              node->filename);
+      node->file_buffer->buffered_list = get_all_time_series_in_node_para_incr(index, node, thread_id);
+      node->file_buffer->buffered_list_size = node->file_buffer->disk_count;
+
+      if (node->file_buffer->buffered_list == NULL) {
+        fprintf(stderr,
+                "Error in dstree_index.c:  Could not retrieve all time series "
+                "for node %s.\n",
+                node->filename);
+      }
+      // COUNT_PARTIAL_LOAD_NODE_TIME_END
     }
-    COUNT_PARTIAL_LOAD_NODE_TIME_END
+    pthread_mutex_unlock(&node->lock);
   }
+
   // If the leaf's data is in memory, proceed. A leaf's data is either fully in
   // disk or in memory
   double tS_bsf;
@@ -856,16 +939,16 @@ int calculate_node_knn_distance_para_incr(
       if (index->settings->track_vector)
       {
         object_result.vector_id = (struct vid *) malloc(sizeof(struct vid));
-        // object_result.vector_id->table_id = 101010;
-        // object_result.vector_id->set_id = 10101;
         object_result.vector_id->table_id = index->vid_cache[(node->vid_pos) + idx].table_id;
         object_result.vector_id->set_id = index->vid_cache[(node->vid_pos) + idx].set_id;
         object_result.vector_id->pos = index->vid_cache[(node->vid_pos) + idx].pos;
         object_result.time = 0;
+        object_result.approx = approx;
         object_result.num_checked_vectors = 0;
         strcpy(object_result.vector_id->raw_data_file, index->vid_cache[(node->vid_pos) + idx].raw_data_file);
       }
           
+      // int stored_at = thread_queue_bounded_sorted_insert(index, knn_results, object_result, cur_size, k, thread_id);
       int stored_at = queue_bounded_sorted_insert(knn_results, object_result, cur_size, k);
       // printf("bsf stored at %d,\n", stored_at);
       update_snapshots = true;
@@ -873,32 +956,35 @@ int calculate_node_knn_distance_para_incr(
       if (index->settings->track_vector)
         free(object_result.vector_id);
 
-      // update query time per k value
-      COUNT_PARTIAL_TIME_END
+      // COUNT_THREAD_PARTIAL_TIME_END(thread_id)
+      // update_thread_query_stats(index, thread_id);
 
-      update_query_stats(index, 0, 0, result);
-      knn_results[stored_at].time += index->stats->query_total_cpu_time;
-      knn_results[stored_at].num_checked_vectors += index->stats->query_filter_checked_ts_count;
-      *total_query_set_time += index->stats->query_total_cpu_time;
-      *total_checked_ts += index->stats->query_filter_checked_ts_count;
-
-      RESET_PARTIAL_COUNTERS()
-      COUNT_PARTIAL_TIME_START
+      if(approx == 0 && knn_results[stored_at].approx == 1)
+      {
+        knn_results[stored_at].approx = 0; // overwrite result that was found in approximate search
+      }
+      
+      // knn_results[stored_at].time = index->stats->thread_query_total_cpu_time[thread_id];
+      // knn_results[stored_at].num_checked_vectors = thread_checked_ts_count[thread_id];
+     
+      // RESET_THREAD_QUERY_COUNTERS(thread_id)
+      // RESET_THREAD_PARTIAL_COUNTERS(thread_id)
+      // COUNT_THREAD_PARTIAL_TIME_START(thread_id)
+      
     }
   }
 
-  if (node->file_buffer != NULL) {
-    // clearing the data for this node
-    for (int i = 0; i < index->settings->max_leaf_size; ++i) {
-      free(node->file_buffer->buffered_list[i]);
-    }
-    free(node->file_buffer->buffered_list);
-  }
+  // if (node->file_buffer != NULL) {
+  //   // clearing the data for this node
+  //   for (int i = 0; i < index->settings->max_leaf_size; ++i) {
+  //     free(node->file_buffer->buffered_list[i]);
+  //   }
+  //   free(node->file_buffer->buffered_list);
+  // }
 
-  node->file_buffer->buffered_list = NULL;
-  node->file_buffer->buffered_list_size = 0;
+  // node->file_buffer->buffered_list = NULL;
+  // node->file_buffer->buffered_list_size = 0;
 
-  pthread_mutex_unlock(&node->lock);
   return num_nn;
 }
 
@@ -1306,7 +1392,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
     q[k - 1].vector_id->table_id = d.vector_id->table_id;
     q[k - 1].vector_id->set_id = d.vector_id->set_id;
     q[k - 1].vector_id->pos = d.vector_id->pos;
-    q[k - 1].time += d.time;
+    // q[k - 1].time = d.time;
+    q[k - 1].approx = d.approx;
     q[k - 1].num_checked_vectors += d.num_checked_vectors;
     // q[k - 1].query_vector_pos = d.query_vector_pos; // because query pos is set at the beginning 
     strcpy(q[k - 1].vector_id->raw_data_file, d.vector_id->raw_data_file);
@@ -1321,7 +1408,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
     q[*cur_size].vector_id->table_id = d.vector_id->table_id;
     q[*cur_size].vector_id->set_id = d.vector_id->set_id;
     q[*cur_size].vector_id->pos = d.vector_id->pos;
-    q[*cur_size].time = d.time;
+    // q[*cur_size].time = d.time;
+    q[*cur_size].approx = d.approx;
     q[*cur_size].num_checked_vectors = d.num_checked_vectors;
     // q[*cur_size].query_vector_pos = d.query_vector_pos; // because query pos is set at the beginning 
     strcpy(q[*cur_size].vector_id->raw_data_file, d.vector_id->raw_data_file);
@@ -1351,7 +1439,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       temp.vector_id->table_id = q[j].vector_id->table_id;
       temp.vector_id->set_id = q[j].vector_id->set_id;
       temp.vector_id->pos = q[j].vector_id->pos;
-      temp.time = q[j].time;
+      // temp.time = q[j].time;
+      temp.approx = q[j].approx;
       temp.num_checked_vectors = q[j].num_checked_vectors;
       // temp.query_vector_pos = q[j].query_vector_pos; // because query pos is set at the beginning 
       strcpy(temp.vector_id->raw_data_file, q[j].vector_id->raw_data_file);
@@ -1365,7 +1454,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[j].vector_id->table_id = q[j - 1].vector_id->table_id;
       q[j].vector_id->set_id = q[j - 1].vector_id->set_id;
       q[j].vector_id->pos = q[j - 1].vector_id->pos;
-      q[j].time = q[j - 1].time;
+      // q[j].time = q[j - 1].time;
+      q[j].approx = q[j - 1].approx;
       q[j].num_checked_vectors = q[j - 1].num_checked_vectors;
       // q[j].query_vector_pos = q[j - 1].query_vector_pos; // because query pos is set at the beginning 
       strcpy(q[j].vector_id->raw_data_file, q[j - 1].vector_id->raw_data_file);
@@ -1377,7 +1467,8 @@ int queue_bounded_sorted_insert(struct query_result *q, struct query_result d,
       q[j - 1].vector_id->table_id = temp.vector_id->table_id;
       q[j - 1].vector_id->set_id = temp.vector_id->set_id;
       q[j - 1].vector_id->pos = temp.vector_id->pos;
-      q[j - 1].time = temp.time;
+      // q[j - 1].time = temp.time;
+      q[j - 1].approx = temp.approx;
       q[j - 1].num_checked_vectors = temp.num_checked_vectors;
       // q[j - 1].query_vector_pos = temp.query_vector_pos; // because query pos is set at the beginning 
       strcpy(q[j - 1].vector_id->raw_data_file, temp.vector_id->raw_data_file);

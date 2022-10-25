@@ -67,6 +67,8 @@ typedef struct worker_param {
   FILE *series_file;
 
   // struct result_vid **global_knn_results;
+  unsigned int * k_values; // k values for which we want to record results
+  unsigned int num_k_values;
   struct result_vid * ground_truth_results;
   unsigned int num_gt_results;
   int8_t ** global_recall_matrix;
@@ -90,6 +92,7 @@ typedef struct query_result {
   struct vid *vector_id;
   double time;
   unsigned int num_checked_vectors;
+  int8_t approx; // = 1 if the result was found with found with approximate search and 0 if its was found with exact search
   /* end kashif changes */
 };
 
@@ -171,6 +174,16 @@ void dstree_calc_tlb(ts_type *query_ts, struct dstree_index *index,
 
 void update_query_stats(struct dstree_index *index, unsigned int query_id,
                         unsigned int found_knn, struct query_result bsf_result);
+
+/* start kashif changes */
+void update_thread_query_stats(struct dstree_index *index, unsigned int thread_id);
+void print_thread_query_stats(struct dstree_index *index, unsigned int thread_id);
+void report_thread_cumulative_query_time(struct query_result * knn_results, 
+unsigned int k);
+void report_thread_knn_results(struct query_result * knn_results, unsigned int * k_values, 
+unsigned int num_k_values, unsigned int thread_id);
+void reset_thread_query_stats(struct dstree_index *index, unsigned int thread_id);
+/* end kashif changes */
 void print_query_stats(struct dstree_index *index, unsigned int query_num,
                        unsigned int found_knn, char *queries);
 void get_query_stats(struct dstree_index *index, unsigned int found_knn);
@@ -243,16 +256,16 @@ void exact_de_incr_progressive_knn_search(
     unsigned int *cur_bsf_snapshot, float warping, FILE *, FILE *);
 
 /* start kashif changes */
-void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
+void approximate_knn_search_para_incr(ts_type *query_ts, ts_type *query_ts_reordered,
                             int *query_order, unsigned int offset,
                             struct dstree_index *index,
                             struct query_result *knn_results, unsigned int k,
-                            // struct bsf_snapshot **bsf_snapshots,
-                            // unsigned int *cur_bsf_snapshot,
-                            unsigned int *curr_size, float warping, struct vid * query_id, double * total_query_set_time, unsigned int * total_checked_ts);
+                            unsigned int *curr_size, float warping, struct vid * query_id,
+                            double * total_query_set_time, unsigned int * total_checked_ts,
+                            unsigned int thread_id);
 
-void approximate_knn_search_para_incr(ts_type *query_ts, ts_type *query_ts_reordered,
-                            int *query_order, unsigned int offset, ts_type bsf,
+void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
+                            int *query_order, unsigned int offset,
                             struct dstree_index *index,
                             struct query_result *knn_results, unsigned int k,
                             unsigned int *curr_size, float warping, struct vid * query_id, 
@@ -281,7 +294,8 @@ struct query_result *exact_de_incr_progressive_knn_search_2(
     // struct bsf_snapshot **bsf_snapshots,
     // unsigned int *cur_bsf_snapshot, 
     float warping, FILE *dataset_file,
-    FILE *series_file,struct vid * query_id, unsigned int num_query_vectors);
+    FILE *series_file,struct vid * query_id, unsigned int num_query_vectors,
+    unsigned int * k_values, unsigned int num_k_values);
 
 struct query_result * exact_de_progressive_knn_search_2(
     ts_type *query_ts, ts_type *query_ts_reordered, int *query_order,

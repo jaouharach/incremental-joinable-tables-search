@@ -461,7 +461,7 @@ enum response dstree_knn_query_multiple_binary_files(
       unsigned int nvec = 0u;
       ts_type val;
 
-      while (total_bytes) // counts 4 bytes as one because every vector is
+      while (total_bytes) // counts 4 bytes as one because every vector value is
                           // stored in 4 bytes
       {
         // beginning of a set of vectors
@@ -489,21 +489,6 @@ enum response dstree_knn_query_multiple_binary_files(
             continue;
           }
 
-          // temp change
-          // if(table_id == 69)
-          // if((set_id == 0 || set_id == 1))
-          // {
-          //   printf("skip curr col\n");
-          //   // COUNT_PARTIAL_INPUT_TIME_START
-          //   fseek(bin_file, nvec * 4 * vector_length, SEEK_CUR);
-          //   // COUNT_PARTIAL_INPUT_TIME_END
-          //   i = 0;
-          //   j = 0;
-          //   total_bytes -= (nvec * vector_length);
-          //   nvec = 0u;
-          //   set_id += 1;
-          //   continue;
-          // }
           found_query = true;
 
           query_time = 0.0;
@@ -544,14 +529,19 @@ enum response dstree_knn_query_multiple_binary_files(
               query_id.set_id = query_vector.set_id;
               query_id.pos = query_vector.pos;
 
+              double query_vector_time = 0.0;
+              unsigned int num_checked_vectors = 0;
+
               if (incremental) {
                 curr_knn = exact_de_incr_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
-                    qvectors_loaded, bin_file_path, &query_time,
-                    &total_checked_ts,
-                    warping, dataset_file, series_file, &query_id, nvec);
+                    qvectors_loaded, bin_file_path, &query_vector_time,
+                    &num_checked_vectors,
+                    warping, dataset_file, series_file, &query_id, nvec, k_values, num_k_values);
               } 
+              query_time += query_vector_time;
+              total_checked_ts += num_checked_vectors;
             }
             // copy new knn(s) to knn_results array
             // printf("end of query for vector sent %u received %u\n", query_vector.pos, curr_knn[0].vector_id->pos);
@@ -595,14 +585,19 @@ enum response dstree_knn_query_multiple_binary_files(
               query_id.set_id = query_vector.set_id;
               query_id.pos = query_vector.pos;
               
+               double query_vector_time = 0.0;
+              unsigned int num_checked_vectors = 0;
+
               if (incremental) {
                 curr_knn = exact_de_incr_progressive_knn_search_2(
                     query_vector.values, query_vector_reordered, query_order,
                     offset, index, minimum_distance, epsilon, r_delta, k,
-                    qvectors_loaded, bin_file_path, &query_time,
-                    &total_checked_ts, 
-                    warping, dataset_file, series_file, &query_id, nvec);
+                    qvectors_loaded, bin_file_path, &query_vector_time,
+                    &num_checked_vectors,
+                    warping, dataset_file, series_file, &query_id, nvec, k_values, num_k_values);
               } 
+              query_time += query_vector_time;
+              total_checked_ts += num_checked_vectors;
             }
             
             // append new knn(s) to knn_results array
@@ -625,6 +620,7 @@ enum response dstree_knn_query_multiple_binary_files(
             // End of Query set
             /* Save query results to csv file */
             query_time /= 1000000;
+            
             printf("Storing result to csv file...\n");
 
             for(int z = 0; z < num_k_values; z++)
@@ -868,7 +864,7 @@ enum response dstree_parallel_incr_knn_query_multiple_binary_files(
       unsigned int nvec = 0u;
       ts_type val;
 
-      while (total_bytes) // counts 4 bytes as one because every vector is
+      while (total_bytes) // counts 4 bytes as one because every vector value is
                           // stored in 4 bytes
       {
         // beginning of a set of vectors
@@ -1293,9 +1289,9 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
 
       /* read binary file */
       // COUNT_PARTIAL_RAND_INPUT
-      // COUNT_PARTIAL_INPUT_TIME_START
+      // COUNT_THREAD_PARTIAL_INPUT_TIME_START(0)
       FILE *bin_file = fopen(bin_file_path, "rb");
-      // COUNT_PARTIAL_INPUT_TIME_END
+      // COUNT_THREAD_PARTIAL_INPUT_TIME_END(0)
 
       if (bin_file == NULL) {
         fprintf(stderr, "Error in dstree_file_loaders.c: File %s not found!\n",
@@ -1309,26 +1305,29 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
       unsigned int nvec = 0u;
       ts_type val;
 
-      while (total_bytes) // counts 4 bytes as one because every vector is
+      
+      while (total_bytes) // counts 4 bytes as one because every vector value is
                           // stored in 4 bytes
       {
         // beginning of a set of vectors
-        if (i == 0) {
+        if (i == 0)
+        {
           if (qset_num == 0)
             break;
 
           // read first integer to check how many vactors in current set
-          // COUNT_PARTIAL_INPUT_TIME_START
+          // COUNT_THREAD_PARTIAL_INPUT_TIME_START(0)
           fread(&nvec, sizeof(nvec), 1, bin_file);
-          // COUNT_PARTIAL_INPUT_TIME_END
+          // COUNT_THREAD_PARTIAL_INPUT_TIME_END(0)
 
           total_bytes--;
           // query set does not fit requirments move to next set
           if ((unsigned int)nvec < min_qset_size ||
               (unsigned int)nvec > max_qset_size) {
-            // COUNT_PARTIAL_INPUT_TIME_START
+            // COUNT_THREAD_PARTIAL_INPUT_TIME_START(0)
             fseek(bin_file, nvec * 4 * vector_length, SEEK_CUR);
-            // COUNT_PARTIAL_INPUT_TIME_END
+            // COUNT_THREAD_PARTIAL_INPUT_TIME_END(0)
+            
             i = 0;
             j = 0;
             total_bytes -= (nvec * vector_length);
@@ -1400,8 +1399,8 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
           }
 
           curr_vector = 0;
-          // RESET_QUERY_COUNTERS()
-          
+          num_threads = nvec;
+          INIT_THREAD_STATS(num_threads)
           printf("\nQuery (%d, %d) ...\n", table_id, set_id);
 
           set_id += 1;
@@ -1422,9 +1421,9 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
           }
 
           // COUNT_PARTIAL_SEQ_INPUT
-          // COUNT_PARTIAL_INPUT_TIME_START
+          // COUNT_THREAD_PARTIAL_INPUT_TIME_START(0)          
           fread((void *)(&val), sizeof(val), 1, bin_file);
-          // COUNT_PARTIAL_INPUT_TIME_END
+          // COUNT_THREAD_PARTIAL_INPUT_TIME_END(0)
 
           total_bytes--;
           query_vectors[curr_vector][j]= val;
@@ -1438,16 +1437,14 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
             qvectors_loaded += 1;
             curr_vector = 0;
 
-            // (todo) perform extact parallel incremental knn search in 
-
-
             // load ground truth results
             char ground_truth_file[255] = "";
             int  num_gt_results = get_ground_truth_file(ground_truth_dir, query_id_arr[0].table_id, query_id_arr[0].set_id, ground_truth_file);
             struct result_vid * ground_truth_results = get_ground_truth_results(ground_truth_file, num_gt_results);
 
-            // setup workers and parameters (1 worker per query vector)
-            num_threads = nvec;
+            // setup workers and parameters (1 worker per query vector)s
+            // init counter for all threads (timers, vector and node counters)
+            dstree_init_thread_stats(index, num_threads);
 
             worker_threads = malloc(sizeof(pthread_t) * num_threads); 
             knn_update_barriers =  malloc(sizeof(pthread_barrier_t) * num_threads);  
@@ -1470,21 +1467,6 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
                 fprintf(stderr, "Error in dstree_file_loaders.c: Could't allocate memory for worker thread %d param.", th);
                 exit(1);
               }
-              // printf("vector:\n");
-              // for(int i = 0; i < index->settings->timeseries_size; i++)
-              // {
-              //   printf("%.3f, ", query_vectors[th][i]);
-              // } 
-              // printf("\n\nvector order:\n");
-              // for(int i = 0; i < index->settings->timeseries_size; i++)
-              // {
-              //   printf("%d, ", query_order_arr[th][i]);
-              // } 
-              // printf("\n\nvector ordered:\n");
-              // for(int i = 0; i < index->settings->timeseries_size; i++)
-              // {
-              //   printf("%.3f, ", query_vectors_reordered[th][i]);
-              // }
 
               param->worker_id = th;
               param->dataset_file = dataset_file; 
@@ -1500,12 +1482,18 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
               param->total_checked_ts = &total_checked_ts;
               param->total_query_set_time = &total_query_time;
               param->warping = warping;
+
               // param->global_knn_results = all_knn_results;
+              param->k_values = k_values; // k values for which we want to record results
+              param->num_k_values = num_k_values;
               param->ground_truth_results = ground_truth_results;
               param->num_gt_results = num_gt_results;
               param->global_recall_matrix = recall_matrix;
               param->finished = &finished[th];
               param->knn_update_barrier = &knn_update_barriers[th];
+
+              RESET_THREAD_PARTIAL_COUNTERS(th)
+              RESET_THREAD_QUERY_COUNTERS(th)
 
               pthread_create(&worker_threads[th], NULL, exact_de_parallel_multi_thread_incr_knn_search, (void *)param);
               printf("coordinator_thread:\t\tcreated worker %d.\n", th);
@@ -1529,19 +1517,6 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
               float recall_from_matrix = compute_recall_from_matrix(recall_matrix, nvec, k, num_gt_results);
               printf("coordinator_thread:\t (!)\tcurrent recall =%f\n", recall_from_matrix);
 
-              // print approx results
-              // for(int q = 0; q < nvec; q++)
-              // {
-              //   printf("knns results for vector: (%u, %u, %u)\n", query_id_arr[q].table_id, query_id_arr[q].set_id, query_id_arr[q].pos);
-              //   for(int x = 0; x < k; x++)
-              //   {
-              //     if(all_knn_results[q][x].pos != -1)
-              //       printf("%dnn: v = (%u, %u, %u), d = na\n", x, all_knn_results[q][x].table_id, all_knn_results[q][x].set_id, all_knn_results[q][x].pos);
-              //     else
-              //       printf("%dnn: v = (na, na, na), d = na\n", x);
-              //   }
-              // }
-
               all_threads_finished = 1;
               for(int th = 0; th < num_threads; th++)
               {
@@ -1552,9 +1527,32 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
                 }
               }
               if(all_threads_finished == 1)
-                printf("coordinator_thread:\t\t(X) end, all workers have finished.");
+                printf("coordinator_thread:\t\t(X) end, all workers have finished.\n");
             }
             printf("coordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", table_id, set_id-1);
+
+
+
+            printf("Stats:\t (...)\t");
+            double max_cpu_time = 0, max_input_time = 0; 
+            int thread_id = -1, mi_thread_id = -1;
+            for(int th = 0; th < num_threads; th++)
+            {
+              if(index->stats->thread_query_total_cpu_time[th] > max_cpu_time)
+              { 
+                max_cpu_time = index->stats->thread_query_total_cpu_time[th];
+                thread_id = th;
+              }
+              if(index->stats->thread_query_total_input_time[th] > max_input_time)
+              { 
+                max_input_time = index->stats->thread_query_total_input_time[th];
+                mi_thread_id = th;
+              }
+              print_thread_query_stats(index, th);
+            }
+
+            printf("THREAD %d HAS MAX CPU TIME = %f\n", max_cpu_time/1000000, thread_id);
+            printf("THREAD %d HAS MAX INPUT TIME = %f\n", max_input_time/1000000, mi_thread_id);
 
             // for(int th = 0; th < num_threads; th++)
             //   pthread_join(worker_threads[th], NULL); 
@@ -1583,11 +1581,6 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
             //   free(query_result_file);
             // }
 
-
-            // (todo) compute recall
-            // float recall = compute_recall(ground_truth_dir, all_knn_results, nvec, k, query_id_arr[0].table_id, query_id_arr[0].set_id);
-            // printf("\nrecall=%f\n", recall);
-            
             // free memory
             // kill worker thread and destroy barrier
             // pthread_cancel(worker_thread);
@@ -1624,8 +1617,9 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
             // }
             // free(all_knn_results);
 
-            // RESET_PARTIAL_COUNTERS()
-            // COUNT_PARTIAL_TIME_START
+            
+            FREE_THREAD_QUERY_COUNTERS
+            FREE_THREAD_PARTIAL_COUNTERS
 
             i = 0;
             j = 0;
@@ -1637,10 +1631,7 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
           j++;
         }
       }
-      // COUNT_PARTIAL_INPUT_TIME_START
       fclose(bin_file);
-      // COUNT_PARTIAL_INPUT_TIME_END
-      
       /* end read binary file */
     }
   }
@@ -1660,13 +1651,206 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
   }
   
   // free memory
-  // COUNT_INPUT_TIME_START
   closedir(dir);
-  // COUNT_INPUT_TIME_END
   free(results_dir);
-  free(k_values);
-  // COUNT_PARTIAL_TIME_END
-  // RESET_PARTIAL_COUNTERS()  
+  free(k_values); 
+  return SUCCESS;
+}
+
+enum response dstree_index_multiple_binary_files(const char *bin_files_directory,
+                                   unsigned int total_data_files,
+                                   struct dstree_index *index) {
+
+  printf("\n+ must read %dfiles\n", total_data_files);
+
+  int vector_length = index->settings->timeseries_size;
+  int opened_files = 0;
+  unsigned int total_vectors  = 0;
+  unsigned int total_datasize  = 0;
+  unsigned int total_read_files = 0;
+
+  // allocate memory for vector
+  struct vector v;
+  v.values = (ts_type *)malloc(sizeof(ts_type) * vector_length);
+  ts_type val;
+  unsigned int nvec = 0u;
+
+  // open source dir
+  struct dirent *dfile;
+  DIR *dir = opendir(bin_files_directory);
+  if (!dir) {
+    printf("Error in dstree_file_loader.c: Unable to open directory stream!");
+    exit(1);
+  }
+
+  while ((dfile = readdir(dir)) != NULL && total_data_files > 0) {
+    if (is_binaryfile(dfile->d_name)) {
+      total_data_files--;
+      opened_files += 1;
+
+      // get fill path of bin file
+      char bin_file_path[PATH_MAX + 1] = "";
+      strcat(bin_file_path, bin_files_directory);
+      strcat(bin_file_path, "/");
+      strcat(bin_file_path, dfile->d_name);
+
+      // get binary table info
+      int datasize, table_id, nsets, vector_length_in_filename;
+      sscanf(dfile->d_name, "data_size%d_t%dc%d_len%d_noznorm.bin", &datasize,
+             &table_id, &nsets, &vector_length_in_filename);
+      total_datasize += datasize;
+      // check if vector length in file name matches vector length passed as
+      // argument
+      if (vector_length_in_filename != vector_length) {
+        fprintf(stderr,
+                "Error in dstree_file_loaders.c:  Vector length passed in "
+                "argumentes (--timeseries-size %d) does not match vector "
+                "length in file (%d) %s.\n",
+                vector_length_in_filename, vector_length, bin_file_path);
+        return FAILURE;
+      }
+
+      RESET_PARTIAL_COUNTERS()
+      COUNT_PARTIAL_TIME_START
+
+      COUNT_PARTIAL_RAND_INPUT
+      COUNT_PARTIAL_INPUT_TIME_START
+      FILE *bin_file = fopen(bin_file_path, "rb");
+      total_read_files += 1;
+      COUNT_PARTIAL_INPUT_TIME_END
+
+      if (bin_file == NULL) {
+        fprintf(stderr, "Error in dstree_file_loaders.c: File %s not found!\n",
+                bin_file_path);
+        return FAILURE;
+      }
+
+      /* Start processing file: read every vector in binary file*/
+      unsigned int i = 0, j = 0, set_id = 0, vector_pos = 0,
+                   total_bytes = (datasize * vector_length) + nsets;
+
+      while (total_bytes) {
+        if (i == 0) {
+          i++;
+          j = 0;
+
+          // read first integer to check how many vactors in current set
+          fread(&nvec, sizeof(nvec), 1, bin_file);
+          total_bytes--;
+          v.table_id = table_id;
+          v.set_id = set_id;
+          v.pos = 0;
+          set_id += 1;
+
+        } else if (i <= (unsigned int)nvec * vector_length) {
+          // end of vector but still in current set
+          if (j > (vector_length - 1)) {
+            j = 0;
+            /*Index v in dstree */
+            if (!dstree_index_insert_vector(index, v.values, v.table_id,
+                                            v.set_id, v.pos, dfile->d_name)) {
+              fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add "
+                              "the time series to the index.\n");
+              return FAILURE;
+            }
+            total_vectors += 1;
+            // next vector position in set (/column)
+            v.pos += 1;
+
+            index->stats->idx_building_total_time += partial_time;
+            index->stats->idx_building_input_time += partial_input_time;
+            index->stats->idx_building_output_time += partial_output_time;
+
+            index->stats->idx_building_seq_input_count +=
+                partial_seq_input_count;
+            index->stats->idx_building_seq_output_count +=
+                partial_seq_output_count;
+            index->stats->idx_building_rand_input_count +=
+                partial_rand_input_count;
+            index->stats->idx_building_rand_output_count +=
+                partial_rand_output_count;
+          }
+
+          COUNT_PARTIAL_SEQ_INPUT
+          COUNT_PARTIAL_INPUT_TIME_START
+          fread((void *)(&val), sizeof(val), 1, bin_file);
+          COUNT_PARTIAL_INPUT_TIME_END
+          total_bytes--;
+          v.values[j] = val;
+
+          // end of last vector in current  set
+          if (i == (unsigned int)nvec * vector_length) {
+            /*Index v in dstree */
+            if (!dstree_index_insert_vector(index, v.values, v.table_id,
+                                            v.set_id, v.pos, dfile->d_name)) {
+              fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add "
+                              "the time series to the index.\n");
+              return FAILURE;
+            }
+            total_vectors += 1;
+            // first vector position in next set (/column)
+            v.pos = 0;
+
+            index->stats->idx_building_total_time += partial_time;
+            index->stats->idx_building_input_time += partial_input_time;
+            index->stats->idx_building_output_time += partial_output_time;
+
+            index->stats->idx_building_seq_input_count +=
+                partial_seq_input_count;
+            index->stats->idx_building_seq_output_count +=
+                partial_seq_output_count;
+            index->stats->idx_building_rand_input_count +=
+                partial_rand_input_count;
+            index->stats->idx_building_rand_output_count +=
+                partial_rand_output_count;
+
+            i = 0;
+            j = 0;
+            nvec = 0u;
+            continue;
+          }
+          i++;
+          j++;
+        }
+      }
+
+      COUNT_PARTIAL_INPUT_TIME_START
+      if (fclose(bin_file)) {
+        fprintf(
+            stderr,
+            "Error in dstree_file_loaders.c: Could not close the filename %s",
+            bin_file_path);
+        return FAILURE;
+      }
+      COUNT_PARTIAL_INPUT_TIME_END
+      COUNT_PARTIAL_TIME_END
+      /* end read processing file */
+      index->stats->idx_building_total_time += partial_time;
+      index->stats->idx_building_input_time += partial_input_time;
+      index->stats->idx_building_output_time += partial_output_time;
+      index->stats->idx_building_seq_input_count += partial_seq_input_count;
+      index->stats->idx_building_seq_output_count += partial_seq_output_count;
+      index->stats->idx_building_rand_input_count += partial_rand_input_count;
+      index->stats->idx_building_rand_output_count += partial_rand_output_count;
+      RESET_PARTIAL_COUNTERS()
+      COUNT_PARTIAL_TIME_START
+    }
+  }
+  COUNT_PARTIAL_INPUT_TIME_START
+  closedir(dir);
+  COUNT_PARTIAL_INPUT_TIME_END
+  free(v.values);
+  if (opened_files == 0) {
+    fprintf(stderr,
+            "Error in dstree_file_loaders.c:  Could not find any binary file "
+            "in directory %s.\n",
+            bin_files_directory);
+    return FAILURE;
+  }
+
+  printf("\ntotal_read_files = %d\n", total_read_files);
+  printf("total_vectors = %d\n", total_vectors);
+  printf("total_datasize = %d\n", total_datasize);
   return SUCCESS;
 }
 /* end kashif changes */
@@ -2258,201 +2442,3 @@ int znorm_comp(const void *a, const void *b) {
     return -1;
 }
 
-/* start kashif changes */
-enum response dstree_index_multiple_binary_files(const char *bin_files_directory,
-                                   unsigned int total_data_files,
-                                   struct dstree_index *index) {
-
-  printf("\n+ must read %dfiles\n", total_data_files);
-
-  int vector_length = index->settings->timeseries_size;
-  int opened_files = 0;
-  unsigned int total_vectors  = 0;
-  unsigned int total_datasize  = 0;
-  unsigned int total_read_files = 0;
-
-  // allocate memory for vector
-  struct vector v;
-  v.values = (ts_type *)malloc(sizeof(ts_type) * vector_length);
-  ts_type val;
-  unsigned int nvec = 0u;
-
-  // open source dir
-  struct dirent *dfile;
-  DIR *dir = opendir(bin_files_directory);
-  if (!dir) {
-    printf("Error in dstree_file_loader.c: Unable to open directory stream!");
-    exit(1);
-  }
-
-  while ((dfile = readdir(dir)) != NULL && total_data_files > 0) {
-    if (is_binaryfile(dfile->d_name)) {
-      total_data_files--;
-      opened_files += 1;
-
-      // get fill path of bin file
-      char bin_file_path[PATH_MAX + 1] = "";
-      strcat(bin_file_path, bin_files_directory);
-      strcat(bin_file_path, "/");
-      strcat(bin_file_path, dfile->d_name);
-
-      // get binary table info
-      int datasize, table_id, nsets, vector_length_in_filename;
-      sscanf(dfile->d_name, "data_size%d_t%dc%d_len%d_noznorm.bin", &datasize,
-             &table_id, &nsets, &vector_length_in_filename);
-      total_datasize += datasize;
-      // check if vector length in file name matches vector length passed as
-      // argument
-      if (vector_length_in_filename != vector_length) {
-        fprintf(stderr,
-                "Error in dstree_file_loaders.c:  Vector length passed in "
-                "argumentes (--timeseries-size %d) does not match vector "
-                "length in file (%d) %s.\n",
-                vector_length_in_filename, vector_length, bin_file_path);
-        return FAILURE;
-      }
-
-      RESET_PARTIAL_COUNTERS()
-      COUNT_PARTIAL_TIME_START
-
-      COUNT_PARTIAL_RAND_INPUT
-      COUNT_PARTIAL_INPUT_TIME_START
-      FILE *bin_file = fopen(bin_file_path, "rb");
-      total_read_files += 1;
-      COUNT_PARTIAL_INPUT_TIME_END
-
-      if (bin_file == NULL) {
-        fprintf(stderr, "Error in dstree_file_loaders.c: File %s not found!\n",
-                bin_file_path);
-        return FAILURE;
-      }
-
-      /* Start processing file: read every vector in binary file*/
-      unsigned int i = 0, j = 0, set_id = 0, vector_pos = 0,
-                   total_bytes = (datasize * vector_length) + nsets;
-
-      while (total_bytes) {
-        if (i == 0) {
-          i++;
-          j = 0;
-
-          // read first integer to check how many vactors in current set
-          fread(&nvec, sizeof(nvec), 1, bin_file);
-          total_bytes--;
-          v.table_id = table_id;
-          v.set_id = set_id;
-          v.pos = 0;
-          set_id += 1;
-
-        } else if (i <= (unsigned int)nvec * vector_length) {
-          // end of vector but still in current set
-          if (j > (vector_length - 1)) {
-            j = 0;
-            /*Index v in dstree */
-            if (!dstree_index_insert_vector(index, v.values, v.table_id,
-                                            v.set_id, v.pos, dfile->d_name)) {
-              fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add "
-                              "the time series to the index.\n");
-              return FAILURE;
-            }
-            total_vectors += 1;
-            // next vector position in set (/column)
-            v.pos += 1;
-
-            index->stats->idx_building_total_time += partial_time;
-            index->stats->idx_building_input_time += partial_input_time;
-            index->stats->idx_building_output_time += partial_output_time;
-
-            index->stats->idx_building_seq_input_count +=
-                partial_seq_input_count;
-            index->stats->idx_building_seq_output_count +=
-                partial_seq_output_count;
-            index->stats->idx_building_rand_input_count +=
-                partial_rand_input_count;
-            index->stats->idx_building_rand_output_count +=
-                partial_rand_output_count;
-          }
-
-          COUNT_PARTIAL_SEQ_INPUT
-          COUNT_PARTIAL_INPUT_TIME_START
-          fread((void *)(&val), sizeof(val), 1, bin_file);
-          COUNT_PARTIAL_INPUT_TIME_END
-          total_bytes--;
-          v.values[j] = val;
-
-          // end of last vector in current  set
-          if (i == (unsigned int)nvec * vector_length) {
-            /*Index v in dstree */
-            if (!dstree_index_insert_vector(index, v.values, v.table_id,
-                                            v.set_id, v.pos, dfile->d_name)) {
-              fprintf(stderr, "Error in dstree_file_loaders.c:  Could not add "
-                              "the time series to the index.\n");
-              return FAILURE;
-            }
-            total_vectors += 1;
-            // first vector position in next set (/column)
-            v.pos = 0;
-
-            index->stats->idx_building_total_time += partial_time;
-            index->stats->idx_building_input_time += partial_input_time;
-            index->stats->idx_building_output_time += partial_output_time;
-
-            index->stats->idx_building_seq_input_count +=
-                partial_seq_input_count;
-            index->stats->idx_building_seq_output_count +=
-                partial_seq_output_count;
-            index->stats->idx_building_rand_input_count +=
-                partial_rand_input_count;
-            index->stats->idx_building_rand_output_count +=
-                partial_rand_output_count;
-
-            i = 0;
-            j = 0;
-            nvec = 0u;
-            continue;
-          }
-          i++;
-          j++;
-        }
-      }
-
-      COUNT_PARTIAL_INPUT_TIME_START
-      if (fclose(bin_file)) {
-        fprintf(
-            stderr,
-            "Error in dstree_file_loaders.c: Could not close the filename %s",
-            bin_file_path);
-        return FAILURE;
-      }
-      COUNT_PARTIAL_INPUT_TIME_END
-      COUNT_PARTIAL_TIME_END
-      /* end read processing file */
-      index->stats->idx_building_total_time += partial_time;
-      index->stats->idx_building_input_time += partial_input_time;
-      index->stats->idx_building_output_time += partial_output_time;
-      index->stats->idx_building_seq_input_count += partial_seq_input_count;
-      index->stats->idx_building_seq_output_count += partial_seq_output_count;
-      index->stats->idx_building_rand_input_count += partial_rand_input_count;
-      index->stats->idx_building_rand_output_count += partial_rand_output_count;
-      RESET_PARTIAL_COUNTERS()
-      COUNT_PARTIAL_TIME_START
-    }
-  }
-  COUNT_PARTIAL_INPUT_TIME_START
-  closedir(dir);
-  COUNT_PARTIAL_INPUT_TIME_END
-  free(v.values);
-  if (opened_files == 0) {
-    fprintf(stderr,
-            "Error in dstree_file_loaders.c:  Could not find any binary file "
-            "in directory %s.\n",
-            bin_files_directory);
-    return FAILURE;
-  }
-
-  printf("\ntotal_read_files = %d\n", total_read_files);
-  printf("total_vectors = %d\n", total_vectors);
-  printf("total_datasize = %d\n", total_datasize);
-  return SUCCESS;
-}
-/* end kashif changes */

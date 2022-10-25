@@ -114,6 +114,24 @@ struct dstree_index *dstree_index_init(struct dstree_index_settings *settings) {
   return index;
 }
 
+/* start kashif changes */
+enum response dstree_init_thread_stats(struct dstree_index *index, int num_threads) 
+{
+  index->stats->thread_query_total_input_time = calloc(num_threads, sizeof(double));
+  index->stats->thread_query_total_output_time = calloc(num_threads, sizeof(double));
+  index->stats->thread_query_total_load_node_time = calloc(num_threads, sizeof(double));
+  index->stats->thread_query_total_cpu_time = calloc(num_threads, sizeof(double));
+  index->stats->thread_query_total_time = calloc(num_threads, sizeof(double));
+
+  index->stats->thread_query_total_loaded_nodes_count = calloc(num_threads, sizeof(unsigned int));
+  index->stats->thread_query_total_checked_nodes_count = calloc(num_threads, sizeof(unsigned int));
+  index->stats->thread_query_total_loaded_ts_count = calloc(num_threads, sizeof(unsigned long long));
+  index->stats->thread_query_total_checked_ts_count = calloc(num_threads, sizeof(unsigned long long));
+
+  return SUCCESS;
+}
+/* end kashif changes */
+
 enum response dstree_init_stats(struct dstree_index *index) {
   index->stats = malloc(sizeof(struct stats_info));
   if (index->stats == NULL) {
@@ -714,7 +732,7 @@ void print_tlb_stats(struct dstree_index *index, unsigned int query_num,
 
 void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
                           boolean is_index_new) {
-
+  
   if (node->level == 0) // root
   {
     if (node->node_segment_split_policies != NULL)
@@ -736,6 +754,7 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
       if (index->fp_cache != NULL)
         free(index->fp_cache);
     }
+    /* start kashif changes */
     if(index->settings->track_vector)
     {
       if (index->vid_filename != NULL)
@@ -743,6 +762,57 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
       if (index->vid_cache != NULL)
         free(index->vid_cache);
     }
+    if(index->settings->parallel)
+    {
+      if (index->stats->thread_query_total_input_time != NULL)
+      {
+        free(index->stats->thread_query_total_input_time);
+        index->stats->thread_query_total_input_time = NULL;
+      }
+      if (index->stats->thread_query_total_output_time != NULL)
+      {
+        free(index->stats->thread_query_total_output_time);
+        index->stats->thread_query_total_output_time = NULL;
+      }
+      if (index->stats->thread_query_total_load_node_time != NULL)
+      {
+        free(index->stats->thread_query_total_load_node_time);
+        index->stats->thread_query_total_load_node_time = NULL;
+      }
+      if (index->stats->thread_query_total_cpu_time != NULL)
+      {
+        free(index->stats->thread_query_total_cpu_time);
+        index->stats->thread_query_total_cpu_time = NULL;
+      }
+      if (index->stats->thread_query_total_time != NULL)
+      {
+        free(index->stats->thread_query_total_time);
+        index->stats->thread_query_total_time = NULL;
+      }
+
+      if (index->stats->thread_query_total_loaded_nodes_count != NULL)
+      {
+        free(index->stats->thread_query_total_loaded_nodes_count);
+        index->stats->thread_query_total_loaded_nodes_count = NULL;
+      }
+      if (index->stats->thread_query_total_checked_nodes_count != NULL)
+      {
+        free(index->stats->thread_query_total_checked_nodes_count);
+        index->stats->thread_query_total_checked_nodes_count = NULL;
+      }
+      if (index->stats->thread_query_total_loaded_ts_count != NULL)
+      {
+        free(index->stats->thread_query_total_loaded_ts_count);
+        index->stats->thread_query_total_loaded_ts_count = NULL;
+      }
+      if (index->stats->thread_query_total_checked_ts_count != NULL)
+      {
+        free(index->stats->thread_query_total_checked_ts_count);
+        index->stats->thread_query_total_checked_ts_count = NULL;
+      }
+    }
+    
+    /* end kashif changes */
   }
   if (!node->is_leaf) {
     dstree_index_destroy(index, node->right_child, is_index_new);
@@ -778,6 +848,13 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
   /* end kashif changes */
 
   if (node->file_buffer != NULL) {
+    if(index->settings->parallel)
+    {
+      // clearing the data for this node (alocated by some thread)
+      for (int i = 0; i < index->settings->max_leaf_size; ++i) {
+        free(node->file_buffer->buffered_list[i]);
+      }
+    }
     free(node->file_buffer->buffered_list);
     node->file_buffer->buffered_list = NULL;
     node->file_buffer->buffered_list_size = 0;

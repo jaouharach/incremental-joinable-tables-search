@@ -571,6 +571,7 @@ int main(int argc, char **argv) {
     }
 
     index->settings->track_vector = track_vector;
+    index->settings->parallel = parallel;
     /* start kashif changes */
 
     if(incremental && parallel)
