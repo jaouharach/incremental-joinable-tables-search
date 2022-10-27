@@ -37,6 +37,7 @@ struct result_vid {
   uint16_t pos; // max = 65535, must change type if dataset columns contain more than 65535 cells (vectors)
   uint8_t qpos; // max = 255, must change type if query column contain more than 255 cells (vectors)
   float time; 
+  unsigned int num_checked_vectors;
 } result_vid;
 
 // result set id

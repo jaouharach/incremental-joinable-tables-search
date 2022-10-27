@@ -66,7 +66,8 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
     boolean all_mindists, boolean max_policy, unsigned int nprobes,
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
-    float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir);
+    float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir,
+    unsigned char store_results_in_disk);
 /* end kashif changes */
 #endif
 

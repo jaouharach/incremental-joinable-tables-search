@@ -9,6 +9,11 @@ print(df.head(3))
 df["pair"] = df["src"] + "," + df[" dest"]
 
 counts, bin_edges = np.histogram(df[" d"], bins=10, density=True)
+print("counts : edges")
+
+for c, e in zip(counts, bin_edges):
+    print(f"c = {c} \t:\t e = {e}")
+
 pdf = counts / sum(counts)
 cdf = np.cumsum(pdf)
 

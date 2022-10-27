@@ -34,6 +34,10 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
                                         unsigned int qset_id, int nqvec,
                                         struct result_vid **knn_results, unsigned int max_k);
 
+// store query results in disk, for multi thread knn search
+enum response store_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
+                                        unsigned int qset_id, int nqvec,
+                                        struct result_vid **knn_results, unsigned int k);
 // create experiment results dir
 char *make_result_directory(char *result_dir, unsigned int total_data_files,
                             unsigned int nq, unsigned int min_qset_size,
@@ -334,6 +338,62 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   sprintf(new_csv_filename, "%s_runtime%.4f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
   
   printf("[k = %u] Combined total query time  = %f\n", max_k, total_querytime/1000000);
+  int ret = rename(csv_file, new_csv_filename);
+  
+  free(new_csv_filename);
+  return SUCCESS;
+}
+
+// store query results in disk, for multi thread knn search
+enum response store_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
+                                        unsigned int qset_id, int nqvec,
+                                        struct result_vid **knn_results, unsigned int k) {
+  FILE *fp;
+  int i, j;
+  COUNT_OUTPUT_TIME_START
+  fp = fopen(csv_file, "w+");
+  COUNT_OUTPUT_TIME_END
+  if (fp == NULL) {
+    fprintf(stderr, "Error in dstree_file_loaders.c: Could not open file %s!\n",
+            csv_file);
+    return FAILURE;
+  }
+
+  // write header
+  fprintf(fp, "TQ:Q, TS:S, q_pos, s_pos, q, s, d, time, k");
+  double total_querytime = 0;
+  unsigned int total_checked_vec = 0;
+  double max_time = -1000;
+  int max_time_query_vector = -1;
+
+  // write results for a specific k value
+  for (int q = 0; q < nqvec; q++)// vector counter
+  {
+    if(knn_results[q][k-1].time > max_time) // max total query time (total query time is time for the kth result)
+    {
+      max_time = knn_results[q][k-1].time;
+      max_time_query_vector = q;
+    }
+
+    for(int s = 0; s < k; s++)// k counter
+    {
+      fprintf(fp, "\n");
+      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], na, %.7f, %u", qtable_id, qset_id,
+            knn_results[q][s].table_id, knn_results[q][s].set_id,
+            knn_results[q][s].qpos, knn_results[q][s].pos, knn_results[q][s].time/1000000, k);
+    total_checked_vec += knn_results[q][s].num_checked_vectors;
+    }
+    
+  }
+  
+  total_querytime = max_time;
+  fclose(fp);
+
+  // add query time to file name and rename csv file
+  char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 20 + 1);
+  sprintf(new_csv_filename, "%s_runtime%.4f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
+  
+  printf("[k = %u] Combined total query time  = %f\n", k, total_querytime/1000000);
   int ret = rename(csv_file, new_csv_filename);
   
   free(new_csv_filename);

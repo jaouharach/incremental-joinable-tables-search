@@ -2436,8 +2436,6 @@ void exact_de_parallel_single_thread_incr_knn_search(void * parameters)
   double * total_query_set_time = param->total_query_set_time;
   unsigned int * total_checked_ts = param->total_checked_ts;
   float warping = param->warping;
-  FILE ** dataset_file_arr = param->dataset_file_arr;
-  FILE ** series_file_arr = param->series_file_arr;
   struct vid * query_id_arr = param->query_id_arr;
   unsigned int num_query_vectors = param->num_query_vectors;
   pthread_barrier_t * knn_update_barrier = param->knn_update_barrier;
@@ -2841,12 +2839,11 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
   double * total_query_set_time = param->total_query_set_time;
   unsigned int * total_checked_ts = param->total_checked_ts;
   float warping = param->warping;
-  FILE *dataset_file = param->dataset_file;
-  FILE *series_file = param->series_file;
   struct vid * query_id = param->query_id;
   pthread_barrier_t * knn_update_barrier = param->knn_update_barrier;
+  unsigned char store_results_in_disk = param->store_results_in_disk;
 
-  // struct result_vid **global_knn_results = param->global_knn_results;
+  struct result_vid **global_knn_results = param->global_knn_results;
   unsigned int * k_values = param->k_values;
   unsigned int num_k_values = param->num_k_values;
   struct result_vid * ground_truth_results = param->ground_truth_results;
@@ -3122,16 +3119,20 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
     is_recently_updated = 0;
     
     // update global knn array (seen by the cooredinator)
-    // printf("\nworked_thread:\t\t (*)\tupdate global knn results...\n");
-    // for(int x = 0; x < k; x++)
-    // {
-    //   global_knn_results[q][x].table_id = knn_results[q][x].vector_id->table_id;
-    //   global_knn_results[q][x].set_id = knn_results[q][x].vector_id->set_id;
-    //   global_knn_results[q][x].pos = knn_results[q][x].vector_id->pos;
-    //   // global_knn_results[q][x].distance = knn_results[q][x].distance;
-    //   global_knn_results[q][x].qpos = knn_results[q][x].query_vector_pos;
-    //   global_knn_results[q][x].time = knn_results[q][x].time;
-    // }
+    if(store_results_in_disk)
+    {
+      printf("\nworked_thread:\t\t (*)\tupdate global knn results in range [%u, %u[ ...\n", update_recall_start_at, update_recall_end_at);
+      for(int x = update_recall_start_at; x < update_recall_end_at; x++)
+      {
+        global_knn_results[query_pos][x].table_id = knn_results[x].vector_id->table_id;
+        global_knn_results[query_pos][x].set_id = knn_results[x].vector_id->set_id;
+        global_knn_results[query_pos][x].pos = knn_results[x].vector_id->pos;
+        // global_knn_results[query_pos][x].distance = knn_results[q][x].distance;
+        global_knn_results[query_pos][x].qpos = knn_results[x].query_vector_pos;
+        global_knn_results[query_pos][x].time = knn_results[x].time;
+        global_knn_results[query_pos][x].num_checked_vectors = knn_results[x].num_checked_vectors;
+      }
+    }
     
     printf("worked_thread (worker #%d):\t(!!!) notify coordinator ...\n", worker_id);
 
@@ -3148,7 +3149,6 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
     
   } // and not finished
   
-
   *finished = 1;
 
   // update time for results that were not reported 
@@ -3162,6 +3162,21 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
     knn_results[found_knn - 1].time = index->stats->thread_query_total_cpu_time[worker_id];
     knn_results[found_knn - 1].num_checked_vectors = thread_checked_ts_count[worker_id];
 
+    printf("\nworked_thread:\t\t (*)\tupdate global knn results in range [%u, %u[ ...\n", update_recall_start_at, update_recall_end_at);
+    if(store_results_in_disk)
+    {
+      // for(int x = update_recall_start_at; x < update_recall_end_at; x++)
+      // {
+        global_knn_results[query_pos][found_knn - 1].table_id = knn_results[found_knn - 1].vector_id->table_id;
+        global_knn_results[query_pos][found_knn - 1].set_id = knn_results[found_knn - 1].vector_id->set_id;
+        global_knn_results[query_pos][found_knn - 1].pos = knn_results[found_knn - 1].vector_id->pos;
+        // global_knn_results[query_pos][found_knn - 1].distance = knn_results[found_knn - 1].distance;
+        global_knn_results[query_pos][found_knn - 1].qpos = knn_results[found_knn - 1].query_vector_pos;
+        global_knn_results[query_pos][found_knn - 1].time = knn_results[found_knn - 1].time;
+        global_knn_results[query_pos][found_knn - 1].num_checked_vectors = knn_results[found_knn - 1].num_checked_vectors;
+      // }
+    }
+
     // printf("TH%d : k = %d, curr knn %d, curr time = %f\n", worker_id, k, pos, knn_results[found_knn - 1].time/1000000);
     RESET_THREAD_QUERY_COUNTERS(worker_id)
     RESET_THREAD_PARTIAL_COUNTERS(worker_id)
@@ -3173,7 +3188,7 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
     worker_id, index->stats->thread_query_total_time[worker_id]/1000000, worker_id, index->stats->thread_query_total_cpu_time[worker_id]/1000000
     , worker_id, index->stats->thread_query_total_input_time[worker_id]);
   
-  report_thread_knn_results(knn_results, k_values, num_k_values, worker_id);
+   report_thread_knn_results(knn_results, k_values, num_k_values, worker_id);
     
   // COUNT_THREAD_PARTIAL_TIME_END(worker_id)
   // update_thread_query_stats(index, worker_id);

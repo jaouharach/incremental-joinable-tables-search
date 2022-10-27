@@ -34,11 +34,10 @@ typedef struct single_worker_param {
   double *total_query_set_time;
   unsigned int *total_checked_ts;
   float warping;
-  FILE **dataset_file_arr;
-  FILE **series_file_arr;
   unsigned int num_query_vectors;
 
-  // struct result_vid **global_knn_results;
+  struct result_vid **global_knn_results;
+  unsigned char store_results_in_disk; // if true results will be copied to global_knn_results
   struct result_vid * ground_truth_results;
   unsigned int num_gt_results;
   int8_t ** global_recall_matrix;
@@ -63,10 +62,10 @@ typedef struct worker_param {
   double *total_query_set_time;
   unsigned int *total_checked_ts;
   float warping;
-  FILE *dataset_file;
-  FILE *series_file;
 
-  // struct result_vid **global_knn_results;
+  struct result_vid **global_knn_results;
+  unsigned char store_results_in_disk; // if true results will be copied to global_knn_results
+
   unsigned int * k_values; // k values for which we want to record results
   unsigned int num_k_values;
   struct result_vid * ground_truth_results;

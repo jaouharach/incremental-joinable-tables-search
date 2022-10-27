@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
   unsigned char track_vector = 0;
   unsigned char keyword_search = 0;
   unsigned char parallel = 0; // parallel incremental query answering
+  unsigned char store_results_in_disk = 0;
   unsigned int qset_num = 3;
   unsigned int min_qset_size = 5;
   unsigned int max_qset_size = 10;
@@ -127,7 +128,8 @@ int main(int argc, char **argv) {
         {"keyword-search", no_argument, 0, ':'},
         {"k-values", required_argument, 0, ';'},
         {"ground-truth-dir", required_argument, 0, '&'},
-        {"parallel", required_argument, 0, '-'}
+        {"parallel", required_argument, 0, '-'},
+        {"store-results-in-disk", required_argument, 0, '!'}
         /* end kashif changes */
     };
 
@@ -340,6 +342,10 @@ int main(int argc, char **argv) {
 
     case '-':
       parallel = 1;
+      break;
+
+    case '!':
+      store_results_in_disk = 1;
       break;
 
     /* end kashif changes */
@@ -578,7 +584,7 @@ int main(int argc, char **argv) {
       dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
-                                    warping, keyword_search, k_values_str, ground_truth_dir);
+                                    warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk);
       // dstree_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
       //                               minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
       //                               max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 

@@ -10,9 +10,9 @@
      
 char *dataset_dir = "/home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/";
 unsigned int total_files = 100000;
-unsigned int total_vectors = 5027911;
+unsigned long long total_vectors = 5027911;
 unsigned int vector_length = 50;
-char * output_file = "pairwise_distances_100k.csv";
+char * output_file = "/data/real/jchanchaf/wdc-2015-en-full/pairwise_distances_100k.csv";
 
 
 // Total files: 500000
@@ -35,7 +35,19 @@ struct vector {
   float * coords;
 } vector;
 
-struct vector *read_all_vectors(char *dataset_dir, unsigned int total_files, unsigned int total_vectors, 
+struct pair_dist { 
+  unsigned int src_table_id;
+  unsigned int src_set_id;
+  unsigned int src_pos;
+
+  unsigned int dest_table_id;
+  unsigned int dest_set_id;
+  unsigned int dest_pos;
+
+  float  dist;
+} pair_dist;
+
+struct vector *read_all_vectors(char *dataset_dir, unsigned int total_files, unsigned long long total_vectors, 
                                 unsigned int vector_length, unsigned long long * total_read_vectors);
 bool is_binaryfile(const char *filename);
 
@@ -59,12 +71,22 @@ int main()
 
     printf("Finished reading vectors, process took %.2f seconds.\n", cpu_time_used);
 
-    cpu_time_used = 0;
     unsigned long long num_distances = (unsigned long long) ((total_read_vectors * (total_read_vectors - 1)) / 2);
-    int total_dist_computations = 0;
+    unsigned long long total_dist_computations = 0;
     printf("Total vectors = %lld, computing %lld distances...\n", total_read_vectors, num_distances);
+
+    struct pair_dist * pairwise_distances = malloc(sizeof(struct pair_dist)* num_distances);
+
+    printf("1 pair requires %ld bytes\n", sizeof(struct pair_dist));
+
+    if(pairwise_distances == NULL)
+    {
+        fprintf(stderr, "Error: couldn't allocate memory for dist array.\n");
+        exit(1);
+    }
+
     FILE *fp;
-    fp = fopen(output_file, "w+");
+    fp = fopen(output_file, "wb");
     if (fp == NULL) 
     {
         fprintf(stderr, "Error: Could not open file %s!\n",
@@ -72,35 +94,36 @@ int main()
         exit(1);
     }
     // write header
-    fprintf(fp, "src, dest, d");
+    // fprintf(fp, "src, dest, d");
 
     start = clock();
-    for(int i = 0, s = 1, dist = 0; dist < num_distances; i++, s++)
+    for(unsigned long long i = 0, s = 1, dist = 0; dist < num_distances; i++, s++)
     {
         struct vector * src = &dataset_vectors[i];
-        for(int j = s; j < total_read_vectors; j++)
+        for(unsigned long long j = s; j < total_read_vectors; j++)
         {
             struct vector * dest = &dataset_vectors[j];
-            printf("(%u, %u, %u) <-- d --> (%u, %u, %u)\n ", 
+            printf("[%lld/%lld] (%u, %u, %u) <-- d --> (%u, %u, %u)\n ", i+1, total_read_vectors,
                     src->table_id, src->set_id, src->pos, dest->table_id, dest->set_id, dest->pos);
             
-            float d = euclidean_distance(src, dest, vector_length);
+            pairwise_distances[dist].src_table_id = src->table_id;
+            pairwise_distances[dist].src_set_id = src->set_id;
+            pairwise_distances[dist].src_pos = src->pos;
+            pairwise_distances[dist].dest_table_id = dest->table_id;
+            pairwise_distances[dist].dest_set_id = dest->set_id;
+            pairwise_distances[dist].dest_pos = dest->pos;
+            pairwise_distances[dist].dist = euclidean_distance(src, dest, vector_length);
 
-            // write distance to file
-            cpu_time_used += ((double) (clock() - start));
-            fprintf(fp, "\n");
-            fprintf(fp, "(%u:%u:%u), (%u:%u:%u), %f", 
-                    src->table_id, src->set_id, src->pos, dest->table_id, dest->set_id, dest->pos, d);
-            start = clock();
             dist++;
-            total_dist_computations++;
+            total_dist_computations++; 
         }       
     }
+    fwrite(pairwise_distances, sizeof(*pairwise_distances), num_distances, fp);
+
     time_used = ((double) (clock() - start_full)) / CLOCKS_PER_SEC;
-    cpu_time_used += ((double) (clock() - start)) / CLOCKS_PER_SEC;
     
     printf("Total time: process took %.2f seconds.\n", time_used);
-    printf("Finished computing distances, process performed %d dist calc in %.2f seconds.\n", total_dist_computations, cpu_time_used);
+    printf("Finished computing distances, process performed %lld dist calc in %.2f seconds.\n", total_dist_computations, time_used);
 
     fclose(fp);
     free(dataset_vectors);
@@ -115,10 +138,10 @@ bool is_binaryfile(const char *filename)
   return nl >= el && !strcmp(filename + nl - el, ext);
 }
 
-struct vector *read_all_vectors(char *dataset_dir, unsigned int total_files, unsigned int total_vectors, 
+struct vector *read_all_vectors(char *dataset_dir, unsigned int total_files, unsigned long long total_vectors, 
                                 unsigned int vector_length, unsigned long long *total_read_vectors)
 {
-    unsigned int read_so_far = 0;
+    unsigned long long read_so_far = 0;
     struct vector *dataset_vectors = malloc(sizeof(struct vector) * total_vectors);
     if(dataset_vectors == NULL)
     {
@@ -260,7 +283,7 @@ struct vector *read_all_vectors(char *dataset_dir, unsigned int total_files, uns
     }
 
     *total_read_vectors = read_so_far; 
-    printf("Total read vector  = %d/%d\n", read_so_far, total_vectors);
+    printf("Total read vector  = %lld/%lld\n", read_so_far, total_vectors);
     return dataset_vectors;
 }
 
@@ -271,6 +294,7 @@ float euclidean_distance(struct vector *a, struct vector *b, int len)
     {
         d += ((a->coords[i] - b->coords[i]) * (a->coords[i] - b->coords[i]));
     }
-    return sqrt(d);
+    // return sqrt(d);
+    return d;
 
 }
