@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.10.3)  4 OCT 2022 10:26
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2022.10.3)  10 NOV 2022 14:28
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -818,283 +818,66 @@ File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-(./introduction.tex
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 7.
- (/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
-File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
-)
-LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <9> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 7.
-
-Underfull \hbox (badness 2020) in paragraph at lines 6--9
-\OT1/cmr/m/n/9 (+20) a keyword-query $\OML/cmm/m/it/9 Q[] \OT1/cmr/m/n/9 (+20) 
-=$ (\OMS/cmsy/m/n/9 f\OT1/cmr/m/n/9 (+20) "biomass", "power",
- []
-
-
-Underfull \hbox (badness 1824) in paragraph at lines 6--9
-\OT1/cmr/m/n/9 (+20) at-tempt the search en-gine re-turns Ta-ble []1[] (at
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 6--9
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 10--15
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 26--26
-[]|\OT1/cmr/m/n/9 (+20) Wheelabrator
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 26--26
-[]|\OT1/cmr/m/n/9 (+20) Logging
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 26--26
-\OT1/cmr/m/n/9 (+20) and Mill
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 26--26
-\OT1/cmr/m/n/9 (+20) Residue/Ag
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 28--28
-[]|\OT1/cmr/m/n/9 (+20) Ag
- []
-
-
-Overfull \hbox (3.477pt too wide) in paragraph at lines 28--28
-\OT1/cmr/m/n/9 (-20) Residue/Urban
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 30--30
-[]|\OT1/cmr/m/n/9 (+20) Mill and
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 30--30
-\OT1/cmr/m/n/9 (+20) Log-ging
- []
-
-
-Overfull \hbox (2.63678pt too wide) in paragraph at lines 30--30
-\OT1/cmr/m/n/9 (-20) Residue/Forest
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 30--30
-\OT1/cmr/m/n/9 (+20) Thin-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 30--30
-\OT1/cmr/m/n/9 (+20) ning/Urban
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 32--32
-[]|\OT1/cmr/m/n/9 (+20) Covanta
- []
-
-
-Underfull \hbox (badness 2951) in paragraph at lines 32--32
-[]|\OT1/cmr/m/n/9 (+20) Orchard and
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 32--32
-\OT1/cmr/m/n/9 (+20) Vine-yard
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 32--32
-\OT1/cmr/m/n/9 (+12) Prun-ings/Nut
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 32--32
-\OT1/cmr/m/n/9 (+20) Shells/Stone
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 47--47
-[]|\OT1/cmr/m/n/9 (+20) Plant
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 47--47
-[]|\OT1/cmr/m/n/9 (+20) Retire
- []
-
-
-Underfull \hbox (badness 2142) in paragraph at lines 47--47
-[]|\OT1/cmr/m/n/9 (+20) Prime mover
- []
-
-
-Underfull \hbox (badness 1168) in paragraph at lines 47--47
-[]|\OT1/cmr/m/n/9 (+20) Prime Mover
- []
-
-
-Overfull \hbox (6.79466pt too wide) in paragraph at lines 47--47
-[]|\OT1/cmr/m/n/9 (-20) Capacity| 
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 47--48
-[]|\OT1/cmr/m/n/9 (+20) net
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 49--49
-[]|\OT1/cmr/m/n/9 (+20) Desert View
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 49--49
-[]|\OT1/cmr/m/n/9 (+20) Steam Tur-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 51--51
-[]|\OT1/cmr/m/n/9 (+20) HL Power
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 51--51
-\OT1/cmr/m/n/9 (+20) Com-pany
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 51--51
-[]|\OT1/cmr/m/n/9 (+20) Steam Tur-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 53--53
-[]|\OT1/cmr/m/n/9 (+20) Covanta
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 53--53
-[]|\OT1/cmr/m/n/9 (+11) Delano
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 53--53
-[]|\OT1/cmr/m/n/9 (+20) Steam Tur-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 55--55
-[]|\OT1/cmr/m/n/9 (+20) Wheelabrator
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 55--55
-[]|\OT1/cmr/m/n/9 (+20) Units
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 55--55
-[]|\OT1/cmr/m/n/9 (+20) Steam Tur-
- []
-
-
-Overfull \hbox (40.90346pt too wide) in paragraph at lines 45--64
- [][] 
- []
-
-) (./background.tex) (./system-architecture.tex
-Underfull \hbox (badness 1360) in paragraph at lines 57--57
-[]\OT1/cmr/bx/n/9 Algorithm 3: \OT1/cmr/m/sc/9 (+20) Kashif: Par-al-lelIn-cre-m
-en-tal-
- []
-
-<<ot1tt.cmap>>
+(./system-architecture.tex<<ot1tt.cmap>>
 Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `cmtt' (encoding: OT1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-Overfull \hbox (1.91989pt too wide) in paragraph at lines 78--78
-[][]|[]$\OML/cmm/m/it/8 ArrayCopy\OT1/cmr/m/n/8 (-20) (\OML/cmm/m/it/8 KnnResut
-ls\OT1/cmr/m/n/8 (-20) [\OML/cmm/m/it/8 i\OT1/cmr/m/n/8 (-20) ]\OML/cmm/m/it/8 
-; []\OT1/cmr/m/n/8 (-20) (\OML/cmm/m/it/8 q[]\OT1/cmr/m/n/8 (-20) ))$; 
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.115 
+      
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Overfull \hbox (22.80663pt too wide) in paragraph at lines 196--196
+[][]|[]$\OML/cmm/m/it/8 CopyResults\OT1/cmr/m/n/8 (-20) (\OML/cmm/m/it/8 Knn; K
+nnReasults; UpdateStart; UpdateEnd\OT1/cmr/m/n/8 (-20) )$; 
  []
 
-
-Overfull \hbox (1.4439pt too wide) in paragraph at lines 119--119
-[][]|[]$\OML/cmm/m/it/8 UpdateKnnResults\OT1/cmr/m/n/8 (-20) (\OML/cmm/m/it/8 N
-[]urr; KnnResults\OT1/cmr/m/n/8 (-20) [\OML/cmm/m/it/8 i\OT1/cmr/m/n/8 (-20) ])
-$; 
- []
-
-) (./demonstration.tex
-<../../img/kashif_querytime_recall_precision.png, id=49, 578.16pt x 433.62pt>
-File: ../../img/kashif_querytime_recall_precision.png Graphic file (type png)
-<use ../../img/kashif_querytime_recall_precision.png>
-Package pdftex.def Info: ../../img/kashif_querytime_recall_precision.png  used 
-on input line 6.
-(pdftex.def)             Requested size: 202.51491pt x 151.88174pt.
-
-
-Class acmart Warning: A possible image without description on input line 7.
-
-
-Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 8.
-
-)
-Underfull \vbox (badness 7522) has occurred while \output is active []
-
- [1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
-
-] Processing 'acks' comment.
+) Processing 'acks' comment.
 \openout4 = `comment.cut'.
 
-
-Comment 'acks' writing to comment.cut. Straight input of comment.cut.
-(./comment.cut) (./paper.bbl)
-
-Class acmart Warning: Some images may lack descriptions.
-
+ Comment 'acks' writing to comment.cut.
+Straight input of comment.cut. (./comment.cut) (./paper.bbl)
 
 Package caption Warning: Unused \captionsetup[sub] on input line 36.
 See the caption package documentation for explanation.
 
 
-Package balance Warning: You have called \balance in second column
-(balance)                Columns might not be balanced.
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
-[2.2 <../../img/kashif_querytime_recall_precision.png>] [3.3]
+
+Overfull \vbox (27.29198pt too high) has occurred while \output is active []
+
+
+[1.1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
+
+] [2.2]
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 219.
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 219.
  (./paper.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 219.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 219.
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: 3753B1AF20486AAE695EDA681CD651E3;782.
+(rerunfilecheck)             Checksum: EAB95E94C945A5FBB0EADB448FD8E0FD;347.
  ) 
 Here is how much of TeX's memory you used:
- 17049 strings out of 494838
- 248358 string characters out of 6178780
- 426872 words of memory out of 5000000
- 19743 multiletter control sequences out of 15000+600000
- 20289 words of font info for 96 fonts, out of 8000000 for 9000
+ 16965 strings out of 494838
+ 247050 string characters out of 6178780
+ 441682 words of memory out of 5000000
+ 19691 multiletter control sequences out of 15000+600000
+ 18429 words of font info for 81 fonts, out of 8000000 for 9000
  220 hyphenation exceptions out of 8191
- 60i,24n,94p,817b,696s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,24n,94p,817b,700s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx6.pfb></usr/share
 /texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share/texliv
@@ -1103,23 +886,22 @@ e/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texlive/texmf
 /fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/share/texlive/texmf-dist/fonts/
 type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
 ublic/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmmi9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
-12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb><
-/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/sha
-re/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texli
-ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf
--dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fo
-nts/type1/public/amsfonts/cm/cmssbx10.pfb></usr/share/texlive/texmf-dist/fonts/
+msfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
+5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></
+usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/shar
+e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-
+dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></usr/share/texlive/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/texlive/texmf-dist/fonts/
 type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmti8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmti9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmt
-t8.pfb>
-Output written on paper.pdf (3 pages, 322387 bytes).
+ublic/amsfonts/cm/cmti8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmti9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmtt8.pfb>
+Output written on paper.pdf (2 pages, 263938 bytes).
 PDF statistics:
- 266 PDF objects out of 1000 (max. 8388607)
- 207 compressed objects within 3 object streams
- 76 named destinations out of 1000 (max. 500000)
- 25162 words of extra memory for PDF output out of 29859 (max. 10000000)
+ 247 PDF objects out of 1000 (max. 8388607)
+ 194 compressed objects within 2 object streams
+ 87 named destinations out of 1000 (max. 500000)
+ 23085 words of extra memory for PDF output out of 24883 (max. 10000000)
 

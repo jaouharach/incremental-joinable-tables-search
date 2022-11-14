@@ -710,14 +710,14 @@ void dstree_print_index_stats(struct dstree_index *index, char *dataset) {
   printf("Total_ts_count\t%u\t%s\t%d\n", index->stats->total_ts_count, dataset,
          id, id);
 
-  for (int i = 0; i < index->stats->leaves_counter; ++i) {
-    double fill_factor = ((double)index->stats->leaves_sizes[i]) /
-                         index->settings->max_leaf_size;
-    printf("Leaf_report_node_%d \t Height  %d  \t%s\t%d\n", (i + 1),
-           index->stats->leaves_heights[i], dataset, id, id);
-    printf("Leaf_report_node_%d \t Fill_Factor  %f \t%s\t%d\n", (i + 1),
-           fill_factor, dataset, id, id);
-  }
+  // for (int i = 0; i < index->stats->leaves_counter; ++i) {
+  //   double fill_factor = ((double)index->stats->leaves_sizes[i]) /
+  //                        index->settings->max_leaf_size;
+  //   printf("Leaf_report_node_%d \t Height  %d  \t%s\t%d\n", (i + 1),
+  //          index->stats->leaves_heights[i], dataset, id, id);
+  //   printf("Leaf_report_node_%d \t Fill_Factor  %f \t%s\t%d\n", (i + 1),
+  //          fill_factor, dataset, id, id);
+  // }
 }
 
 void print_tlb_stats(struct dstree_index *index, unsigned int query_num,

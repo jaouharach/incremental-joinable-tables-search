@@ -23,13 +23,40 @@
 #include <pthread.h>
 
 /* start kashif changes */
+
 // vector id
-struct vid { 
+typedef struct vid { 
   unsigned int table_id;
   unsigned int set_id;
   unsigned int pos;
   char raw_data_file[300]; // name of the raw (bin) file where vector is store
 } vid;
+
+
+struct job {
+  struct vid query_id;
+  ts_type * query_vector;
+  int * query_order;
+  ts_type * query_vector_reordered;
+} job;
+
+struct pool {
+	char cancelled;
+	unsigned int remaining; // 0 is thread is not working 1 if thread has finished current job 2 if thread finishied last job (no more jobs to take)
+	unsigned int num_threads;
+
+	struct  job * job_array;
+  unsigned int num_jobs;
+	unsigned int job_counter;
+
+	pthread_t *threads;
+  unsigned int *task_count;
+  void *(*function)(void *);
+
+  struct worker_param *params;
+  unsigned int num_working_threads;
+  unsigned int *working;
+} pool;
 
 struct result_vid { 
   unsigned int table_id; // max = 4,294,967,295, must change type if dataset contains more that 4,294,967,295 tables

@@ -19,6 +19,7 @@
 #include "dstree_node.h"
 #include "pqueue.h"
 
+
 typedef struct single_worker_param {
   ts_type **query_ts_arr;
   ts_type **query_ts_reordered_arr;
@@ -48,6 +49,7 @@ typedef struct single_worker_param {
 
 typedef struct worker_param {
   int8_t worker_id;
+  struct pool *thread_pool;
   ts_type *query_ts;
   ts_type *query_ts_reordered;
   int *query_order;
@@ -74,6 +76,7 @@ typedef struct worker_param {
   
   char * finished;
   pthread_barrier_t * knn_update_barrier;
+  pthread_mutex_t * status_lock;
 };
 
 typedef struct query_result {

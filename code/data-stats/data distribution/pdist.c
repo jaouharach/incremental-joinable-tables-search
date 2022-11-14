@@ -6,8 +6,9 @@
 #include <math.h>
 #include <errno.h>
 #include <time.h>
+#include <pthread.h>
      
-     
+int num_threads = 32; 
 char *dataset_dir = "/home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/";
 unsigned int total_files = 100000;
 unsigned long long total_vectors = 5027911;
@@ -75,7 +76,8 @@ int main()
     unsigned long long total_dist_computations = 0;
     printf("Total vectors = %lld, computing %lld distances...\n", total_read_vectors, num_distances);
 
-    struct pair_dist * pairwise_distances = malloc(sizeof(struct pair_dist)* num_distances);
+    // struct pair_dist * pairwise_distances = malloc(sizeof(struct pair_dist)* num_distances);
+    double * pairwise_distances = malloc(sizeof(double)* num_distances);
 
     printf("1 pair requires %ld bytes\n", sizeof(struct pair_dist));
 
@@ -106,13 +108,15 @@ int main()
             printf("[%lld/%lld] (%u, %u, %u) <-- d --> (%u, %u, %u)\n ", i+1, total_read_vectors,
                     src->table_id, src->set_id, src->pos, dest->table_id, dest->set_id, dest->pos);
             
-            pairwise_distances[dist].src_table_id = src->table_id;
-            pairwise_distances[dist].src_set_id = src->set_id;
-            pairwise_distances[dist].src_pos = src->pos;
-            pairwise_distances[dist].dest_table_id = dest->table_id;
-            pairwise_distances[dist].dest_set_id = dest->set_id;
-            pairwise_distances[dist].dest_pos = dest->pos;
-            pairwise_distances[dist].dist = euclidean_distance(src, dest, vector_length);
+            // pairwise_distances[dist].src_table_id = src->table_id;
+            // pairwise_distances[dist].src_set_id = src->set_id;
+            // pairwise_distances[dist].src_pos = src->pos;
+            // pairwise_distances[dist].dest_table_id = dest->table_id;
+            // pairwise_distances[dist].dest_set_id = dest->set_id;
+            // pairwise_distances[dist].dest_pos = dest->pos;
+            // pairwise_distances[dist].dist = euclidean_distance(src, dest, vector_length);
+            
+            pairwise_distances[dist] = (double) euclidean_distance(src, dest, vector_length);
 
             dist++;
             total_dist_computations++; 

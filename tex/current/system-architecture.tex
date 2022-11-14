@@ -1,6 +1,7 @@
 \section{Proposed Approach}
 \label{sec:system-architecture}
 
+\iffalse
 \small
 \begin{algorithm}
 	\DontPrintSemicolon
@@ -9,115 +10,191 @@
 \end{algorithm}
 
 \small
+\fi
+
+
+
+% COORDINATOR ALGORITHM
+
+\small
+\begin{algorithm}
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{$JobArray = \{q_{1}, ..., q_{n}\}$, $k$, $r_{th}$, $m$ the number of threads, $JobCounter$, $AllWorkersDone$.}
+	\KwOut{$KnnResults$.}
+	
+	\vspace{.2cm}
+	\textbf{Thread Array} $Workers[m]$;\\
+	\textbf{Barrier} $Barrier$; \\
+	\textbf{Boolean} $AllWorkersDone \gets False$;\\
+	\textbf{Shared Queue} $KnnResults[n][k] \gets \{\{+\infty_{1}, ..., +\infty_{k}\}_{q_{1}}, ..., \{+\infty_{1}, ..., +\infty_{k}\}_{q_{n}}\}$;\\
+	\vspace{.2cm}
+	
+	\For{$i \gets 0$ \KwTo $m - 1$}
+	{
+		$Workers[i].${\sc InitWorkerThread}$(JobArray, k, $\\ $JobCounter, Barrier, KnnResults, AllWorkersDone)$;\\
+	}
+	
+	\tcp{get incremental results}
+	\While{!AtomicLoad(AllWorkersDone) and }
+	{
+		{\it Coordinator threads waits for new results on} $Barrier$;
+		\If{\it Recall($KnnResults$, GroundThruth) $\geq r_{th}$)}
+		{
+			$StopAllWorkers()$;\\
+			Return {KnnResults};
+		}
+	}
+	
+	\caption{{\sc Kashif: InitThreadPool}}
+	\label{algo:coordinator}
+\end{algorithm}
+
+% END COORDINATOR ALGORITHM
+
+
 \begin{algorithm}
 	\DontPrintSemicolon
-	\KwIn{A query vector $q$,  and $k$.}
-	\KwOut{$k$ Nearest vectors to $q$.}
+	\KwIn{A query vector $q$, $k$, $N_{root}$.}
+	\KwOut{$k$ Nearest Vectors to $q$.}
 	\vspace{.2cm}
-	$KnnResults[k] \gets \{\infty_{1}, ..., \infty_{k}\}$;\\
-	$N_{curr} = N_{root}$;\\
-	\vspace{.2cm}
-	\While{!$N_{curr}.IsLeaf()$}
+	\textbf{Queue} $Knn[k] \gets \{(null, \infty_{1}), ..., (null, \infty_{k})\}$;\\
+	\textbf{Node} $N \gets N_{root}$;\\
+	\While{!$N.IsLeaf()$}
 	{
-		$SP = N_{curr}.SplitPolicy()$;\\
-		$N_{curr} = N_{curr}.RouteToChildNode(q, SP)$;\\
+		$SP = N.SplitPolicy()$;\\
+		$N = N.RouteToChildNode(q, SP)$;\\
 		
 	}
-	$KnnResults \gets GetNearestVectors(N_{curr}, q, k)$;\\
-	\KwRet{$KnnResutls$;}
+	\vspace{.1cm}
+	$(v', bsf) = Knn[k]$;\\
+	\ForEach{$v \in N.Vcetors()$}
+	{
+		\If{$D(v, q) \leq bsf $}
+		{
+			$Knn.SortedInsert(v, D(v, q))$;\\
+		}
+		$(v', bsf) = Knn[k]$;\\
+	}
+
+
+	\KwRet{$Knn$;}
 	\caption{{\sc HeuristicKnnSearch}}
 	\label{algo:heuristic_knn_search}
 \end{algorithm}
 
 
+
+% INITIALIZE WORKER THREAD
 \small
 \begin{algorithm}
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{A sequence of query vectors $Q = \{q_{1}, ..., q_{n}\}, k$ and the recall threashold $r_{th}$.}
-%	\KwOut{$k * n$ Nearest vectors to the the query vectors.}
-	\vspace{.2cm}
-	\textbf{Shared Array} $AllKnnResults[n][k] \gets \{\{+\infty_{1}, ..., +\infty_{k}\}_{q_{1}}, ..., \{+\infty_{1}, ..., +\infty_{k}\}_{q_{n}}\}$;\\
-	\textbf{Shared Boolead} $Finished \gets False$;\\
-	\textbf{Float} $CurrentRecall \gets 0$;\\
-	\textbf{Barrier} $UpdateKnnsBarrier$ {\it for workerThread and CoordinatorThread};\\
-	
+	\KwIn{$JobArray$, $k$,  $JobCounter$, $Barrier$, $KnnResults$, $AllWorkersDone$.}
 	\vspace{.2cm}
 	
-	
-	initialize one {\it WorkerThread};\\
-	{\it WorkerThread} runs an instance of {\sc ExactKnnSearch$(Q, k)$};\\
-	\SetKwRepeat{Do}{do}{while}	
-	\Do{!$Finished$ and $CurrentRecall < r_{th}$;}
-	{ 
-		$CoordinatorThread$ blocks on $UpdateKnnsBarrier$;\\
-		$CurrentRecall \gets ComputeRecall(AllKnnResults)$;
+	\While{True}
+	{
+		$JobIdx = SyncFetchAndAdd(JobCounter)$;\\
+		
+		\If{$JobIdx > JobArray.Size()$} 
+		{
+			\While{!AtomicLoad(AllWorkersDone)}
+			{
+				{\it Thread} reaches $Barrier$; \\
+			}
+			$break$; \tcp{no more jobs to do, and all workers finished their work}\\
+		}
+		$q = JobArray[JobIdx]$;\\
+	 	{\sc ExactKnnSearch$(q, k, KnnResults[JobIdx], Barrier)$};
+	 	
+	 	\If{JobIdx == JobArray.Size()} 
+	 	{
+	 		\tcp{completed last job} notify other users
+	 		AtomicStore(AllWorkersDone, True);\\
+	 	}
 	}
-	$Finished \gets True$;\\
-%	\KwRet{$AllKnnResutls$;}
-	\caption{{\sc Kashif: ParallelIncrementalQueryAnswering}}
-	\label{algo:query_answering}
+	
+	\caption{{\sc Kashif: InitWorkerThread}}
+	\label{algo:init_thread}
 \end{algorithm}
+% END INITIALIZE WORKER THREAD
 
 
+% KNN SEARCH (ONE THREAD)
 \small
 \begin{algorithm}
 	\DontPrintSemicolon
-	\KwIn{A sequence of query vectors $Q = \{q_{1}, ..., q_{n}\}, k$.}
-%	\KwOut{$k * n$ Nearest vectors to the the query vectors.}
+	\KwIn{A query vectors $q$,  $k$, knnResults, Barrier, $N_{root}$.}
 	\vspace{.2cm}
-	\textbf{Array} $KnnResults[n][k] \gets \{\{+\infty_{1}, ..., +\infty_{k}\}_{q_{1}}, ..., \{+\infty_{1}, ..., +\infty_{k}\}_{q_{n}}\}$;\\
-	\textbf{Queue} $pq_{1}, ..., pq_{n}$;\\
+	
+	\tcp{local knn results, ordered by distance}
+	\textbf{Queue} $Knn[k] \gets \{(null, +\infty_{1}), ..., (null, +\infty_{k})\}$;\\
+	\textbf{Queue} $pq  \gets \{\}$; \tcp{priority queue}
+	\tcc{last NN returned by incremental search is at position LastIncrResult - 1}
+	\textbf{Integer} $LastIncrResult \gets 0$; \\
+	\textbf{Integer} $UpdateStart \gets 0$; \tcp{where new results start}
+	\textbf{Integer} $UpdateEnd \gets 0$; \tcp{where new results end}
+	\textbf{Boolean} $NewIncrement \gets False$;
 	\vspace{.2cm}
 	
 	\tcc{perform heuristic search and update knn results in global array}
-	\ForEach{$q_i \in Q$}
-	{%
-		$ArrayCopy(KnnResutls[i], \text{\sc HeuristicKnnSearch} (q_{i}))$;\\
-		$ArrayCopy(AllKnnResults[i], KnnResutls[i])$;
-	}
- 	{\it WorkerThread} reaches $UpdateKnnsBarrier$; \\
- 	
- 	\tcc{initialize priority queues}
- 	\ForEach {$q_{i} \in  Q$}
- 	{
- 		$pq_i \gets \{\}$;\\
- 		$pq_i.Add(N_{root},D_{lb}(N_{root}, q_i)$);\\
- 	}
- 
- 	\While{$!Finished$ and $\exists q_{j} \in Q \text{ , } !pq_j.Empty()$}
- 	{
- 		\ForEach {$q_{i} \in Q$}
- 		{
- 			$N_{curr} = pq_{i}.Pop()$;\\
- 			\If{$N_{curr}.IsLeaf()$}
- 			{
- 				$d_{curr} = calcMinDist(N_{curr}, q_{i})$;\\
- 				\If {$d_{curr} <  KnnResults[i][k-1]$}
- 				{
- 					$UpdateKnnResults(N_curr, KnnResults[i])$;\\
- 				}
- 			}
- 			\Else
- 			{
- 				\ForEach {$N_{child}$ in $N_{curr}.ChildNodes()$}
- 				{
- 					\If {$D_{lb}(N_{child}, q_{i}) < KnnResults[i][k-1]$}
- 					{
- 						$pq_i.Add(N_{child},D_{lb}(N_{child}, q_i))$;\\	
- 					}	
- 				}
- 			}
- 		}
+	$KnnResults \gets ${\sc HeuristicKnnSearch$(q, k)$};\\
 
- 		\tcc{update knn results in global array}
- 		\ForEach {$q_{i}$ in $Q$}
- 		{
- 			$ArrayCopy(AllKnnResults[i], KnnResutls[i])$;\\	
- 		}
- 	 	{\it WorkerThread} reaches $UpdateKnnsBarrier$; \\
- 	}
- 	$Finished \gets True$;\\
+	\tcp{initialize priority queues}
+	$pq.Add(N_{root}$);\\
+	\vspace{.2cm}
+	
+	\While{!pq.Empty()}
+	{
+		NewIncrement = False;\\
+		\While{!NewIncrement and !pq.Empty()}
+		{
+			$N \gets pq.Pop()$;\\
+			
+			\For{$pos \gets LastIncrResult$ \KwTo $k - 1$}
+			{
+				$(v', bsf) \gets Knn[pos]$;\\
+				\If{$D_{lb}(N, q) > bsf$}
+				{
+					$LastIncrResult \gets pos + 1$;\\
+					$NewIncrement \gets True$;\\
+				}
+			}
+			\If{NewIncrement}
+			{
+				$UpdateStart \gets UpdateEnd$;\\
+				$UpdateEnd \gets LastIncrResult$;\\ 
+			}
+		
+			\If{$N.IsLeaf()$}
+			{
+				$(v', bsf) \gets Knn[k]$;\\
+				\ForEach{$v \in N.Vcetors()$}
+				{
+					\If{$D(v, q) < bsf $}
+					{
+						$Knn.SortedInsert(v, D(v, q))$;\\
+					}
+				}
+			}
+			\Else
+			{
+				\ForEach {$N'$ in $N.ChildNodes()$}
+				{
+					\If {$D_{lb}(N', q) < bsf$}
+					{
+						$pq.Add(N')$;\\	
+					}	
+				}
+			}
+		}
+	
+		\tcp{copy new results to global kNN Queue}
+		$CopyResults(Knn, KnnReasults, UpdateStart, UpdateEnd)$;\\
+		 \tcp{Wait for other threads to finish current increment}
+		 {\it Thread} blocks on $Barrier$;
+	}
 	\caption{{\sc ExactKnnSearch}}
 	\label{algo:exact_knn_search}
 \end{algorithm}
 
+%END KNN SEARCH (ONE THREAD)

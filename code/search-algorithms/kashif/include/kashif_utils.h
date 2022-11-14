@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "globals.h"
+#include <stdatomic.h>
 
 #define NBITS 64
 typedef float ts_type;
@@ -21,6 +22,42 @@ typedef struct vector {
   unsigned int pos;
   ts_type *values;
 } vector;
+
+struct pool_queue {
+  struct vid *query_id;
+  int *query_order;
+  ts_type * query_vector;
+  ts_type *query_vector_reordered;
+
+	char free;
+	struct pool_queue *next;
+} pool_queue;
+
+struct thread_param {
+    struct pool *thread_pool;
+    struct worker_param * work_param;
+    uint8_t thread_id;
+} thread_param;
+
+// struct pool {
+// 	char cancelled;
+// 	unsigned int remaining;
+//   int8_t * thread_status; // 0 is thread is not working 1 if thread has finished current job 2 if thread finishied last job (no more jobs to take)
+// 	unsigned int num_threads;
+
+// 	struct pool_queue * query_queue;
+// 	struct pool_queue *end_queue;
+
+//   pthread_mutex_t * status_lock;
+//   pthread_mutex_t queue_lock;
+// 	pthread_cond_t queue_condition;
+
+// 	pthread_t *threads;
+//   unsigned int *task_count;
+//   void *(*function)(void *);
+
+//   struct worker_param *params;
+// } pool;
 
 // create result file name and path.
 char *make_file_path(char *result_dir, unsigned int qtable_id,
@@ -68,6 +105,29 @@ float compute_recall(char * ground_truth_dir, struct result_vid ** knn_results, 
 int compute_one_query_vector_recall(struct result_vid * ground_truth_results, int  num_gt_results, struct query_result * knn_results, 
                               int first_nn, int last_nn, int8_t * recall_row);
 float compute_recall_from_matrix(int8_t ** recall_matrix, int num_query_vectors, int k, int num_ground_truth_results);
+
+//  count elements in queue
+unsigned int get_queue_size(struct pool_queue * queue, unsigned int thread_id);
+
+// start thread in thread pool
+static void * start_thread(void *arg);
+
+// initialize thread pool
+void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type epsilon, unsigned int k,
+              void * (*thread_func)(void *), unsigned int num_threads, unsigned int offset,
+              ts_type r_delta, unsigned int * total_checked_ts, double * total_query_time, 
+              float warping, struct result_vid ** all_knn_results, unsigned char store_results_in_disk,
+              unsigned int *k_values, unsigned int num_k_values, struct result_vid *ground_truth_results,
+              unsigned int num_gt_results, int8_t * recall_matrix, unsigned int num_query_vectors,
+              struct job * job_array, unsigned int vector_length);
+
+// fill job queue of the thread pool
+struct pool_queue * pool_init_job_queue(struct vid *query_id_arr, int ** query_order_arr,
+                    ts_type ** query_vectors, ts_type ** query_vectors_reordered,
+                    unsigned int num_query_vectors, unsigned int vector_lengt);
+
+// end pool of threads wait for all threads to finish.
+void pool_end(struct pool *pool);
 
 ts_type todecimal(char *s) {
   // printf("\ninput: %s\n", s);
@@ -324,9 +384,10 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
             knn_results[q][s].table_id, knn_results[q][s].set_id,
             knn_results[q][s].qpos, knn_results[q][s].pos, knn_results[q][s].time/1000000, max_k);
     
-    total_querytime += knn_results[q][s].time;
+    
     // total_checked_vec += knn_results[s].num_checked_vectors;
     }
+    total_querytime += knn_results[q][max_k-1].time;
   }
   fclose(fp);
   COUNT_OUTPUT_TIME_END
@@ -795,4 +856,253 @@ float compute_recall_from_matrix(int8_t ** recall_matrix, int num_query_vectors,
     }
 
   return num_matches / num_ground_truth_results;
+}
+
+
+//  count elements in queue
+unsigned int get_queue_size(struct pool_queue * queue, unsigned int thread_id)
+{
+  if(queue == NULL)
+  {
+    fprintf(stderr, "Error in kashif_utils.c: cannot measure size of a null pointer to queue, call made by th%d.\n", thread_id);
+    exit(1);
+  }
+
+  if(queue[0].next == NULL)
+  {
+    printf("Queue size = *1*\t");
+    return 1;
+  }
+  int i = 0;
+  do
+  {
+      i++;
+  } while ((queue[i].next != NULL));
+  
+
+  printf("Queue size = %d\t", i+1);
+  return i+1;
+}
+
+// start thread in thread pool
+static void * start_thread(void *arg) 
+{
+  struct worker_param *param = (struct worker_param *) arg;
+  struct pool * thread_pool = param->thread_pool;
+  unsigned int thread_id = param->worker_id;
+
+  int job_idx = -1, working, num_working_threads;
+  unsigned int thread_done = 0, done = 1;
+
+  while(1)
+  {
+    job_idx = __sync_fetch_and_add(&(thread_pool->job_counter), 1);
+    if(job_idx >= thread_pool->num_jobs) // no more jobs
+    {
+      num_working_threads = __sync_sub_and_fetch(&(thread_pool->num_working_threads), 1);
+      printf("worked_thread (worker #%d):\t(XXX) i'm done !\n", thread_id);
+      
+      if(num_working_threads == 0)
+      {
+        printf("worked_thread (worker #%d):\t(Last) last to finish !\n", thread_id);
+        // pthread_barrier_wait(param->knn_update_barrier);
+        // printf("worked_thread (worker #%d):\t(Left) i left !\n", thread_id);
+      }
+      
+      break;
+    }
+
+    struct job * curr_job = &(thread_pool->job_array[job_idx]);
+    printf("worked_thread (worker #%d):\t> start knn search with job: (%u, %u, %u)...\n",
+            thread_id, curr_job->query_id.table_id, curr_job->query_id.set_id, curr_job->query_id.pos);
+
+    // take query vector from job and add it to thread param
+    param->query_id = &(curr_job->query_id);
+    param->query_order = curr_job->query_order;
+    param->query_ts = curr_job->query_vector;
+    param->query_ts_reordered = curr_job->query_vector_reordered;
+    thread_pool->function(param); // run knn search 
+    thread_pool->task_count[thread_id]++;
+    printf("worked_thread (worker #%d):\t< end knn search .\n", thread_id);
+
+    // if(job_idx == (thread_pool->num_jobs - 1))
+    // {
+    //   printf("worked_thread (worker #%d):\t(::) work done, %u are working\n", thread_id, thread_pool->working);
+    //   __atomic_store(&(thread_pool->all_workers_done), &done, done);
+    // }
+  }
+
+  printf("worked_thread (worker #%d):\t(X) end.\n", thread_id);
+	return NULL;
+}
+
+void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type epsilon, unsigned int k,
+              void * (*thread_func)(void *), unsigned int num_threads, unsigned int offset,
+              ts_type r_delta, unsigned int * total_checked_ts, double * total_query_time, 
+              float warping, struct result_vid ** all_knn_results, unsigned char store_results_in_disk,
+              unsigned int *k_values, unsigned int num_k_values, struct result_vid *ground_truth_results,
+              unsigned int num_gt_results, int8_t * recall_matrix, unsigned int num_query_vectors,
+              struct job * job_array, unsigned int vector_length)
+{
+  printf("\ncoordinator_thread:\t (!)\tinit pool: #threads = %d\n", num_threads);
+  // init query stats
+  dstree_init_thread_stats(index, num_threads);
+  
+  pthread_barrier_t *knn_update_barrier = malloc((num_threads) * sizeof(pthread_barrier_t));
+  char * finished = calloc(num_threads, sizeof(char));
+  pool->threads = malloc((num_threads) * sizeof(pthread_t));
+  pool->task_count = calloc(num_threads, sizeof(unsigned int));
+  pool->working = calloc(num_threads, sizeof(unsigned int));
+  pool->params = malloc(sizeof(struct worker_param) * num_threads);
+  
+  pool->num_threads = num_threads;
+  pool->function = thread_func;
+  pool->job_array = job_array;
+  pool->num_jobs = num_query_vectors;
+  pool->job_counter = 0; // next job to be executed
+  pool->num_working_threads = num_threads;
+  pool->cancelled = 0;
+  
+  
+  if(pool->threads == NULL || pool->task_count == NULL || finished == NULL || pool->params == NULL)
+  {
+    fprintf(stderr, "Error in kashif_utils.c: Couldn't allocate memory for thread pool.\n");
+    exit(1);
+  }
+  
+  // set thread parameters
+	for (int i = 0; i < num_threads; i++) 
+  {
+    printf("\ncoordinator_thread:\t (!)\tstart thread %u --- --- --- --- ---\n", i);
+    // init barriers
+    pthread_barrier_init(&knn_update_barrier[i], NULL, 2);
+
+    pool->params[i].worker_id = (uint8_t)i;
+    pool->params[i].thread_pool = pool;
+
+    pool->params[i].worker_id = i;
+    pool->params[i].epsilon = epsilon;
+    pool->params[i].index = index;
+    pool->params[i].k = k;
+    pool->params[i].offset = offset;
+    
+    pool->params[i].r_delta = r_delta;
+    pool->params[i].total_checked_ts = total_checked_ts;
+    pool->params[i].total_query_set_time = total_query_time;
+    pool->params[i].warping = warping;
+
+    pool->params[i].global_knn_results = all_knn_results;
+    pool->params[i].store_results_in_disk = store_results_in_disk;
+    pool->params[i].k_values = k_values; // k values for which we want to record results
+    pool->params[i].num_k_values = num_k_values;
+    pool->params[i].ground_truth_results = ground_truth_results;
+    pool->params[i].num_gt_results = num_gt_results;
+    pool->params[i].global_recall_matrix = recall_matrix;
+    pool->params[i].finished = &finished[i];
+    pool->params[i].knn_update_barrier = &knn_update_barrier[i];
+
+    RESET_THREAD_PARTIAL_COUNTERS(i)
+    RESET_THREAD_QUERY_COUNTERS(i)
+
+		pthread_create(&pool->threads[i], NULL, &start_thread, &pool->params[i]);
+	}
+
+
+  // get result incrementally
+  unsigned int pool_done = 1;
+  unsigned int thread_done = 0;
+  unsigned int all_finished = 0;
+
+  while(1)
+  {
+    for (int th = 0; th < num_threads; th++) 
+    {
+      
+      __atomic_load(&(pool->working[th]), &thread_done, 1);
+      printf("\ncoordinator_thread:\t (Check)\tis thread %d working ? answer =  %d\n", th, thread_done);
+      thread_done = 0;
+
+      if(!(atomic_compare_exchange_strong(&(pool->working[th]), &thread_done, thread_done)))
+      {
+        printf("\ncoordinator_thread:\t (Zzz)\twaiting... thread %d working = %d\n", th, pool->working[th]);
+        pthread_barrier_wait(&knn_update_barrier[th]);
+        printf("\ncoordinator_thread:\t (!)\treceived new knn results from thread %d\n", th);
+        // compute current recall
+        // float recall_from_matrix = compute_recall_from_matrix(recall_matrix, num_query_vectors, k, num_gt_results);
+        // printf("\ncoordinator_thread:\t (!)\tcurrent recall =%f\n", recall_from_matrix); 
+      }
+    }
+    if((atomic_compare_exchange_strong(&(pool->num_working_threads), &all_finished, all_finished)))
+    {
+      printf("\ncoordinator_thread:\t (!)\tpool done, nb working threads = %u\n", pool->num_working_threads);
+      pool_done == 1;
+      break;
+    }
+    pool_done = 0;
+    all_finished = 0;
+  }  
+  
+
+  printf("\ncoordinator_thread:\t\t(X) end, all workers have finished, freeing thread pool.\n");
+  pool_end(pool);
+
+  printf("\ncoordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", 
+          job_array[0].query_id.table_id, job_array[0].query_id.set_id);
+
+  // free memory
+  free(finished);
+}
+
+// end thread pool, wait for all threads to finish
+void pool_end(struct pool *pool) 
+{
+  printf("coordinator_thread:\t (!)\tstart freeing pool resources.\n");
+	struct pool *thread_pool = (struct pool *) pool;
+	struct pool_queue *q;
+	int i;
+
+	thread_pool->cancelled = 1;
+
+
+	for (i = 0; i < thread_pool->num_threads; i++) {
+		pthread_join(thread_pool->threads[i], NULL);
+	}
+
+  free(thread_pool->threads);
+  free(thread_pool->task_count);
+  free(thread_pool->params);
+
+  printf("coordinator_thread:\t (!)\tend freeing pool resources.\n");
+}
+
+
+struct pool_queue * pool_init_job_queue(struct vid *query_id_arr, int ** query_order_arr,
+                    ts_type ** query_vectors, ts_type ** query_vectors_reordered,
+                    unsigned int num_query_vectors, unsigned int vector_length)
+{
+  // fill the pools job queue with query vector, each query vector is a job waiting to be executed by a thread.
+	struct pool_queue *query_queue = (struct pool_queue *) malloc(sizeof(struct pool_queue) * num_query_vectors);
+	
+
+  // last element in the queue
+  int j = num_query_vectors - 1;
+  query_queue[j].query_id = &query_id_arr[j];
+  query_queue[j].query_order = query_order_arr[j];
+  query_queue[j].query_vector = query_vectors[j];
+  query_queue[j].query_vector_reordered = query_vectors_reordered[j];
+  query_queue[j].next = NULL;
+  query_queue[j].free = 0;
+
+  // fill the rest of the queue starting from the end of the queue
+  for(int i = num_query_vectors - 2; i >= 0; i--)
+  {
+      query_queue[i].query_id = &query_id_arr[i];
+      query_queue[i].query_order = query_order_arr[i];
+      query_queue[i].query_vector = query_vectors[i];
+      query_queue[i].query_vector_reordered = query_vectors_reordered[i];
+      query_queue[i].next =  &query_queue[i + 1];
+      query_queue[i].free = 0;
+  }
+
+  return query_queue;
 }

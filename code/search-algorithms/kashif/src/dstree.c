@@ -82,6 +82,7 @@ int main(int argc, char **argv) {
   unsigned int num_k_values = 0;
   char * k_values_str = "1,3,5,10,30,50,100,300,500,1000,3000,5000";
   char * ground_truth_dir = "";
+  unsigned int num_threads = 1;
   /* end kashif changes */
 
   // printf("new code\n");
@@ -129,7 +130,8 @@ int main(int argc, char **argv) {
         {"k-values", required_argument, 0, ';'},
         {"ground-truth-dir", required_argument, 0, '&'},
         {"parallel", required_argument, 0, '-'},
-        {"store-results-in-disk", required_argument, 0, '!'}
+        {"store-results-in-disk", required_argument, 0, '!'},
+        {"num-threads", required_argument, 0, ')'}
         /* end kashif changes */
     };
 
@@ -346,6 +348,10 @@ int main(int argc, char **argv) {
 
     case '!':
       store_results_in_disk = 1;
+      break;
+
+    case ')':
+      num_threads = atoi(optarg);
       break;
 
     /* end kashif changes */
@@ -580,11 +586,16 @@ int main(int argc, char **argv) {
     index->settings->parallel = parallel;
     /* start kashif changes */
 
+    printf("Nb threads = %d\n", num_threads);
     if(incremental && parallel)
-      dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
+      dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
-                                    warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk);
+                                    warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk, num_threads);
+      // dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
+      //                               minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
+      //                               max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
+      //                               warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk);
       // dstree_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
       //                               minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
       //                               max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 

@@ -85,7 +85,8 @@ src/lib_libdstree_a-dstree_file_loaders.o: src/dstree_file_loaders.c \
  /usr/include/x86_64-linux-gnu/bits/confname.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_posix.h \
  /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
- /usr/include/x86_64-linux-gnu/bits/unistd.h globals.h
+ /usr/include/x86_64-linux-gnu/bits/unistd.h globals.h \
+ /usr/lib/gcc/x86_64-linux-gnu/7/include/stdatomic.h
 
 /usr/include/stdc-predef.h:
 
@@ -310,3 +311,5 @@ src/../include/kashif_utils.h:
 /usr/include/x86_64-linux-gnu/bits/unistd.h:
 
 globals.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/7/include/stdatomic.h:
