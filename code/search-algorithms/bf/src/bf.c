@@ -295,8 +295,9 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                         next_vec = 0;
                         
                         // only return vectors with distance 0
-                        if(identical_knn_search)
+                        if(identical_knn_search == 1)
                         {
+                            printf("\n>>> performing identical knn search ...\n");
                            /*run query set */
                             // Perform brute force knn search for all query vectors
                             all_knn_results =  brute_force_identical_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, &total_checked_vec, &total_knns);
@@ -329,6 +330,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                         }
                         else
                         {
+                            printf("\n>>> performing knn search ...\n");
                             // Perform brute force knn search for all query vectors
                             all_knn_results =  brute_force_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, k, &total_checked_vec);
 

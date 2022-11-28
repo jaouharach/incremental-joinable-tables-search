@@ -38,6 +38,7 @@ struct job {
   ts_type * query_vector;
   int * query_order;
   ts_type * query_vector_reordered;
+  unsigned int worker_id; // worker who executed this job
 } job;
 
 struct pool {
@@ -50,7 +51,7 @@ struct pool {
 	unsigned int job_counter;
 
 	pthread_t *threads;
-  unsigned int *task_count;
+  unsigned int *executed_jobs_count;// nb of executed jobs for each thread
   void *(*function)(void *);
 
   struct worker_param *params;
@@ -64,6 +65,7 @@ struct result_vid {
   uint16_t pos; // max = 65535, must change type if dataset columns contain more than 65535 cells (vectors)
   uint8_t qpos; // max = 255, must change type if query column contain more than 255 cells (vectors)
   float time; 
+  float distance;
   unsigned int num_checked_vectors;
 } result_vid;
 

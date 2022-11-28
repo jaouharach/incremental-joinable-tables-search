@@ -37,8 +37,13 @@ struct thread_param {
     struct pool *thread_pool;
     struct worker_param * work_param;
     uint8_t thread_id;
-} thread_param;
+} thread_para;
 
+
+struct performance {
+  float recall;
+  float precision;
+} performance;
 // struct pool {
 // 	char cancelled;
 // 	unsigned int remaining;
@@ -101,10 +106,18 @@ struct result_table *get_top_tables_by_euclidean_distance(struct query_result *k
                          unsigned int num_top);
 int get_ground_truth_file(char * ground_truth_dir, int query_table_id, int query_set_id, char * ground_truth_file);
 struct result_vid * get_ground_truth_results(char * ground_truth_file, int total_results);
+
+struct performance compute_recall_precision(struct result_vid * ground_truth_results, int num_gt_results, struct result_vid ** knn_results, int k, int q, int query_table_id, int query_set_id);
+
 float compute_recall(char * ground_truth_dir, struct result_vid ** knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id);
-int compute_one_query_vector_recall(struct result_vid * ground_truth_results, int  num_gt_results, struct query_result * knn_results, 
+void compute_one_query_vector_recall(struct result_vid * ground_truth_results, int  num_gt_results, struct query_result * knn_results, 
                               int first_nn, int last_nn, int8_t * recall_row);
+
 float compute_recall_from_matrix(int8_t ** recall_matrix, int num_query_vectors, int k, int num_ground_truth_results);
+float compute_vector_recall(struct result_vid * knn_results, struct result_vid * gt_results, int query_vector_pos, int k);
+float compute_vector_recall_identical_results(int8_t ** recall_matrix, int query_vector_pos, int k, int num_identical_neighbors);
+
+unsigned int get_num_identical_results(struct result_vid * ground_truth_results, int  num_gt_results, unsigned int query_vector_pos);
 
 //  count elements in queue
 unsigned int get_queue_size(struct pool_queue * queue, unsigned int thread_id);
@@ -380,9 +393,9 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
     {
       // printf("k = %d, time = %f -- %f\n", s, knn_results[s].time, knn_results[s].time/1000000);
       fprintf(fp, "\n");
-      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], na, %.7f, %u", qtable_id, qset_id,
+      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %f, %.7f, %u", qtable_id, qset_id,
             knn_results[q][s].table_id, knn_results[q][s].set_id,
-            knn_results[q][s].qpos, knn_results[q][s].pos, knn_results[q][s].time/1000000, max_k);
+            knn_results[q][s].qpos, knn_results[q][s].pos, knn_results[q][s].distance, knn_results[q][s].time/1000000, max_k);
     
     
     // total_checked_vec += knn_results[s].num_checked_vectors;
@@ -398,7 +411,7 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
   char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 20 + 1);
   sprintf(new_csv_filename, "%s_runtime%.4f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
   
-  printf("[k = %u] Combined total query time  = %f\n", max_k, total_querytime/1000000);
+  printf("%u, \t%f\n", max_k, total_querytime/1000000);
   int ret = rename(csv_file, new_csv_filename);
   
   free(new_csv_filename);
@@ -439,8 +452,8 @@ enum response store_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
     for(int s = 0; s < k; s++)// k counter
     {
       fprintf(fp, "\n");
-      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], na, %.7f, %u", qtable_id, qset_id,
-            knn_results[q][s].table_id, knn_results[q][s].set_id,
+      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %f, %.7f, %u", qtable_id, qset_id,
+            knn_results[q][s].table_id, knn_results[q][s].set_id, knn_results[q][s].distance,
             knn_results[q][s].qpos, knn_results[q][s].pos, knn_results[q][s].time/1000000, k);
     total_checked_vec += knn_results[q][s].num_checked_vectors;
     }
@@ -714,7 +727,14 @@ int  get_ground_truth_file(char * ground_truth_dir, int query_table_id, int quer
       break;
     }
   }
+
   FILE * file = fopen(ground_truth_file, "r");
+
+  if(file == NULL)
+  {
+    fprintf(stderr, "Error in kashif_utils: Cannot open gt file %s for column %s\n", ground_truth_file, queryid);
+    exit(1);
+  }
   int num_lines = 0;
   // read file and count number of lines
   while (fgets(buffer, 80, file)) {
@@ -748,6 +768,7 @@ struct result_vid * get_ground_truth_results(char * ground_truth_file, int total
       char *token = strtok(buffer, ",");
       int col = 0;
       int table_id = 0, set_id = 0, vector_pos = 0, query_vector_pos = 0;
+      float distance = 0;
 
       while (token) {
           // Just printing each integer here but handle as needed
@@ -759,6 +780,9 @@ struct result_vid * get_ground_truth_results(char * ground_truth_file, int total
               query_vector_pos = atoi(token);
           else if (col == 3)
               vector_pos = atoi(token);
+          else if (col == 6)
+              distance = atof(token);
+
           token = strtok(NULL, ",");
           col++;
       }
@@ -768,10 +792,51 @@ struct result_vid * get_ground_truth_results(char * ground_truth_file, int total
       ground_truth_results[i].set_id = set_id;
       ground_truth_results[i].pos = vector_pos;
       ground_truth_results[i].qpos = query_vector_pos;
+      ground_truth_results[i].distance = distance;
       i++;
   }
   fclose(file);
   return ground_truth_results;
+}
+
+struct performance compute_recall_precision(struct result_vid * ground_truth_results, int num_gt_results, struct result_vid ** knn_results, int k, int q, int query_table_id, int query_set_id)
+{
+  struct performance perf;
+  float num_matches = 0, kth_dist;
+  int tp_fn = 0;
+
+
+  kth_dist = knn_results[q][k - 1].distance;
+
+  // count tp + fn
+  for(int i = 0; i < num_gt_results; i++)
+  {
+    if(ground_truth_results[i].qpos == q && ground_truth_results[i].distance <= kth_dist)
+      tp_fn++;
+  }
+  
+  // count matches
+  for(int x = 0; x < k; x++)
+    for(int i = 0, j = 0; j < tp_fn && i < num_gt_results; i++)
+    {
+      if(ground_truth_results[i].qpos == knn_results[q][x].qpos)
+      {
+        j++;
+        if(ground_truth_results[i].table_id == knn_results[q][x].table_id
+        && ground_truth_results[i].set_id == knn_results[q][x].set_id
+        && ground_truth_results[i].pos == knn_results[q][x].pos)
+        {
+          num_matches++;
+          break;
+        }
+      }
+    }
+
+  // printf("k = %u, kthdistnace = %f, matches = %.1f, tp_fn = %d, #gt = %d\n", k, kth_dist, num_matches, tp_fn, num_gt_results);
+  perf.recall = num_matches/(float)tp_fn;
+  perf.precision = 0;
+
+  return perf;
 }
 
 float compute_recall(char * ground_truth_dir, struct result_vid ** knn_results, int num_query_vectors, int k, int query_table_id, int query_set_id)
@@ -784,7 +849,7 @@ float compute_recall(char * ground_truth_dir, struct result_vid ** knn_results, 
   float num_matches = 0;
   int num_knn_results = num_query_vectors * k;
 
-  printf("total vectors: %d\n", num_query_vectors);
+  // printf("total vectors: %d\n", num_query_vectors);
   for(int q = 0; q < num_query_vectors; q++)
   {
     for(int x = 0; x < k; x++)
@@ -817,14 +882,14 @@ float compute_recall(char * ground_truth_dir, struct result_vid ** knn_results, 
   }
   
   // printf("%f / %f\n", num_matches, (float)num_gt_results);
-  printf("precision = %f\n", num_matches/exact_result_total_rows);
+  // printf("precision = %f\n", num_matches/exact_result_total_rows);
 
   free(exact_results_counter);
   free(ground_truth_results);
   return num_matches/(float)num_gt_results;
 }
 
-int compute_one_query_vector_recall(struct result_vid * ground_truth_results, int  num_gt_results, struct query_result * knn_results, 
+void compute_one_query_vector_recall(struct result_vid * ground_truth_results, int  num_gt_results, struct query_result * knn_results, 
                               int first_nn, int last_nn, int8_t * recall_row)
 {
   int found_matches = 0;
@@ -842,9 +907,8 @@ int compute_one_query_vector_recall(struct result_vid * ground_truth_results, in
         break;
       }
     }
-
-  return found_matches;
 }
+
 
 float compute_recall_from_matrix(int8_t ** recall_matrix, int num_query_vectors, int k, int num_ground_truth_results)
 {
@@ -858,6 +922,69 @@ float compute_recall_from_matrix(int8_t ** recall_matrix, int num_query_vectors,
   return num_matches / num_ground_truth_results;
 }
 
+float compute_k_recall_from_matrix(struct result_vid ** knn_results, struct result_vid * gt_results, int num_query_vectors, int k, int num_ground_truth_results)
+{
+  float num_matches = 0.0;
+  for(int q = 0; q < num_query_vectors; q++)
+    num_matches += compute_vector_recall(knn_results[q], gt_results, q, k);
+
+
+  return num_matches / (k * num_query_vectors);
+}
+
+float compute_vector_recall(struct result_vid * knn_results, struct result_vid * gt_results, int query_vector_pos, int k)
+{
+  float num_matches = 0.0;
+  int i = k;
+  for(int x = 0, j = 0; x < k; x++)
+  {
+    while(i > 0)
+    {
+      if(gt_results[j].qpos == query_vector_pos)
+      {
+        if(gt_results[j].table_id == knn_results[x].table_id
+          && gt_results[j].set_id == knn_results[x].set_id
+          && gt_results[j].pos == knn_results[x].pos
+          )
+        {
+          // update recall matrix
+          num_matches ++;
+          i--;
+          break;
+        }
+        i--;
+      }
+      j++;
+    }
+  }
+
+  return num_matches;
+}
+
+float compute_vector_recall_identical_results(int8_t ** recall_matrix, int query_vector_pos, int k, int num_identical_neighbors)
+{
+  float num_matches = 0.0;
+  for(int r = 0; r < k; r++)
+  {
+    num_matches += recall_matrix[query_vector_pos][r];
+  }
+
+  return num_matches / num_identical_neighbors;
+}
+
+// count total identical nn for one query vector
+unsigned int get_num_identical_results(struct result_vid * ground_truth_results, int  num_gt_results, unsigned int query_vector_pos)
+{
+  unsigned int num_identical_results = 0;
+  for(int i = 0; i < num_gt_results; i++)
+  {
+    if(ground_truth_results[i].qpos == query_vector_pos)
+    {
+      num_identical_results ++;
+    }
+  }
+  return num_identical_results;
+}
 
 //  count elements in queue
 unsigned int get_queue_size(struct pool_queue * queue, unsigned int thread_id)
@@ -913,6 +1040,8 @@ static void * start_thread(void *arg)
     }
 
     struct job * curr_job = &(thread_pool->job_array[job_idx]);
+    curr_job->worker_id = thread_id;
+
     printf("worked_thread (worker #%d):\t> start knn search with job: (%u, %u, %u)...\n",
             thread_id, curr_job->query_id.table_id, curr_job->query_id.set_id, curr_job->query_id.pos);
 
@@ -922,14 +1051,9 @@ static void * start_thread(void *arg)
     param->query_ts = curr_job->query_vector;
     param->query_ts_reordered = curr_job->query_vector_reordered;
     thread_pool->function(param); // run knn search 
-    thread_pool->task_count[thread_id]++;
     printf("worked_thread (worker #%d):\t< end knn search .\n", thread_id);
 
-    // if(job_idx == (thread_pool->num_jobs - 1))
-    // {
-    //   printf("worked_thread (worker #%d):\t(::) work done, %u are working\n", thread_id, thread_pool->working);
-    //   __atomic_store(&(thread_pool->all_workers_done), &done, done);
-    // }
+    thread_pool->executed_jobs_count[thread_id]++;
   }
 
   printf("worked_thread (worker #%d):\t(X) end.\n", thread_id);
@@ -951,7 +1075,7 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
   pthread_barrier_t *knn_update_barrier = malloc((num_threads) * sizeof(pthread_barrier_t));
   char * finished = calloc(num_threads, sizeof(char));
   pool->threads = malloc((num_threads) * sizeof(pthread_t));
-  pool->task_count = calloc(num_threads, sizeof(unsigned int));
+  pool->executed_jobs_count = calloc(num_threads, sizeof(unsigned int));
   pool->working = calloc(num_threads, sizeof(unsigned int));
   pool->params = malloc(sizeof(struct worker_param) * num_threads);
   
@@ -964,7 +1088,7 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
   pool->cancelled = 0;
   
   
-  if(pool->threads == NULL || pool->task_count == NULL || finished == NULL || pool->params == NULL)
+  if(pool->threads == NULL || pool->working == NULL || finished == NULL || pool->params == NULL)
   {
     fprintf(stderr, "Error in kashif_utils.c: Couldn't allocate memory for thread pool.\n");
     exit(1);
@@ -1069,7 +1193,7 @@ void pool_end(struct pool *pool)
 	}
 
   free(thread_pool->threads);
-  free(thread_pool->task_count);
+  free(thread_pool->executed_jobs_count);
   free(thread_pool->params);
 
   printf("coordinator_thread:\t (!)\tend freeing pool resources.\n");

@@ -24,28 +24,44 @@
 	
 	\vspace{.2cm}
 	\textbf{Thread Array} $Workers[m]$;\\
-	\textbf{Barrier} $Barrier$; \\
-	\textbf{Boolean} $AllWorkersDone \gets False$;\\
+	\textbf{Boolean Array} $WorkersState[m] \gets \{False, ..., False\}$;\\
+	\textbf{Integer} $NumWorkingThreads$ = m;\\
+	\textbf{Barrier Array} $Barrier[m]$; \\
+	\textbf{Boolean} $WorkerDone \gets True$;\\
 	\textbf{Shared Queue} $KnnResults[n][k] \gets \{\{+\infty_{1}, ..., +\infty_{k}\}_{q_{1}}, ..., \{+\infty_{1}, ..., +\infty_{k}\}_{q_{n}}\}$;\\
 	\vspace{.2cm}
 	
 	\For{$i \gets 0$ \KwTo $m - 1$}
 	{
-		$Workers[i].${\sc InitWorkerThread}$(JobArray, k, $\\ $JobCounter, Barrier, KnnResults, AllWorkersDone)$;\\
+		$Workers[i].${\sc InitWorkerThread}$(JobArray, k, $\\ $JobCounter, Barrier[i], KnnResults, WorkersState[i], NumWorkingThreads)$;\\
 	}
 	
 	\tcp{get incremental results}
-	\While{!AtomicLoad(AllWorkersDone) and }
+	\While{True}
 	{
-		{\it Coordinator threads waits for new results on} $Barrier$;
-		\If{\it Recall($KnnResults$, GroundThruth) $\geq r_{th}$)}
+		\For{$i \gets 0$ \KwTo $m - 1$}
 		{
-			$StopAllWorkers()$;\\
-			Return {KnnResults};
+			\If{!$AtomicCompare(WorkersState[i], WorkerDone)$}
+			{
+				{\it Coordinator waits on} $Barrier[i];$\\
+			}
+			
 		}
+
+		%\If{\it Recall($KnnResults$, GroundThruth) $\geq r_{th}$)}
+		%{
+		%	$StopAllWorkers()$;\\
+		%	Return {KnnResults};
+		%}
+		\If{!$AtomicCompare(NumWorkingThreads, 0)$}
+		{
+			\tcp{no more jobs and all workers finished their jobs.}
+			break;\\
+		}
+	
 	}
 	
-	\caption{{\sc Kashif: InitThreadPool}}
+	\caption{{\sc Kashif: StartThreadPool}}
 	\label{algo:coordinator}
 \end{algorithm}
 
@@ -88,29 +104,20 @@
 \small
 \begin{algorithm}
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{$JobArray$, $k$,  $JobCounter$, $Barrier$, $KnnResults$, $AllWorkersDone$.}
+	\KwIn{$JobArray$, $k$,  $JobCounter$, $Barrier$, $KnnResults$, $WorkerState$, $NumWorkingThreads$.}
 	\vspace{.2cm}
 	
 	\While{True}
 	{
 		$JobIdx = SyncFetchAndAdd(JobCounter)$;\\
-		
 		\If{$JobIdx > JobArray.Size()$} 
 		{
-			\While{!AtomicLoad(AllWorkersDone)}
-			{
-				{\it Thread} reaches $Barrier$; \\
-			}
-			$break$; \tcp{no more jobs to do, and all workers finished their work}\\
+			$SyncFetchAndSub(NumWorkingThreads)$;\\
+			$break$; \tcp{no more jobs to do}\\
 		}
 		$q = JobArray[JobIdx]$;\\
-	 	{\sc ExactKnnSearch$(q, k, KnnResults[JobIdx], Barrier)$};
+	 	{\sc ExactKnnSearch$(q, k, KnnResults[JobIdx], Barrier, WorkerState)$};
 	 	
-	 	\If{JobIdx == JobArray.Size()} 
-	 	{
-	 		\tcp{completed last job} notify other users
-	 		AtomicStore(AllWorkersDone, True);\\
-	 	}
 	}
 	
 	\caption{{\sc Kashif: InitWorkerThread}}
@@ -135,6 +142,8 @@
 	\textbf{Integer} $UpdateEnd \gets 0$; \tcp{where new results end}
 	\textbf{Boolean} $NewIncrement \gets False$;
 	\vspace{.2cm}
+	
+	$AtomicSet(WorkerState, False)$;\\ \tcp{thread is working}
 	
 	\tcc{perform heuristic search and update knn results in global array}
 	$KnnResults \gets ${\sc HeuristicKnnSearch$(q, k)$};\\
@@ -192,6 +201,7 @@
 		$CopyResults(Knn, KnnReasults, UpdateStart, UpdateEnd)$;\\
 		 \tcp{Wait for other threads to finish current increment}
 		 {\it Thread} blocks on $Barrier$;
+		 $AtomicSet(WorkerState, True)$;\\ \tcp{thread stoped working}
 	}
 	\caption{{\sc ExactKnnSearch}}
 	\label{algo:exact_knn_search}

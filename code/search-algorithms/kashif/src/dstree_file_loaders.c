@@ -478,6 +478,7 @@ enum response dstree_knn_query_multiple_binary_files(
           // query set does not fit requirments move to next set
           if ((unsigned int)nvec < min_qset_size ||
               (unsigned int)nvec > max_qset_size) {
+            printf("skipping (%u, %u) size = %d\n", table_id, set_id, nvec);
             COUNT_PARTIAL_INPUT_TIME_START
             fseek(bin_file, nvec * 4 * vector_length, SEEK_CUR);
             COUNT_PARTIAL_INPUT_TIME_END
@@ -486,6 +487,7 @@ enum response dstree_knn_query_multiple_binary_files(
             total_bytes -= (nvec * vector_length);
             nvec = 0u;
             set_id += 1;
+            
             continue;
           }
 
@@ -553,6 +555,7 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[query_vector.pos][t].pos = curr_knn[t].vector_id->pos;
               all_knn_results[query_vector.pos][t].qpos = curr_knn[t].query_vector_pos;
               all_knn_results[query_vector.pos][t].time = curr_knn[t].time;
+              all_knn_results[query_vector.pos][t].distance = curr_knn[t].distance;
             }
             query_vector.pos += 1;
             
@@ -609,7 +612,7 @@ enum response dstree_knn_query_multiple_binary_files(
               all_knn_results[query_vector.pos][t].pos = curr_knn[t].vector_id->pos;
               all_knn_results[query_vector.pos][t].qpos = curr_knn[t].query_vector_pos;
               all_knn_results[query_vector.pos][t].time = curr_knn[t].time;
-              
+              all_knn_results[query_vector.pos][t].distance = curr_knn[t].distance;
             }
             query_vector.pos = 0;
 
@@ -643,9 +646,68 @@ enum response dstree_knn_query_multiple_binary_files(
             printf("computing recall...\n");
 
             // compute recall
+            // int k_idx;
+            // unsigned int k = k_values[num_k_values - 1];
+            // struct performance perf;
+            // char ground_truth_file[255] = "";
+            // int  num_gt_results = get_ground_truth_file(ground_truth_dir, query_vector.table_id, query_vector.set_id, ground_truth_file);
+            // struct result_vid * ground_truth_results = get_ground_truth_results(ground_truth_file, num_gt_results);
+
+            // printf("gt results: #resutls = %d\n", num_gt_results);
+            // for(int gt = 0; gt < num_gt_results; gt++)
+            // {
+            //   printf("q = %u, s = (%u, %u, %u), d = %f\n", 
+            //   ground_truth_results[gt].qpos, ground_truth_results[gt].table_id, 
+            //   ground_truth_results[gt].set_id, ground_truth_results[gt].pos, ground_truth_results[gt].distance);
+            // }
+            // exit(1);
+
+            // for(int q = 0; q < nvec; q++)
+            // {
+            //   printf("\n q = (%u, %u, %u) results:\n", query_vector.table_id, query_vector.set_id, q);
+            //   for(int i = 0; i < k; i++)
+            //   {
+            //     perf = compute_recall_precision(ground_truth_results, num_gt_results, all_knn_results, i + 1, q, query_vector.table_id, query_vector.set_id);
+            //     printf("k = %d,\tdistance = %f,\trecall = %f,\ttime = %f\n", i+1, all_knn_results[q][i].distance, perf.recall, all_knn_results[q][i].time/1000000);
+            //   }
+
+            //   exit(1);
+              // for(int i = 0; i < num_k_values; i++)
+              // {
+              //   k_idx = k_values[i]-1;
+
+              //   perf = compute_recall_precision(ground_truth_results, num_gt_results, all_knn_results, k_idx + 1, q, query_vector.table_id, query_vector.set_id);
+              //   printf("k = %d,\tdistance = %f,\trecall = %f,\ttime = %f\n", k_idx+1, all_knn_results[q][k_idx].distance, perf.recall, all_knn_results[q][k_idx].time/1000000);
+              // }
+
+            //   printf("end results.\n\n");
+            // }
+
+            // free(ground_truth_results);
             // temp change
-            // float recall = compute_recall(ground_truth_dir, all_knn_results, nvec, k, query_vector.table_id, query_vector.set_id);
-            // printf("\nrecall=%f\n", recall);
+            // int k_values[] = {1, 3, 5, 7, 10, 30, 50, 70, 100, 300, 500, 700, 1000, 10000};
+            // int num_k = 17;
+            
+            // int k_values[] = {1, 3, 5, 7, 10, 30, 50, 70, 100, 300, 500, 700, 1000};
+            // int num_k = 13;
+            // int curr_k;
+
+
+            // printf("\nnvec : %d\n", nvec);
+            // printf("k,\trecall,\tprecision,\ttime\n");
+
+            // float time = 0.0;
+            // struct performance perf;
+            // for(int a = 0; a < num_k; a++)
+            // {
+            //   curr_k = k_values[a];
+            //   time = 0.0;
+            //   perf = compute_recall_precision(ground_truth_dir, all_knn_results, nvec, curr_k, query_vector.table_id, query_vector.set_id);
+            //   for(int q = 0; q < nvec; q++)
+            //     time += all_knn_results[q][curr_k-1].time;
+            //   printf("%d,\t%f,\t%f,\t%f\n", curr_k, perf.recall, perf.precision, time/1000000);
+
+            // }
 
             // if(keyword_search)
             // {
@@ -1980,43 +2042,15 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             qvectors_loaded += 1;
             curr_vector = 0;
 
-            // printf("list of jobs: \n");
-            // for(int wj = 0; wj < nvec; wj++)
-            // {
-            //   printf("job: (%u, %u, %u)\n", 
-            //   job_array[wj].query_id.table_id, job_array[wj].query_id.set_id, job_array[wj].query_id.pos);
-
-            //   printf("query vector : \t(");
-            //   for (int val = 0; val < vector_length; val++)
-            //   {
-            //     printf("%f, ", job_array[wj].query_vector[val]);
-            //   }
-              
-            //   printf(")\n\nquery order: \t(");
-            //   for (int val = 0; val < vector_length; val++)
-            //   {
-            //     printf("%u, ", job_array[wj].query_order[val]);
-            //   }
-            //   printf(")\n\nquery vector ordered: \t(");
-            //   for (int val = 0; val < vector_length; val++)
-            //   {
-            //     printf("%f, ", job_array[wj].query_vector_reordered[val]);
-            //   }
-            //   printf("\n");
-
-            // }
-
-            // exit(1);
-
             // load ground truth results
             // temp change below
-            char ground_truth_file[255] = "";
-            // int  num_gt_results = get_ground_truth_file(ground_truth_dir, query_id_arr[0].table_id, query_id_arr[0].set_id, ground_truth_file);
+            // char ground_truth_file[255] = "";
+            // int  num_gt_results = get_ground_truth_file(ground_truth_dir, job_array[0].query_id.table_id,job_array[0].query_id.set_id, ground_truth_file);
             // struct result_vid * ground_truth_results = get_ground_truth_results(ground_truth_file, num_gt_results);
 
-            struct result_vid * ground_truth_results = NULL;
             int  num_gt_results = 0;
-
+            struct result_vid * ground_truth_results = NULL;
+            printf("coordinator_thread:\t\tread ground truth results, num results = %d\n", num_gt_results);
             
             // create worker threads, 1 query vector per thread
             printf("coordinator_thread:\t\tinit thread pool with  %d threads, |Q| = %d.\n", num_threads, nvec);
@@ -2028,51 +2062,107 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                   k_values, num_k_values, ground_truth_results,
                   num_gt_results, recall_matrix, nvec, job_array, vector_length);            
 
-            exit(1);
-          
 
-            printf("Stats:\t (...)\t");
-            double max_cpu_time = 0, max_input_time = 0; 
-            int max_cpu_thread_id = -1, max_in_thread_id = -1;
+            // printf("Stats:\t (...)\t");
+            double max_cpu_time = 0, min_cpu_time = FLT_MAX; 
+            int max_cpu_thread_id = -1, min_cpu_thread_id = -1;
 
-            double min_cpu_time = FLT_MAX, min_input_time = FLT_MAX; 
-            int min_cpu_thread_id = -1, min_in_thread_id = -1;
-
+            double ** thread_time = malloc(sizeof(double*) * num_threads);
+            if(thread_time == NULL)
+            {
+              fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for thread time.\n");
+              exit(1);
+            }
+            // sum up time for all the queryies executed by one thread
             for(int th = 0; th < num_threads; th++)
             {
-              if(index->stats->thread_query_total_cpu_time[th] > max_cpu_time)
-              { 
-                max_cpu_time = index->stats->thread_query_total_cpu_time[th];
-                max_cpu_thread_id = th;
-              }
-              if(index->stats->thread_query_total_cpu_time[th] < min_cpu_time)
+              thread_time[th] = calloc(k, sizeof(double));
+              if(thread_time[th] == NULL)
               {
-                min_cpu_time = index->stats->thread_query_total_cpu_time[th];
-                min_cpu_thread_id = th;
+                fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for thread time.\n");
+                exit(1);
+              }
+            }
+            
+
+            for(int a = 0; a < nvec; a++)
+            {
+              int thread_id = job_array[a].worker_id;
+              for(int b = 0; b < k; b++)
+              {
+                thread_time[thread_id][b] += all_knn_results[a][b].time;
+              }
+            }
+            
+
+            for(int b = 0; b < num_k_values; b++)
+            {
+              unsigned int curr_k = k_values[b];
+              // printf("\n\n- -- -- -- k = %u -- -- -- -\n\n", curr_k);
+
+              double max_cpu_time = 0, min_cpu_time = FLT_MAX; 
+              int max_cpu_thread_id = -1, min_cpu_thread_id = -1;
+
+              for(int th = 0; th < num_threads; th++)
+              {
+                if(thread_time[th][curr_k-1] > max_cpu_time)
+                { 
+                  max_cpu_time = thread_time[th][curr_k-1];
+                  max_cpu_thread_id = th;
+                }
+                // if(thread_time[th][curr_k] < min_cpu_time)
+                // {
+                //   min_cpu_time = thread_time[th][curr_k];
+                //   min_cpu_thread_id = th;
+                // }
+                // print_thread_query_stats(index, th);
               }
 
-              if(index->stats->thread_query_total_input_time[th] > max_input_time)
-              { 
-                max_input_time = index->stats->thread_query_total_input_time[th];
-                max_in_thread_id = th;
-              }
-              if(index->stats->thread_query_total_input_time[th] < min_input_time)
-              { 
-                min_input_time = index->stats->thread_query_total_input_time[th];
-                min_in_thread_id = th;
-              }
-
-              print_thread_query_stats(index, th);
+              printf("k = %u, t = %f\n", max_cpu_time/1000000, curr_k);
+              // printf("THREAD %d HAS MIN CPU TIME = %f\n", min_cpu_time/1000000, min_cpu_thread_id);
             }
 
-            printf("THREAD %d HAS MAX CPU TIME = %f\n", max_cpu_time/1000000, max_cpu_thread_id);
-            printf("THREAD %d HAS MAX INPUT TIME = %f\n", max_input_time/1000000, max_in_thread_id);
+            // measure recall at each nn, to visualize recall improvement/ degredattion
+            unsigned int num_gt_neighbors = 0;
+            float recall = 0.0;
+            float k_recall = 0.0;
 
-            printf("THREAD %d HAS MIN CPU TIME = %f\n", min_cpu_time/1000000, min_cpu_thread_id);
-            printf("THREAD %d HAS MIN INPUT TIME = %f\n", min_input_time/1000000, min_in_thread_id);
+            // for(int a = 0; a < 1; a++)
+            // {
+            //   // num_gt_neighbors = get_num_identical_results(ground_truth_results, num_gt_results, a);
+            //   printf("recall report for query vector %d -- -- -- --\n");
+            //   printf("k;\t\ts;\t\td;\t\trecall;\t\t\n");
+              
+            //   for(int b = 0; b < k; b++)
+            //   {
+            //     recall = compute_vector_recall(all_knn_results[a], ground_truth_results, a, b+1);
+            //     printf("%d;\t\t(%u,%u,%u);\t\t%f;\t\t%f;\n", b+1, all_knn_results[a][b].table_id,
+            //            all_knn_results[a][b].set_id, all_knn_results[a][b].pos, all_knn_results[a][b].distance, recall);
+            //   }
+            // }
 
-            // for(int th = 0; th < num_threads; th++)
-            //   pthread_join(worker_threads[th], NULL); 
+
+            // printf("recall report for query column (%u, %u) -- -- -- --\n", job_array[0].query_id.table_id, job_array[0].query_id.set_id);
+            //   printf("k;\t\trecall;\t\t\n");
+            // for(int b = 0; b < k; b++)
+            // {
+            //   recall = compute_k_recall_from_matrix(all_knn_results, ground_truth_results, nvec, b+1, num_gt_results);
+            //   printf("%d;\t\t%f;\n", b+1, recall);
+            // }
+
+            
+            // for(int b = 0; b < k; b++)
+            // {
+            //   printf("recall report for k -- -- -- --\n");
+            //   printf("k;\t\trecall;\t\t\n");
+              
+            //   for(int a = 1; a < nvec; a++)
+            //   {
+            //     recall = compute_vector_recall_identical_results(recall_matrix, a, b+1, b+1);
+            //     printf("%d;\t\t(%u,%u,%u);\t\t%f;\t\t%f;\n", b+1, all_knn_results[a][b].table_id,
+            //            all_knn_results[a][b].set_id, all_knn_results[a][b].pos, all_knn_results[a][b].distance, recall);
+            //   }
+            // }
 
             // store query results
             if(store_results_in_disk)
@@ -2095,8 +2185,6 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 free(query_result_file);
               }
             }
-            
-            
 
             // free memory
             // kill worker thread and destroy barrier
