@@ -3120,15 +3120,21 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
       }
       
       // printf("worked_thread (worker #%d):\t(!!!) notify coordinator ...\n", worker_id);
+      
+      printf("worked_thread (worker #%d):\t(!!!) wait for coordinator (start)...\n", worker_id);
+      pthread_barrier_wait(knn_update_barrier);
+      printf("worked_thread (worker #%d):\t(!!!) wait for coordinator (end)...\n", worker_id);
+
       if(empty_queue)
       {
-        pthread_barrier_wait(knn_update_barrier);
+        // pthread_barrier_wait(knn_update_barrier);
         int working = __sync_sub_and_fetch(&(thread_pool->working[worker_id]), 1);
-        // printf("worked_thread (worker #%d):\t\t (-)\t end work, state = %d...\n", worker_id, working);
+        printf("worked_thread (worker #%d):\t(xxx) work done. signal coordinator.\n", worker_id);
       }
-      else
-        pthread_barrier_wait(knn_update_barrier);
-
+      pthread_mutex_lock( &(thread_pool->cond_mutex[worker_id]));
+      pthread_cond_signal(&(thread_pool->cond_thread_state[worker_id]));
+      pthread_mutex_unlock( &(thread_pool->cond_mutex[worker_id]));
+      
     }
     is_recently_updated = 0;
     iteration++;

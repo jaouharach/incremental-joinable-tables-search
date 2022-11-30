@@ -13,6 +13,7 @@
 #include <linux/limits.h>
 #include "../include/utils.h"
 #include "../include/stats.h"
+#include <errno.h>
 
 int main(int argc, char const *argv[])
 {   
@@ -133,6 +134,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
     unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top, char * result_dir,
     unsigned int total_data_file, unsigned int data_gb_size, unsigned int k, unsigned char identical_knn_search)
 {
+    printf("bf_sequential_search();\n");
     RESET_PARTIAL_COUNTERS()
     COUNT_PARTIAL_TIME_START
     int opened_files = 0; 
@@ -195,7 +197,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
             COUNT_PARTIAL_INPUT_TIME_END
             if (bin_file == NULL)
             {
-                printf("Error in bf.c: File %s not found!\n", bin_file_path);
+                printf("Error in bf.c: File %s not found! because of error: %s\n", bin_file_path, strerror(errno));
                 exit(1);
             }
 
@@ -227,6 +229,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                         i = 0;
                         j = 0;
                         total_bytes -= nvec * vector_length;
+                        //printf("size = %u, skip();\n", nvec);
                         continue;
                     }
                     found_query = true;
@@ -241,8 +244,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                             exit(1);
                         }
                     }
-                    printf("Query %u/%u. id:(%u, %u) \n\n", (total_queries-qset_num)+1, total_queries, table_id, set_id);
-                    
+                    printf("\nQuery %u/%u. id:(%u, %u), size = %u\n\n", (total_queries-qset_num)+1, total_queries, table_id, set_id, nvec);
                     
                     total_checked_vec = 0;
                     next_vec = 0;
@@ -375,6 +377,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                     j++;
                 }
             }
+            fclose(bin_file);
         }
     }
     COUNT_PARTIAL_INPUT_TIME_START

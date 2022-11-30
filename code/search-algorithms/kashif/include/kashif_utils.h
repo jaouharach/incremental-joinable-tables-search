@@ -1075,6 +1075,8 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
   pthread_barrier_t *knn_update_barrier = malloc((num_threads) * sizeof(pthread_barrier_t));
   char * finished = calloc(num_threads, sizeof(char));
   pool->threads = malloc((num_threads) * sizeof(pthread_t));
+  pool->cond_thread_state = malloc((num_threads) * sizeof(pthread_cond_t));
+  pool->cond_mutex = malloc((num_threads) * sizeof(pthread_mutex_t));
   pool->executed_jobs_count = calloc(num_threads, sizeof(unsigned int));
   pool->working = calloc(num_threads, sizeof(unsigned int));
   pool->params = malloc(sizeof(struct worker_param) * num_threads);
@@ -1100,6 +1102,8 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
     printf("\ncoordinator_thread:\t (!)\tstart thread %u --- --- --- --- ---\n", i);
     // init barriers
     pthread_barrier_init(&knn_update_barrier[i], NULL, 2);
+    pthread_cond_init(&(pool->cond_thread_state[i]), NULL);
+    pthread_mutex_init(&(pool->cond_mutex[i]), NULL);
 
     pool->params[i].worker_id = (uint8_t)i;
     pool->params[i].thread_pool = pool;
@@ -1133,24 +1137,33 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
 
 
   // get result incrementally
-  unsigned int pool_done = 1;
+  unsigned int pool_done = 0;
   unsigned int thread_done = 0;
   unsigned int all_finished = 0;
 
-  while(1)
+  while(pool_done != 1)
   {
+    pool_done = 0;
+    all_finished = 0;
     for (int th = 0; th < num_threads; th++) 
     {
       
       __atomic_load(&(pool->working[th]), &thread_done, 1);
-      printf("\ncoordinator_thread:\t (Check)\tis thread %d working ? answer =  %d\n", th, thread_done);
+      // printf("\ncoordinator_thread:\t (Check)\tis thread %d working ? answer =  %d\n", th, thread_done);
       thread_done = 0;
 
       if(!(atomic_compare_exchange_strong(&(pool->working[th]), &thread_done, thread_done)))
       {
+        // wait for thread to update its state
+        pthread_mutex_lock( &(pool->cond_mutex[th]));
         printf("\ncoordinator_thread:\t (Zzz)\twaiting... thread %d working = %d\n", th, pool->working[th]);
         pthread_barrier_wait(&knn_update_barrier[th]);
-        printf("\ncoordinator_thread:\t (!)\treceived new knn results from thread %d\n", th);
+        printf("\ncoordinator_thread:\t (!)\tNew NNs from thread %d.\n", th);
+        printf("\ncoordinator_thread:\t (!)\tWait for thread %d to update its state.\n", th);
+        
+        pthread_cond_wait(&(pool->cond_thread_state[th]), &(pool->cond_mutex[th]));
+        printf("\ncoordinator_thread:\t (!)\tThread %d has updated its state.\n", th);
+        pthread_mutex_unlock( &(pool->cond_mutex[th]));
         // compute current recall
         // float recall_from_matrix = compute_recall_from_matrix(recall_matrix, num_query_vectors, k, num_gt_results);
         // printf("\ncoordinator_thread:\t (!)\tcurrent recall =%f\n", recall_from_matrix); 
@@ -1159,11 +1172,9 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
     if((atomic_compare_exchange_strong(&(pool->num_working_threads), &all_finished, all_finished)))
     {
       printf("\ncoordinator_thread:\t (!)\tpool done, nb working threads = %u\n", pool->num_working_threads);
-      pool_done == 1;
+      pool_done = 1;
       break;
     }
-    pool_done = 0;
-    all_finished = 0;
   }  
   
 

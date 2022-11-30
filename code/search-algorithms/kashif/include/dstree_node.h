@@ -51,6 +51,9 @@ struct pool {
 	unsigned int job_counter;
 
 	pthread_t *threads;
+  pthread_cond_t *cond_thread_state;
+  pthread_mutex_t *cond_mutex;
+  
   unsigned int *executed_jobs_count;// nb of executed jobs for each thread
   void *(*function)(void *);
 

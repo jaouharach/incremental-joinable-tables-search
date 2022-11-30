@@ -2005,7 +2005,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
           }
 
           INIT_THREAD_STATS(num_threads)
-          printf("\nQuery (%d, %d) ...\n", table_id, set_id);
+          printf("\nQuery (%d, %d), |Q| = %u ...\n", table_id, set_id, nvec);
 
           set_id += 1;
           i++;
