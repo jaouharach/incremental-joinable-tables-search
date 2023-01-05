@@ -99,8 +99,8 @@ unsigned long get_total_data_vectors(char *bindir,
 unsigned int get_data_gb_size(char *dl_dir, unsigned int total_data_files);
 int get_ndigits(unsigned int n);
 int delete_directory(char * dir_path);
-struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_results, 
-                         unsigned int num_top);
+struct result_sid *get_top_sets(struct result_vid **knn_results, int num_query_vectors, unsigned int k, 
+                        int num_top, unsigned int * total_matching_columns);
 
 struct result_table *get_top_tables_by_euclidean_distance(struct query_result *knn_results, int num_knn_results, 
                          unsigned int num_top);
@@ -132,7 +132,7 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
               float warping, struct result_vid ** all_knn_results, unsigned char store_results_in_disk,
               unsigned int *k_values, unsigned int num_k_values, struct result_vid *ground_truth_results,
               unsigned int num_gt_results, int8_t * recall_matrix, unsigned int num_query_vectors,
-              struct job * job_array, unsigned int vector_length);
+              struct job * job_array, unsigned int vector_length, unsigned int stop_when_nn_dist_changes);
 
 // fill job queue of the thread pool
 struct pool_queue * pool_init_job_queue(struct vid *query_id_arr, int ** query_order_arr,
@@ -511,82 +511,105 @@ char *make_result_directory(char *result_dir, unsigned int l, unsigned int nq,
 }
 
 // get sets with the the largest number of matching vectors with the query (highest ovelap size)
-struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_results, 
-                         unsigned int num_top)
+struct result_sid *get_top_sets(struct result_vid **knn_results, int num_query_vectors, unsigned int k, 
+                        int num_top, unsigned int *total_matching_columns)
 {
   // frequency = number of matching vectors with the query set vectors
-  int i, j, k;
+  int i, j;
 
   struct result_sid * distinct_sets = NULL;
   struct vid * distinct_match_vectors = NULL;
 
-
+  *total_matching_columns = 0;
   unsigned int num_distinct_sets = 0;
+  unsigned int num_distinct_vectors = 0;
+  
+
   int found = 0;
+  int new_column = -1, new_vector = -1;
 
   num_distinct_sets += 1;
   distinct_sets = realloc(distinct_sets, sizeof(struct result_sid));
-  distinct_sets[0].table_id = knn_results[0].vector_id->table_id;
-  distinct_sets[0].set_id = knn_results[0].vector_id->set_id;
+  distinct_sets[0].table_id = knn_results[0][0].table_id;
+  distinct_sets[0].set_id = knn_results[0][0].set_id;
+  // strcpy(distinct_sets[0].raw_data_file, knn_results[0][0].raw_data_file);
   distinct_sets[0].overlap_size = 0;
-  strcpy(distinct_sets[0].raw_data_file, knn_results[0].vector_id->raw_data_file);
 
-  // get distinct sets
-  for ( i = 1; i < num_knn_results; i++)
-  {
-    found = 0;
-    for(j = num_distinct_sets - 1; j >= 0; j--)
-    {
-      if(distinct_sets[j].table_id == knn_results[i].vector_id->table_id)
-        if(distinct_sets[j].set_id == knn_results[i].vector_id->set_id)
-        {
-          found = 1;
-          break;
-        }
-    }
-    if(found == 0)
-    {
-      num_distinct_sets += 1;
-      distinct_sets = realloc(distinct_sets, (sizeof(struct result_sid) * num_distinct_sets));
-      distinct_sets[num_distinct_sets - 1].table_id = knn_results[i].vector_id->table_id;
-      distinct_sets[num_distinct_sets - 1].set_id = knn_results[i].vector_id->set_id;
-      distinct_sets[num_distinct_sets - 1].overlap_size = 0;
-      strcpy(distinct_sets[num_distinct_sets - 1].raw_data_file, knn_results[i].vector_id->raw_data_file);
-    }
-  }
-
-  unsigned int num_distinct_vectors = 0;
-  
   num_distinct_vectors += 1;
   distinct_match_vectors = realloc(distinct_match_vectors, sizeof(struct vid));
-  distinct_match_vectors[0].table_id = knn_results[0].vector_id->table_id;
-  distinct_match_vectors[0].set_id = knn_results[0].vector_id->set_id;
-  distinct_match_vectors[0].pos = knn_results[0].vector_id->pos;
+  distinct_match_vectors[0].table_id = knn_results[0][0].table_id;
+  distinct_match_vectors[0].set_id = knn_results[0][0].set_id;
+  distinct_match_vectors[0].pos = knn_results[0][0].pos;
 
-  // get distinct vectors
-  for ( i = 1; i < num_knn_results; i++)
+
+  // get distinct sets & vectors
+  for(int a = 0; a < num_query_vectors; a++)
   {
-    found = 0;
-    for(j = num_distinct_vectors - 1; j >= 0; j--)
+    float first_dist = knn_results[a][0].distance;
+    for(int b = 0; b < k; b++)
     {
-      if(distinct_match_vectors[j].table_id == knn_results[i].vector_id->table_id)
-        if(distinct_match_vectors[j].set_id == knn_results[i].vector_id->set_id)
-        if(distinct_match_vectors[j].pos == knn_results[i].vector_id->pos)
-        {
-          found = 1;
-          break;
-        }
-    }
-    if(found == 0)
-    {
-      num_distinct_vectors += 1;
-      distinct_match_vectors = realloc(distinct_match_vectors, (sizeof(struct vid) * num_distinct_vectors));
-      distinct_match_vectors[num_distinct_vectors - 1].table_id = knn_results[i].vector_id->table_id;
-      distinct_match_vectors[num_distinct_vectors - 1].set_id = knn_results[i].vector_id->set_id;
-      distinct_match_vectors[num_distinct_vectors - 1].pos = knn_results[i].vector_id->pos;
+      // stop when distnace changes
+      if(knn_results[a][b].distance > first_dist)
+        break;
+
+      new_column = 1;
+      new_vector = 1;
+      for(j = num_distinct_sets - 1; j >= 0; j--)
+      {
+        if(distinct_sets[j].table_id == knn_results[a][b].table_id)
+          if(distinct_sets[j].set_id == knn_results[a][b].set_id)
+          {
+            new_column = 0;
+            break;
+          }
+      }
+      for(j = num_distinct_vectors - 1; j >= 0; j--)
+      {
+        if(distinct_match_vectors[j].table_id == knn_results[a][b].table_id)
+          if(distinct_match_vectors[j].set_id == knn_results[a][b].set_id)
+          if(distinct_match_vectors[j].pos == knn_results[a][b].pos)
+          {
+            new_vector = 0;
+            break;
+          }
+      }
+      // get distinct columns (sets)
+      if(new_column == 1)
+      {
+        
+        distinct_sets = realloc(distinct_sets, (sizeof(struct result_sid) * (num_distinct_sets+1)));
+        distinct_sets[num_distinct_sets].table_id = knn_results[a][b].table_id;
+        distinct_sets[num_distinct_sets].set_id = knn_results[a][b].set_id;
+        distinct_sets[num_distinct_sets].overlap_size = 0;
+        // strcpy(distinct_sets[num_distinct_sets].raw_data_file, knn_results[a][b].raw_data_file);
+        num_distinct_sets += 1;
+      }
+      // get distinct vectors
+      if(new_vector == 1)
+      {
+        
+        distinct_match_vectors = realloc(distinct_match_vectors, (sizeof(struct vid) * (num_distinct_vectors+1)));
+        distinct_match_vectors[num_distinct_vectors].table_id = knn_results[a][b].table_id;
+        distinct_match_vectors[num_distinct_vectors].set_id = knn_results[a][b].set_id;
+        distinct_match_vectors[num_distinct_vectors].pos = knn_results[a][b].pos;
+        num_distinct_vectors += 1;
+      }
     }
   }
+  
 
+  // print distinct column ids: 
+
+  // printf("all knn results : \n ");
+  // for(int a = 0; a < num_query_vectors; a++)
+  // {
+  //   for(int b = 0; b < k; b++)
+  //     printf("%d, %d: (%u, %u, %u)\n", a, b+1, knn_results[a][b].table_id, knn_results[a][b].set_id, knn_results[a][b].pos);
+  //   printf("\n");
+  // }
+
+  
+  // measure column overlap with the query column
   for(i = num_distinct_sets - 1; i >= 0; i--)
   {
     for(j = num_distinct_vectors - 1; j >= 0; j--)
@@ -599,8 +622,8 @@ struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_re
     }
   }
 
-  // fill the rest withe the last elemet
-  if(num_distinct_sets < num_top)
+  // fill the rest of 'num_top' with the last elemet
+  if((num_top != -1) && (num_distinct_sets < num_top))
   {
     distinct_sets = realloc(distinct_sets, (sizeof(struct result_sid) * num_top));
     struct result_sid * last = &distinct_sets[num_distinct_sets - 1];
@@ -616,6 +639,7 @@ struct result_sid *get_top_sets(struct query_result *knn_results, int num_knn_re
 
   free(distinct_match_vectors);
 
+  *total_matching_columns = num_distinct_sets;
   return distinct_sets;
 }
 
@@ -1027,14 +1051,14 @@ static void * start_thread(void *arg)
     if(job_idx >= thread_pool->num_jobs) // no more jobs
     {
       num_working_threads = __sync_sub_and_fetch(&(thread_pool->num_working_threads), 1);
-      printf("worked_thread (worker #%d):\t(XXX) i'm done !\n", thread_id);
+      // printf("worked_thread (worker #%d):\t(XXX) i'm done !\n", thread_id);
       
-      if(num_working_threads == 0)
-      {
-        printf("worked_thread (worker #%d):\t(Last) last to finish !\n", thread_id);
-        // pthread_barrier_wait(param->knn_update_barrier);
-        // printf("worked_thread (worker #%d):\t(Left) i left !\n", thread_id);
-      }
+      // if(num_working_threads == 0)
+      // {
+      //   printf("worked_thread (worker #%d):\t(Last) last to finish !\n", thread_id);
+      //   // pthread_barrier_wait(param->knn_update_barrier);
+      //   // printf("worked_thread (worker #%d):\t(Left) i left !\n", thread_id);
+      // }
       
       break;
     }
@@ -1042,8 +1066,8 @@ static void * start_thread(void *arg)
     struct job * curr_job = &(thread_pool->job_array[job_idx]);
     curr_job->worker_id = thread_id;
 
-    printf("worked_thread (worker #%d):\t> start knn search with job: (%u, %u, %u)...\n",
-            thread_id, curr_job->query_id.table_id, curr_job->query_id.set_id, curr_job->query_id.pos);
+    // printf("worked_thread (worker #%d):\t> start knn search with job: (%u, %u, %u)...\n",
+    //         thread_id, curr_job->query_id.table_id, curr_job->query_id.set_id, curr_job->query_id.pos);
 
     // take query vector from job and add it to thread param
     param->query_id = &(curr_job->query_id);
@@ -1051,12 +1075,12 @@ static void * start_thread(void *arg)
     param->query_ts = curr_job->query_vector;
     param->query_ts_reordered = curr_job->query_vector_reordered;
     thread_pool->function(param); // run knn search 
-    printf("worked_thread (worker #%d):\t< end knn search .\n", thread_id);
+    // printf("worked_thread (worker #%d):\t< end knn search .\n", thread_id);
 
     thread_pool->executed_jobs_count[thread_id]++;
   }
 
-  printf("worked_thread (worker #%d):\t(X) end.\n", thread_id);
+  // printf("worked_thread (worker #%d):\t(X) end.\n", thread_id);
 	return NULL;
 }
 
@@ -1066,9 +1090,9 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
               float warping, struct result_vid ** all_knn_results, unsigned char store_results_in_disk,
               unsigned int *k_values, unsigned int num_k_values, struct result_vid *ground_truth_results,
               unsigned int num_gt_results, int8_t * recall_matrix, unsigned int num_query_vectors,
-              struct job * job_array, unsigned int vector_length)
+              struct job * job_array, unsigned int vector_length, unsigned int stop_when_nn_dist_changes)
 {
-  printf("\ncoordinator_thread:\t (!)\tinit pool: #threads = %d\n", num_threads);
+  // printf("\ncoordinator_thread:\t (!)\tinit pool: #threads = %d\n", num_threads);
   // init query stats
   dstree_init_thread_stats(index, num_threads);
   
@@ -1118,6 +1142,7 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
     pool->params[i].total_checked_ts = total_checked_ts;
     pool->params[i].total_query_set_time = total_query_time;
     pool->params[i].warping = warping;
+    pool->params[i].stop_when_nn_dist_changes = stop_when_nn_dist_changes;
 
     pool->params[i].global_knn_results = all_knn_results;
     pool->params[i].store_results_in_disk = store_results_in_disk;
@@ -1156,13 +1181,13 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
       {
         // wait for thread to update its state
         pthread_mutex_lock( &(pool->cond_mutex[th]));
-        printf("\ncoordinator_thread:\t (Zzz)\twaiting... thread %d working = %d\n", th, pool->working[th]);
+        // printf("\ncoordinator_thread:\t (Zzz)\twaiting... thread %d working = %d\n", th, pool->working[th]);
         pthread_barrier_wait(&knn_update_barrier[th]);
-        printf("\ncoordinator_thread:\t (!)\tNew NNs from thread %d.\n", th);
-        printf("\ncoordinator_thread:\t (!)\tWait for thread %d to update its state.\n", th);
+        // printf("\ncoordinator_thread:\t (!)\tNew NNs from thread %d.\n", th);
+        // printf("\ncoordinator_thread:\t (!)\tWait for thread %d to update its state.\n", th);
         
         pthread_cond_wait(&(pool->cond_thread_state[th]), &(pool->cond_mutex[th]));
-        printf("\ncoordinator_thread:\t (!)\tThread %d has updated its state.\n", th);
+        // printf("\ncoordinator_thread:\t (!)\tThread %d has updated its state.\n", th);
         pthread_mutex_unlock( &(pool->cond_mutex[th]));
         // compute current recall
         // float recall_from_matrix = compute_recall_from_matrix(recall_matrix, num_query_vectors, k, num_gt_results);
@@ -1171,7 +1196,7 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
     }
     if((atomic_compare_exchange_strong(&(pool->num_working_threads), &all_finished, all_finished)))
     {
-      printf("\ncoordinator_thread:\t (!)\tpool done, nb working threads = %u\n", pool->num_working_threads);
+      // printf("\ncoordinator_thread:\t (!)\tpool done, nb working threads = %u\n", pool->num_working_threads);
       pool_done = 1;
       break;
     }
@@ -1181,8 +1206,8 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
   printf("\ncoordinator_thread:\t\t(X) end, all workers have finished, freeing thread pool.\n");
   pool_end(pool);
 
-  printf("\ncoordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", 
-          job_array[0].query_id.table_id, job_array[0].query_id.set_id);
+  // printf("\ncoordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", 
+          // job_array[0].query_id.table_id, job_array[0].query_id.set_id);
 
   // free memory
   free(finished);

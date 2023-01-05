@@ -2826,6 +2826,8 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
   double * total_query_set_time = param->total_query_set_time;
   unsigned int * total_checked_ts = param->total_checked_ts;
   float warping = param->warping;
+  unsigned int stop_when_nn_dist_changes = param->stop_when_nn_dist_changes;
+
   struct vid * query_id = param->query_id;
   pthread_barrier_t * knn_update_barrier = param->knn_update_barrier;
   unsigned char store_results_in_disk = param->store_results_in_disk;
@@ -2857,7 +2859,8 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
   unsigned int update_recall_start_at = 0;
   unsigned int update_recall_end_at = 0;
   int8_t is_recently_updated = 0;
-  
+  int8_t nn_dist_changed = 0;
+  unsigned int nn_dist_changed_at = k-1; // position of the last nn with the same distance to the query as the first nn.
   
   knn_results = calloc(k, sizeof(struct query_result));
   // recall_matrix[q] = calloc(k, sizeof(int8_t));
@@ -3006,7 +3009,7 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
         update_recall_start_at = update_recall_end_at;
         update_recall_end_at = k;
         is_recently_updated = 1;
-        break;
+        break; // last increment
       }
 
       if (n->node->is_leaf) // n is a leaf
@@ -3096,8 +3099,59 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
       *finished = 1;
     }
     
+    // report result to the coordinator
     if(is_recently_updated == 1)
     {
+      // find where nn distance has changed
+      if((stop_when_nn_dist_changes != 0))
+      {
+        printf("\n(q = %d) checking if NN distance has changed ...\n", knn_results[0].query_vector_pos);
+        ts_type first_nn_dist = knn_results[0].distance;
+        for(int nn = 0; nn < k; nn++)
+        {
+          if(knn_results[nn].distance != first_nn_dist)
+          {
+            nn_dist_changed = 1;
+            nn_dist_changed_at = nn - 1;
+            break;
+          }
+        }
+      
+        // only report nns of the same distance as the first nn 
+        if((stop_when_nn_dist_changes == 1) && nn_dist_changed)
+        {
+          for(int nn = (nn_dist_changed_at + 1); nn < k; nn++)
+          {
+            // remove results after distance change (make as all zeros result)
+            knn_results[nn].vector_id->table_id = 0;
+            knn_results[nn].vector_id->set_id = 0;
+            knn_results[nn].vector_id->pos = 0;
+          }
+        }
+        // only report nns of the same distance as the first nn (and the rest of results found in the last increment)
+        else if((stop_when_nn_dist_changes == 2) && nn_dist_changed)
+        {
+          printf("\n(!) Query vector %d: Remove results in [%d - %d]\n", knn_results[0].query_vector_pos, update_recall_end_at, k);
+          for(int nn = update_recall_end_at; nn < k; nn++)
+          {
+            // remove results not found by last increment
+            knn_results[nn].vector_id->table_id = 0;
+            knn_results[nn].vector_id->set_id = 0;
+            knn_results[nn].vector_id->pos = 0;
+          }
+        }
+        printf("\n(q = %d) checking if NN distance has changed (done)\n", knn_results[0].query_vector_pos);
+
+
+        if(nn_dist_changed == 1) // stop knn search
+        {
+          printf("\n(q = %d) NN distance has changed (exit)\n", knn_results[0].query_vector_pos);
+          while ((n_tmp = pqueue_pop(pq)))  //empty the queue for this vector
+            free(n_tmp);
+          empty_queue = 1;
+        }
+      }
+
       // printf("(q = %d) start updating recall in interval [%d, %d[\n", q, update_recall_start_at[q], update_recall_end_at[q]);
       // temp change below
       // compute_one_query_vector_recall(ground_truth_results, num_gt_results, knn_results, update_recall_start_at,
@@ -3121,16 +3175,16 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
       
       // printf("worked_thread (worker #%d):\t(!!!) notify coordinator ...\n", worker_id);
       
-      printf("worked_thread (worker #%d):\t(!!!) wait for coordinator (start)...\n", worker_id);
+      // printf("worked_thread (worker #%d):\t(!!!) wait for coordinator (start)...\n", worker_id);
       pthread_barrier_wait(knn_update_barrier);
-      printf("worked_thread (worker #%d):\t(!!!) wait for coordinator (end)...\n", worker_id);
+      // printf("worked_thread (worker #%d):\t(!!!) wait for coordinator (end)...\n", worker_id);
 
       if(empty_queue)
       {
-        // pthread_barrier_wait(knn_update_barrier);
         int working = __sync_sub_and_fetch(&(thread_pool->working[worker_id]), 1);
-        printf("worked_thread (worker #%d):\t(xxx) work done. signal coordinator.\n", worker_id);
+        // printf("worked_thread (worker #%d):\t(xxx) work done. signal coordinator.\n", worker_id);
       }
+      
       pthread_mutex_lock( &(thread_pool->cond_mutex[worker_id]));
       pthread_cond_signal(&(thread_pool->cond_thread_state[worker_id]));
       pthread_mutex_unlock( &(thread_pool->cond_mutex[worker_id]));

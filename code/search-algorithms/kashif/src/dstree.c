@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
   char * k_values_str = "1,3,5,10,30,50,100,300,500,1000,3000,5000";
   char * ground_truth_dir = "";
   unsigned int num_threads = 1;
+  unsigned int stop_when_nn_dist_changes = 0; // = 0 return all knn, = 1 stop when nn distance changes, = 2 (similar to 1) but return all results in the last increment.
   /* end kashif changes */
 
   // printf("new code\n");
@@ -131,7 +132,8 @@ int main(int argc, char **argv) {
         {"ground-truth-dir", required_argument, 0, '&'},
         {"parallel", no_argument, 0, '-'},
         {"store-results-in-disk", required_argument, 0, '!'},
-        {"num-threads", required_argument, 0, ')'}
+        {"num-threads", required_argument, 0, ')'},
+        {"stop-when-nn-dist-changes", required_argument, 0, '$'}, // stop knn search when nn distance changes
         /* end kashif changes */
     };
 
@@ -352,6 +354,10 @@ int main(int argc, char **argv) {
 
     case ')':
       num_threads = atoi(optarg);
+      break;
+
+    case '$':
+      stop_when_nn_dist_changes = atoi(optarg);
       break;
 
     /* end kashif changes */
@@ -592,7 +598,7 @@ int main(int argc, char **argv) {
       dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
-                                    warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk, num_threads);
+                                    warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk, num_threads, stop_when_nn_dist_changes);
     }
       // dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
       //                               minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,

@@ -1555,7 +1555,8 @@ enum response dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(
               param->total_checked_ts = &total_checked_ts;
               param->total_query_set_time = &total_query_time;
               param->warping = warping;
-
+              param->stop_when_nn_dist_changes = 0;
+              
               param->global_knn_results = all_knn_results;
               param->store_results_in_disk = store_results_in_disk;
               param->k_values = k_values; // k values for which we want to record results
@@ -1763,7 +1764,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
     float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir,
-    unsigned char store_results_in_disk, unsigned int num_threads) 
+    unsigned char store_results_in_disk, unsigned int num_threads, unsigned int stop_when_nn_dist_changes) 
 {
   // worker threads and barriers
   // int8_t num_threads = 0;
@@ -2060,7 +2061,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                   r_delta, total_checked_ts, &total_query_time, 
                   warping, all_knn_results, store_results_in_disk,
                   k_values, num_k_values, ground_truth_results,
-                  num_gt_results, recall_matrix, nvec, job_array, vector_length);            
+                  num_gt_results, recall_matrix, nvec, job_array, vector_length, stop_when_nn_dist_changes);            
 
 
             // printf("Stats:\t (...)\t");
@@ -2123,9 +2124,9 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             }
 
             // measure recall at each nn, to visualize recall improvement/ degredattion
-            unsigned int num_gt_neighbors = 0;
-            float recall = 0.0;
-            float k_recall = 0.0;
+            // unsigned int num_gt_neighbors = 0;
+            // float recall = 0.0;
+            // float k_recall = 0.0;
 
             // for(int a = 0; a < 1; a++)
             // {
@@ -2184,6 +2185,41 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 }
                 free(query_result_file);
               }
+            }
+
+            // print joinable tables
+            if(keyword_search)
+            {
+              // don't change these lines to allaow ui to fetch results
+                struct result_table* top = get_top_tables_by_euclidean_distance(all_knn_results, k*nvec, num_top);
+                for(int m = 0; m < num_top; m++)
+                {
+                  printf("table-%u- in file @@%s$ min_distance=%.3f§ num_closest=%u# total_matches=%uµ\n", top[m].table_id, top[m].raw_data_file, top[m].min_distance, top[m].num_min, top[m].total_matches);
+                }
+                free(top);
+                // don't change these lines to allaow ui to fetch results
+            } 
+            else
+            {
+                // don't change these lines to allaow ui to fetch results
+                unsigned int total_matching_columns = 0;
+                struct result_sid * top = get_top_sets(all_knn_results, nvec, k, -1, &total_matching_columns);
+
+                printf("Joinable columns, %d in total : \n ");
+                printf("query_column,\tmatching_colun,\toverlap \n");
+                for(int a = 0; a < total_matching_columns; a++)
+                {
+                  printf("t%u_c%u,\t\tt%u_c%u,\t\t%u\n",
+                        job_array[0].query_id.table_id, job_array[0].query_id.set_id, 
+                        top[a].table_id, top[a].set_id, 
+                        top[a].overlap_size);
+                }
+                // for(int m = 0; m < num_top; m++)
+                // {
+                //   printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+                // }
+                free(top);
+                // don't change these lines to allaow ui to fetch results
             }
 
             // free memory

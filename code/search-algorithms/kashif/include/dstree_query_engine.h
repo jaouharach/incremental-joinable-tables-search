@@ -64,6 +64,7 @@ typedef struct worker_param {
   double *total_query_set_time;
   unsigned int *total_checked_ts;
   float warping;
+  unsigned int stop_when_nn_dist_changes;
 
   struct result_vid **global_knn_results;
   unsigned char store_results_in_disk; // if true results will be copied to global_knn_results
