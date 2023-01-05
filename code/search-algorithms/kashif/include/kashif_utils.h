@@ -80,6 +80,12 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
 enum response store_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
                                         unsigned int qset_id, int nqvec,
                                         struct result_vid **knn_results, unsigned int k);
+
+// store query results in disk, for multi thread knn search (correct way)
+enum response store_parallel_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
+                                        unsigned int qset_id, int nqvec,
+                                        struct result_vid **knn_results, unsigned int k, double *max_thread_time);
+
 // create experiment results dir
 char *make_result_directory(char *result_dir, unsigned int total_data_files,
                             unsigned int nq, unsigned int min_qset_size,
@@ -421,7 +427,8 @@ enum response save_to_query_result_file(char *csv_file, unsigned int qtable_id,
 // store query results in disk, for multi thread knn search
 enum response store_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
                                         unsigned int qset_id, int nqvec,
-                                        struct result_vid **knn_results, unsigned int k) {
+                                        struct result_vid **knn_results, unsigned int k)
+{
   FILE *fp;
   int i, j;
   COUNT_OUTPUT_TIME_START
@@ -464,10 +471,58 @@ enum response store_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
   fclose(fp);
 
   // add query time to file name and rename csv file
-  char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 20 + 1);
+  
+  char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 50 + 1);
   sprintf(new_csv_filename, "%s_runtime%.4f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
   
   printf("[k = %u] Combined total query time  = %f\n", k, total_querytime/1000000);
+  int ret = rename(csv_file, new_csv_filename);
+  
+  free(new_csv_filename);
+  return SUCCESS;
+}
+
+// store query results in disk, for multi thread knn search
+enum response store_parallel_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
+                                        unsigned int qset_id, int nqvec,
+                                        struct result_vid **knn_results, unsigned int k, double *max_thread_time)
+{
+  FILE *fp;
+  int i, j;
+  COUNT_OUTPUT_TIME_START
+  fp = fopen(csv_file, "w+");
+  COUNT_OUTPUT_TIME_END
+  if (fp == NULL) 
+  {
+    fprintf(stderr, "Error in kashif_utils.h: Could not open file %s, reason = %s!\n", csv_file, strerror(errno));
+    return FAILURE;
+  }
+
+  // write header
+  fprintf(fp, "TQ:Q, TS:S, q_pos, s_pos, q, s, d, time, k");
+  unsigned int total_checked_vec = 0;
+  
+  // write results for a specific k value
+  for (int q = 0; q < nqvec; q++)// vector counter
+  {
+    for(int s = 0; s < k; s++)// k counter
+    {
+      fprintf(fp, "\n");
+      fprintf(fp, "%u:%u, %u:%u, %u, %u, [], [], %f, %.7f, %u", qtable_id, qset_id,
+            knn_results[q][s].table_id, knn_results[q][s].set_id, knn_results[q][s].distance,
+            knn_results[q][s].qpos, knn_results[q][s].pos, knn_results[q][s].time/1000000, k);
+    total_checked_vec += knn_results[q][s].num_checked_vectors;
+    }
+    
+  }
+  
+  fclose(fp);
+
+  // add query time to file name and rename csv file
+  char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 20 + 1);
+  sprintf(new_csv_filename, "%s_runtime%.4f_ndistcalc_dataaccess%u.csv\0", csv_file,  max_thread_time[k-1]/1000000, total_checked_vec);
+  
+  printf("[k = %u] Combined total query time  = %f\n", k, max_thread_time[k-1]/1000000);
   int ret = rename(csv_file, new_csv_filename);
   
   free(new_csv_filename);
@@ -1205,7 +1260,7 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
 
   printf("\ncoordinator_thread:\t\t(X) end, all workers have finished, freeing thread pool.\n");
   pool_end(pool);
-
+  free(knn_update_barrier);
   // printf("\ncoordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", 
           // job_array[0].query_id.table_id, job_array[0].query_id.set_id);
 
@@ -1229,8 +1284,13 @@ void pool_end(struct pool *pool)
 	}
 
   free(thread_pool->threads);
+  free(thread_pool->cond_thread_state);
+  free(thread_pool->cond_mutex);
   free(thread_pool->executed_jobs_count);
   free(thread_pool->params);
+  free(thread_pool->working);
+  
+  free(thread_pool);
 
   printf("coordinator_thread:\t (!)\tend freeing pool resources.\n");
 }

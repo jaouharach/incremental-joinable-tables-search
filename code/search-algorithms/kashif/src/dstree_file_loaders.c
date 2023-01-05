@@ -2095,7 +2095,12 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
               }
             }
             
-
+            double * max_thread_time = malloc(k * sizeof(double));
+            if(max_thread_time == NULL)
+            {
+              fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for max thread time array.\n");
+              exit(1);
+            }
             for(int b = 0; b < num_k_values; b++)
             {
               unsigned int curr_k = k_values[b];
@@ -2118,8 +2123,8 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 // }
                 // print_thread_query_stats(index, th);
               }
-
-              printf("k = %u, t = %f\n", max_cpu_time/1000000, curr_k);
+              max_thread_time[curr_k-1] = max_cpu_time;
+              printf("k = %u, t = %f, #th = %d\n", max_cpu_time/1000000, curr_k, num_threads);
               // printf("THREAD %d HAS MIN CPU TIME = %f\n", min_cpu_time/1000000, min_cpu_thread_id);
             }
 
@@ -2177,13 +2182,13 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 char *query_result_file = make_file_path(results_dir, job_array[0].query_id.table_id, job_array[0].query_id.set_id, nvec,
                                         total_data_files, dlsize, vector_length, curr_k);
 
-                if(!store_knn_results_in_disk(query_result_file, job_array[0].query_id.table_id, job_array[0].query_id.set_id,
-                                        nvec, all_knn_results, curr_k))
+                if(!store_parallel_knn_results_in_disk(query_result_file, job_array[0].query_id.table_id, job_array[0].query_id.set_id,
+                                        nvec, all_knn_results, curr_k, max_thread_time))
                 {
                   fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't save query results to file %s.", query_result_file);
                   exit(1);
                 }
-                free(query_result_file);
+                free(query_result_file);              
               }
             }
 
@@ -2205,8 +2210,8 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 unsigned int total_matching_columns = 0;
                 struct result_sid * top = get_top_sets(all_knn_results, nvec, k, -1, &total_matching_columns);
 
-                printf("Joinable columns, %d in total : \n ");
-                printf("query_column,\tmatching_colun,\toverlap \n");
+                printf("Joinable columns, %d in total : \n ", total_matching_columns);
+                printf("query_column,\tmatching_column,\toverlap \n");
                 for(int a = 0; a < total_matching_columns; a++)
                 {
                   printf("t%u_c%u,\t\tt%u_c%u,\t\t%u\n",
@@ -2214,6 +2219,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                         top[a].table_id, top[a].set_id, 
                         top[a].overlap_size);
                 }
+                printf("\nend print joinable tables.\n");
                 // for(int m = 0; m < num_top; m++)
                 // {
                 //   printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
@@ -2227,6 +2233,21 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             // pthread_cancel(worker_thread);
             // pthread_barrier_destroy(&knn_update_barrier);
 
+            // free thread time
+            free(max_thread_time);
+            for(int th = 0; th < num_threads; th++)
+            {
+              free(thread_time[th]);
+            }
+            free(thread_time);
+            
+            // free recall matrix
+            for (int q = 0, i = 1; q < nvec; ++q) 
+            { 
+              free(recall_matrix[q]);
+            }
+            free(recall_matrix);
+            
             // free ground truth results
             free(ground_truth_results);
 
