@@ -2085,7 +2085,26 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
               }
             }
             
+            // report query time and query results
+            char file_res [] = "query_results.csv\0";
+            char file_time [] = "query_time.csv\0";
 
+            FILE *fpr, *fpt;
+
+            COUNT_OUTPUT_TIME_START
+            fpr = fopen(file_res, "a");
+            fpt = fopen(file_time, "a");
+            COUNT_OUTPUT_TIME_END
+
+            if (fpr == NULL || fpt == NULL) {
+              fprintf(stderr, "Error in dstree_file_loaders.c: Could not open file %s or file %s!\n", file_res, file_time);
+              return FAILURE;
+            }
+
+            COUNT_OUTPUT_TIME_START
+            fprintf(fpr, "tqq,tss,overlap\n");
+            fprintf(fpt, "k,querytime,nb_threads\n");
+            
             for(int a = 0; a < nvec; a++)
             {
               int thread_id = job_array[a].worker_id;
@@ -2125,8 +2144,11 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
               }
               max_thread_time[curr_k-1] = max_cpu_time;
               printf("k = %u, t = %f, #th = %d\n", max_cpu_time/1000000, curr_k, num_threads);
+              fprintf(fpt, "%u,%f,%d\n", max_cpu_time/1000000, curr_k, num_threads);
               // printf("THREAD %d HAS MIN CPU TIME = %f\n", min_cpu_time/1000000, min_cpu_thread_id);
             }
+            fclose(fpt);
+            COUNT_OUTPUT_TIME_END
 
             // measure recall at each nn, to visualize recall improvement/ degredattion
             // unsigned int num_gt_neighbors = 0;
@@ -2210,16 +2232,21 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 unsigned int total_matching_columns = 0;
                 struct result_sid * top = get_top_sets(all_knn_results, nvec, k, -1, &total_matching_columns);
 
+                
                 printf("Joinable columns, %d in total : \n ", total_matching_columns);
-                printf("query_column,\tmatching_column,\toverlap \n");
+                COUNT_OUTPUT_TIME_START
                 for(int a = 0; a < total_matching_columns; a++)
                 {
-                  printf("t%u_c%u,\t\tt%u_c%u,\t\t%u\n",
+                  fprintf(fpr, "t%uc%u,t%uc%u,%u\n",
                         job_array[0].query_id.table_id, job_array[0].query_id.set_id, 
                         top[a].table_id, top[a].set_id, 
                         top[a].overlap_size);
                 }
+
                 printf("\nend print joinable tables.\n");
+                fclose(fpr);
+                COUNT_OUTPUT_TIME_END
+
                 // for(int m = 0; m < num_top; m++)
                 // {
                 //   printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);

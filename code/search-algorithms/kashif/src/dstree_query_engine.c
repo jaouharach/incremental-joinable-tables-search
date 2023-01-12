@@ -3105,7 +3105,7 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
       // find where nn distance has changed
       if((stop_when_nn_dist_changes != 0))
       {
-        printf("\n(q = %d) checking if NN distance has changed ...\n", knn_results[0].query_vector_pos);
+        // printf("\n(q = %d) checking if NN distance has changed ...\n", knn_results[0].query_vector_pos);
         ts_type first_nn_dist = knn_results[0].distance;
         for(int nn = 0; nn < k; nn++)
         {
@@ -3120,12 +3120,22 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
         // only report nns of the same distance as the first nn 
         if((stop_when_nn_dist_changes == 1) && nn_dist_changed)
         {
+          printf("\n(!) Query vector %d: Remove results in [%d - %d]\n", knn_results[0].query_vector_pos, 
+          (nn_dist_changed_at + 1), k);
+
           for(int nn = (nn_dist_changed_at + 1); nn < k; nn++)
           {
             // remove results after distance change (make as all zeros result)
             knn_results[nn].vector_id->table_id = 0;
             knn_results[nn].vector_id->set_id = 0;
             knn_results[nn].vector_id->pos = 0;
+
+            if(store_results_in_disk)
+            {
+              global_knn_results[query_pos][nn].table_id = 0;
+              global_knn_results[query_pos][nn].set_id = 0;
+              global_knn_results[query_pos][nn].pos = 0;
+            }
           }
         }
         // only report nns of the same distance as the first nn (and the rest of results found in the last increment)
@@ -3138,14 +3148,21 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
             knn_results[nn].vector_id->table_id = 0;
             knn_results[nn].vector_id->set_id = 0;
             knn_results[nn].vector_id->pos = 0;
+            
+            if(store_results_in_disk)
+            {
+              global_knn_results[query_pos][nn].table_id = 0;
+              global_knn_results[query_pos][nn].set_id = 0;
+              global_knn_results[query_pos][nn].pos = 0;
+            }
           }
         }
-        printf("\n(q = %d) checking if NN distance has changed (done)\n", knn_results[0].query_vector_pos);
+        // printf("\n(q = %d) checking if NN distance has changed (done)\n", knn_results[0].query_vector_pos);
 
 
         if(nn_dist_changed == 1) // stop knn search
         {
-          printf("\n(q = %d) NN distance has changed (exit)\n", knn_results[0].query_vector_pos);
+          // printf("\n(q = %d) NN distance has changed (exit)\n", knn_results[0].query_vector_pos);
           while ((n_tmp = pqueue_pop(pq)))  //empty the queue for this vector
             free(n_tmp);
           empty_queue = 1;
@@ -3170,6 +3187,7 @@ void exact_de_parallel_multi_thread_incr_knn_search(void * parameters)
           global_knn_results[query_pos][x].qpos = knn_results[x].query_vector_pos;
           global_knn_results[query_pos][x].time = knn_results[x].time;
           global_knn_results[query_pos][x].num_checked_vectors = knn_results[x].num_checked_vectors;
+
         }
       }
       

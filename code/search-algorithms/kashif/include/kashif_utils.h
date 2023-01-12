@@ -600,12 +600,12 @@ struct result_sid *get_top_sets(struct result_vid **knn_results, int num_query_v
   // get distinct sets & vectors
   for(int a = 0; a < num_query_vectors; a++)
   {
-    float first_dist = knn_results[a][0].distance;
+    // float first_dist = knn_results[a][0].distance;
     for(int b = 0; b < k; b++)
     {
-      // stop when distnace changes
-      if(knn_results[a][b].distance > first_dist)
-        break;
+      // // stop when distance changes
+      // if(knn_results[a][b].distance > first_dist)
+      //   break;
 
       new_column = 1;
       new_vector = 1;
