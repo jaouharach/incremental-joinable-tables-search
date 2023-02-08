@@ -1,0 +1,1 @@
+g++ -c ostree.cpp -o ostree.o

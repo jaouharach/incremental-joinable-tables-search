@@ -19,6 +19,11 @@ valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset  /home/
 
 valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset /data/real/jchanchaf/wdc-2015-en-full/10m/bins/ --total-data-files 50000 --buffer-size 6000 --index-path ../50k-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100000
 
+
+(for 100 tables, contains 552 columns, 5699 vectors)
+
+bin/dstree --dataset /data/real/jchanchaf/wdc-2015-en-full/subsets/100-nonorm/ --total-data-files 100 --buffer-size 600 --index-path /home/jaouhara.chanchaf/work-dir/indexes/100-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100
+
 2- run queries on index (for 100k tables):
 
 bin/dstree --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/query-columns[10]-size[5-10] --nq 10  --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins --total-data-files 100000 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/kashif-search/10nn/ --buffer-size 6000 --index-path /home/jaouhara.chanchaf/Projects/IQA/iqa-demo/code/100k-idx/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0 --k 10 --timeseries-size 50 --track-vector 1 --warping 0.00 --min-qset-size 5 --max-qset-size 10 --leaf-size 1000000 --top 10

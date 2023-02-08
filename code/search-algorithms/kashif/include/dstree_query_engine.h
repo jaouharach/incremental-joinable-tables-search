@@ -267,6 +267,23 @@ void approximate_knn_search_para_incr(ts_type *query_ts, ts_type *query_ts_reord
                             double * total_query_set_time, unsigned int * total_checked_ts,
                             unsigned int thread_id);
 
+void approximate_knn_search_para_incr_ostree(ts_type *query_ts, ts_type *query_ts_reordered,
+                            int *query_order, unsigned int offset,
+                            struct dstree_index *index,
+                            void *knn_tree, unsigned int k,
+                            unsigned int *curr_size, float warping, struct vid * query_id,
+                            double * total_query_set_time, unsigned int * total_checked_ts,
+                            unsigned int thread_id, unsigned long * insert_counter);
+
+
+void approximate_knn_search_para_incr_mmheap(ts_type *query_ts, ts_type *query_ts_reordered,
+                            int *query_order, unsigned int offset,
+                            struct dstree_index *index,
+                            void * knn_heap, unsigned int k,
+                            unsigned int *curr_size, float warping, struct vid * query_id,
+                            double * total_query_set_time, unsigned int * total_checked_ts,
+                            unsigned int thread_id, unsigned long * insert_counter);
+
 void approximate_knn_search_2(ts_type *query_ts, ts_type *query_ts_reordered,
                             int *query_order, unsigned int offset,
                             struct dstree_index *index,
@@ -309,7 +326,13 @@ struct query_result * exact_de_progressive_knn_search_2(
     unsigned int *cur_bsf_snapshot, unsigned int query_vector_pos);
 
 void exact_de_parallel_single_thread_incr_knn_search(void * parameters);
-void exact_de_parallel_multi_thread_incr_knn_search(void * parameters);
+
+
+// multi thread knn search 
+void exact_de_parallel_multi_thread_incr_knn_search(void * parameters); // (using sorted array)
+void exact_de_parallel_multi_thread_incr_knn_search_ostree(void * parameters); // (using ostree)
+void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters); // (using min max heap)
+
 /* end kashif changes */
 
 #endif

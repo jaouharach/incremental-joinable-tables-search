@@ -2103,7 +2103,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
 
             COUNT_OUTPUT_TIME_START
             fprintf(fpr, "tqq,tss,overlap\n");
-            fprintf(fpt, "k,querytime,nb_threads\n");
+            fprintf(fpt, "k,querytime,nb_threads,data_structure\n");
             
             for(int a = 0; a < nvec; a++)
             {
@@ -2120,6 +2120,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
               fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for max thread time array.\n");
               exit(1);
             }
+            char data_struct [] = "sorted-array\0";
             for(int b = 0; b < num_k_values; b++)
             {
               unsigned int curr_k = k_values[b];
@@ -2143,8 +2144,10 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 // print_thread_query_stats(index, th);
               }
               max_thread_time[curr_k-1] = max_cpu_time;
-              printf("k = %u, t = %f, #th = %d\n", max_cpu_time/1000000, curr_k, num_threads);
-              fprintf(fpt, "%u,%f,%d\n", max_cpu_time/1000000, curr_k, num_threads);
+              printf("k,\tt,\t#th,\tdata_structure\n");
+              printf("%u,\t%f,\t%d,\t%s\n", curr_k, max_cpu_time/1000000, num_threads, data_struct);
+
+              fprintf(fpt, "%u,%f,%d,%s\n", curr_k, max_cpu_time/1000000, num_threads, data_struct);
               // printf("THREAD %d HAS MIN CPU TIME = %f\n", min_cpu_time/1000000, min_cpu_thread_id);
             }
             fclose(fpt);
@@ -2226,7 +2229,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 free(top);
                 // don't change these lines to allaow ui to fetch results
             } 
-            else
+            else if (0)
             {
                 // don't change these lines to allaow ui to fetch results
                 unsigned int total_matching_columns = 0;

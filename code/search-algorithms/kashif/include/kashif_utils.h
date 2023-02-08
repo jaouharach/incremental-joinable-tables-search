@@ -1147,7 +1147,7 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
               unsigned int num_gt_results, int8_t * recall_matrix, unsigned int num_query_vectors,
               struct job * job_array, unsigned int vector_length, unsigned int stop_when_nn_dist_changes)
 {
-  // printf("\ncoordinator_thread:\t (!)\tinit pool: #threads = %d\n", num_threads);
+  printf("\ncoordinator_thread:\t (!)\tinit pool: #threads = %d\n", num_threads);
   // init query stats
   dstree_init_thread_stats(index, num_threads);
   
@@ -1178,7 +1178,7 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
   // set thread parameters
 	for (int i = 0; i < num_threads; i++) 
   {
-    printf("\ncoordinator_thread:\t (!)\tstart thread %u --- --- --- --- ---\n", i);
+    // printf("\ncoordinator_thread:\t (!)\tstart thread %u --- --- --- --- ---\n", i);
     // init barriers
     pthread_barrier_init(&knn_update_barrier[i], NULL, 2);
     pthread_cond_init(&(pool->cond_thread_state[i]), NULL);

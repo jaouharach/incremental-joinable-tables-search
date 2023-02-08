@@ -84,6 +84,10 @@ int main(int argc, char **argv) {
   char * ground_truth_dir = "";
   unsigned int num_threads = 1;
   unsigned int stop_when_nn_dist_changes = 0; // = 0 return all knn, = 1 stop when nn distance changes, = 2 (similar to 1) but return all results in the last increment.
+  
+  char knn_data_structure [2][11] = {"sorted-arr\0", "ostree\0"};
+
+  unsigned int ostree = 0; //  = 1 use ostree, = 0 use sorted array
   /* end kashif changes */
 
   // printf("new code\n");
@@ -134,6 +138,9 @@ int main(int argc, char **argv) {
         {"store-results-in-disk", required_argument, 0, '!'},
         {"num-threads", required_argument, 0, ')'},
         {"stop-when-nn-dist-changes", required_argument, 0, '$'}, // stop knn search when nn distance changes
+        {"knn-data-structure", required_argument, 0, '('}, // in which data structure should we store knns 
+
+        
         /* end kashif changes */
     };
 
@@ -358,6 +365,21 @@ int main(int argc, char **argv) {
 
     case '$':
       stop_when_nn_dist_changes = atoi(optarg);
+      break;
+
+    case '(':
+      if (strcmp(optarg, knn_data_structure[1]) == 0)
+      {
+        printf("ostree\n");
+        ostree = 1;
+        exit(1);
+      }
+      else
+      {
+        printf("ostree\n");
+        ostree = 0;
+        exit(1);
+      }
       break;
 
     /* end kashif changes */

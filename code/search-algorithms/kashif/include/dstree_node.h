@@ -185,6 +185,24 @@ int calculate_node_knn_distance_para_incr(
     unsigned int *cur_size, float warping, struct vid * query_id,
     double * total_query_set_time, unsigned int * total_checked_ts,
     unsigned int thread_id, unsigned int approx);
+
+int calculate_node_knn_distance_para_incr_ostree(
+    struct dstree_index *index, struct dstree_node *node,
+    ts_type *query_ts_reordered, int *query_order, unsigned int offset,
+    unsigned int k, void *knn_tree,
+    unsigned int *cur_size, float warping, struct vid * query_id,
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int thread_id, unsigned int approx, unsigned long *insert_counter);
+
+
+int calculate_node_knn_distance_para_incr_mmheap(
+    struct dstree_index *index, struct dstree_node *node,
+    ts_type *query_ts_reordered, int *query_order, unsigned int offset,
+    unsigned int k, void * knn_heap,
+    unsigned int *cur_size, float warping, struct vid * query_id,
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int thread_id, unsigned int approx, unsigned long *insert_counter);
+    
 /* end kashif changes */
 enum response append_ts_gt_to_child_node(struct dstree_index * index,
 					 struct dstree_node * node,

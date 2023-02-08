@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "minmax_heap.h": "c",
+        "ostree.h": "c",
+        "dstree_query_engine.h": "c",
+        "*.tcc": "c",
+        "algorithm": "c",
+        "iterator": "c",
+        "random": "c",
+        "functional": "c"
+    }
+}

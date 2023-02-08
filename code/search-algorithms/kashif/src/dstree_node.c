@@ -15,6 +15,8 @@
 #include "../include/dstree_index.h"
 #include "../include/dstree_query_engine.h"
 #include "../include/pqueue.h"
+#include "../include/ostree/ostree.h"
+
 #include <float.h>
 #include <limits.h>
 #include <math.h>
@@ -963,6 +965,156 @@ int calculate_node_knn_distance_para_incr(
       {
         knn_results[stored_at].approx = 0; // overwrite result that was found in approximate search
       }
+      
+      // knn_results[stored_at].time = index->stats->thread_query_total_cpu_time[thread_id];
+      // knn_results[stored_at].num_checked_vectors = thread_checked_ts_count[thread_id];
+     
+      // RESET_THREAD_QUERY_COUNTERS(thread_id)
+      // RESET_THREAD_PARTIAL_COUNTERS(thread_id)
+      // COUNT_THREAD_PARTIAL_TIME_START(thread_id)
+      
+    }
+  }
+
+  // if (node->file_buffer != NULL) {
+  //   // clearing the data for this node
+  //   for (int i = 0; i < index->settings->max_leaf_size; ++i) {
+  //     free(node->file_buffer->buffered_list[i]);
+  //   }
+  //   free(node->file_buffer->buffered_list);
+  // }
+
+  // node->file_buffer->buffered_list = NULL;
+  // node->file_buffer->buffered_list_size = 0;
+
+  return num_nn;
+}
+
+
+int calculate_node_knn_distance_para_incr_ostree(
+    struct dstree_index *index, struct dstree_node *node,
+    ts_type *query_ts_reordered, int *query_order, unsigned int offset,
+    unsigned int k, void *knn_tree,
+    unsigned int *cur_size, float warping, struct vid * query_id,
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int thread_id, unsigned int approx, unsigned long * insert_counter)
+{
+  // get the k-th distance from the results queue
+  ts_type kth_bsf = FLT_MAX;
+  ts_type distance = FLT_MAX;
+  unsigned int num_nn = 0;
+
+  unsigned int ts_byte_size =
+      sizeof(ts_type) * index->settings->timeseries_size;
+
+  // count the number of leaves and the number of time series that were checked
+  // this is different from the count_loaded_node and counted_loaded_ts
+  // which count the number of leaves and time series that were not found in
+  // memory and had to be retrieved from disk
+  // checked_nodes = loaded_nodes + nodes_in_memory
+  COUNT_THREAD_CHECKED_NODE(thread_id)
+  COUNT_THREAD_CHECKED_TS(node->node_size,thread_id)
+
+  // TEST THAT DATA IS FULLY IN MEM
+  // If the leaf's data is in disk, load it
+
+  if (node->file_buffer->buffered_list_size == 0)
+  {
+    pthread_mutex_lock(&node->lock);
+    if (node->file_buffer->buffered_list_size == 0) {
+      COUNT_THREAD_LOADED_NODE(thread_id) 
+      COUNT_THREAD_LOADED_TS(node->node_size,thread_id)
+      // COUNT_PARTIAL_LOAD_NODE_TIME_START
+
+      node->file_buffer->buffered_list = get_all_time_series_in_node_para_incr(index, node, thread_id);
+      node->file_buffer->buffered_list_size = node->file_buffer->disk_count;
+
+      if (node->file_buffer->buffered_list == NULL) {
+        fprintf(stderr,
+                "Error in dstree_index.c:  Could not retrieve all time series "
+                "for node %s.\n",
+                node->filename);
+      }
+      // COUNT_PARTIAL_LOAD_NODE_TIME_END
+    }
+    pthread_mutex_unlock(&node->lock);
+  }
+
+  // If the leaf's data is in memory, proceed. A leaf's data is either fully in
+  // disk or in memory
+  double tS_bsf;
+  double tE_bsf;
+  struct timeval current_time_bsf;
+  boolean update_snapshots = false;
+
+  for (unsigned int idx = 0; idx < node->file_buffer->buffered_list_size;
+       ++idx) {
+        
+      if(index->vid_cache[(node->vid_pos) + idx].table_id == query_id->table_id)
+        continue;
+
+    struct query_result * kth_result = ostree_get_max(knn_tree);
+    kth_bsf = kth_result->distance;
+
+    //(sid) warping distance here
+    if (warping > 0) {
+      distance = ts_warping_distance(
+          query_ts_reordered, node->file_buffer->buffered_list[idx],
+          offset, // offset is 0 for whole matching
+          index->settings->timeseries_size, kth_bsf, query_order, warping);
+      // distance = get_dtw(query_ts_reordered, query_order,
+      // node->file_buffer->buffered_list[idx],
+      // warping*index->settings->timeseries_size,
+      // index->settings->timeseries_size, kth_bsf);
+    } else {
+      distance = ts_euclidean_distance_reordered(
+          query_ts_reordered, node->file_buffer->buffered_list[idx],
+          offset, // offset is 0 for whole matching
+          index->settings->timeseries_size, kth_bsf, query_order);
+    }
+
+    if (distance <= kth_bsf) // (tmp change) <= instead of <
+    {
+      num_nn++;
+      struct query_result * object_result = malloc(sizeof(struct query_result)); // =  malloc(sizeof(struct query_result));
+      object_result->node = node;
+      object_result->distance = distance;
+      if (index->settings->classify)
+        object_result->label = index->gt_cache[(node->gt_pos) + idx];
+
+      if (index->settings->track_file_pos)
+      {
+        object_result->file_pos = index->fp_cache[(node->fp_pos) + idx];
+        // object_result.series = calloc (1, ts_byte_size);
+        // mempcpy(object_result.series,node->file_buffer->buffered_list[idx],ts_byte_size);
+      }
+      if (index->settings->track_vector)
+      {
+        object_result->vector_id = (struct vid *) malloc(sizeof(struct vid));
+        object_result->vector_id->table_id = index->vid_cache[(node->vid_pos) + idx].table_id;
+        object_result->vector_id->set_id = index->vid_cache[(node->vid_pos) + idx].set_id;
+        object_result->vector_id->pos = index->vid_cache[(node->vid_pos) + idx].pos;
+        object_result->time = 0;
+        object_result->approx = approx;
+        object_result->num_checked_vectors = 0;
+        strcpy(object_result->vector_id->raw_data_file, index->vid_cache[(node->vid_pos) + idx].raw_data_file);
+      }
+          
+
+      ostree_insert(knn_tree, object_result, insert_counter);
+      // printf("bsf stored at %d,\n", stored_at);
+      update_snapshots = true;
+      
+      // if (index->settings->track_vector)
+      //   free(object_result.vector_id);
+
+      // COUNT_THREAD_PARTIAL_TIME_END(thread_id)
+      // update_thread_query_stats(index, thread_id);
+
+      // if(approx == 0 && knn_results[stored_at].approx == 1)
+      // {
+      //   knn_results[stored_at].approx = 0; // overwrite result that was found in approximate search
+      // }
       
       // knn_results[stored_at].time = index->stats->thread_query_total_cpu_time[thread_id];
       // knn_results[stored_at].num_checked_vectors = thread_checked_ts_count[thread_id];
