@@ -195,7 +195,7 @@ int calculate_node_knn_distance_para_incr_ostree(
     unsigned int thread_id, unsigned int approx, unsigned long *insert_counter);
 
 
-int calculate_node_knn_distance_para_incr_minmax_heap(
+int calculate_node_knn_distance_para_incr_mmheap(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
     unsigned int k, void * knn_heap,

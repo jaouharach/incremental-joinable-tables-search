@@ -22,13 +22,16 @@ void ostree_print(void * ost);
 void ostree_destroy(void * ost);
 
 
-// // Min Max Heap
-// void* mmheap_create(int heap_size, unsigned int query_pos); 
-// struct query_result *mmheap_get_max(void * h);
-// struct query_result *mmheap_get_min(void * h);
-// void mmheap_insert(void * h, struct query_result *qr);
-// void mmheap_print(void * h);
-// void mmheap_destroy(void * h);
+// Min Max Heap
+void* mmheap_create(int heap_size, unsigned int query_pos); 
+unsigned int mmheap_get_maxsize(void *h);
+struct query_result *mmheap_get_max(void * h);
+void mmheap_pop_max(void * h);
+struct query_result *mmheap_get_min(void * h);
+void mmheap_pop_min(void * h);
+void mmheap_insert(void * h, struct query_result *qr);
+void mmheap_print(void * h);
+void mmheap_destroy(void * h);
 
 
 #ifdef __cplusplus

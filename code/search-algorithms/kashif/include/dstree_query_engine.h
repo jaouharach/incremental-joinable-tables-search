@@ -276,7 +276,7 @@ void approximate_knn_search_para_incr_ostree(ts_type *query_ts, ts_type *query_t
                             unsigned int thread_id, unsigned long * insert_counter);
 
 
-void approximate_knn_search_para_incr_minmax_mheap(ts_type *query_ts, ts_type *query_ts_reordered,
+void approximate_knn_search_para_incr_mmheap(ts_type *query_ts, ts_type *query_ts_reordered,
                             int *query_order, unsigned int offset,
                             struct dstree_index *index,
                             void * knn_heap, unsigned int k,
@@ -331,7 +331,7 @@ void exact_de_parallel_single_thread_incr_knn_search(void * parameters);
 // multi thread knn search 
 void exact_de_parallel_multi_thread_incr_knn_search(void * parameters); // (using sorted array)
 void exact_de_parallel_multi_thread_incr_knn_search_ostree(void * parameters); // (using ostree)
-void exact_de_parallel_multi_thread_incr_knn_search_minmax_mheap(void * parameters); // (using min max heap)
+void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters); // (using min max heap)
 
 /* end kashif changes */
 

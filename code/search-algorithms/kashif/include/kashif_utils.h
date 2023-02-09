@@ -1236,9 +1236,9 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
       {
         // wait for thread to update its state
         pthread_mutex_lock( &(pool->cond_mutex[th]));
-        // printf("\ncoordinator_thread:\t (Zzz)\twaiting... thread %d working = %d\n", th, pool->working[th]);
+        printf("\ncoordinator_thread:\t (Zzz)\twaiting... thread %d working = %d\n", th, pool->working[th]);
         pthread_barrier_wait(&knn_update_barrier[th]);
-        // printf("\ncoordinator_thread:\t (!)\tNew NNs from thread %d.\n", th);
+        printf("\ncoordinator_thread:\t (!)\tNew NNs from thread %d.\n", th);
         // printf("\ncoordinator_thread:\t (!)\tWait for thread %d to update its state.\n", th);
         
         pthread_cond_wait(&(pool->cond_thread_state[th]), &(pool->cond_mutex[th]));

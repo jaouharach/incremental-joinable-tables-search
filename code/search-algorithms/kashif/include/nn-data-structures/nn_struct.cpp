@@ -142,9 +142,32 @@ void ostree_destroy(void * tree)
 
 
 /* (START) MIN MAX  HEAP CODE  */
+
+struct knn_heap
+{
+    vector<struct query_result*> *heap;
+    unsigned int max_size; // the maximum nb of nodes to store in heap
+} knn_heap;
+
+
+unsigned int mmheap_get_maxsize(void *h)
+{
+    struct knn_heap * knn_heap = (struct knn_heap *) h;
+    return knn_heap->max_size;
+}
+
 void* mmheap_create(int heap_size, unsigned int query_pos)
 {
-    vector<struct query_result*>* heap = new vector<struct query_result*>;
+    struct knn_heap * knn_heap  = (struct knn_heap *) malloc(sizeof(struct knn_heap));
+    if(knn_heap == NULL)
+    {
+        fprintf(stderr, "Error in nn_struct.c: Cannot allocate memory for knn heap.\n");
+        exit(1);
+    }
+
+    knn_heap->heap = new vector<struct query_result*>;
+    knn_heap->max_size = heap_size;
+    
     for(int i = 0; i < heap_size; i++)
     {
         struct query_result * qr = (struct query_result *) malloc(sizeof(struct query_result));
@@ -171,72 +194,115 @@ void* mmheap_create(int heap_size, unsigned int query_pos)
         qr->query_vector_pos = query_pos;
         qr->approx = 1;
         
-        heap->push_back(qr);
+        knn_heap->heap->push_back(qr);
     }
-    return (void *) heap;
+    return (void *) knn_heap;
 }
 
 // insert a new element to the heap (delete max and insert new element)
 void mmheap_insert(void * h, struct query_result *qr)
 {
-    vector<struct query_result *>* heap = (vector<struct query_result *>*) h;
+    struct knn_heap * knn_heap = (struct knn_heap *) h;
+    vector<struct query_result *>* heap = knn_heap->heap;
+    
+    qr->query_vector_pos = heap->back()->query_vector_pos; // keep track of query pos
 
-    pop_minmax_heap_max(heap->begin(), heap->end()); // put max at the end of the heap (array)
+    if(heap->size() == knn_heap->max_size) // heap is full must delete max
+    {
+        pop_minmax_heap_max(heap->begin(), heap->end()); // put max at the end of the heap (array)
 
-    struct query_result * max = heap->back(); // get max 
-    qr->query_vector_pos = max->query_vector_pos; // keep trach of query vector pos (in query column)
-    free(max->vector_id);  // free allocated memory
-    free(max);
+        struct query_result * max = heap->back(); // get max 
+        free(max->vector_id);  // free allocated memory
+        free(max);
 
-    heap->back() = qr;
-    push_minmax_heap(heap->begin(), heap->end());
+        heap->back() = qr;
+        push_minmax_heap(heap->begin(), heap->end());
+    }
+    else if (heap->size() < knn_heap->max_size) // heap is not full add new nn
+    {
+        heap->push_back(qr);
+        push_minmax_heap(heap->begin(), heap->end());
+    }
+    else
+    {
+        fprintf(stderr, "Error in nn_struct.c: knn heap size shouldn't exceed %u!\n", knn_heap->max_size);
+        exit(1);
+    }
 }
 
 
 void mmheap_print(void * h)
 {
-    vector<struct query_result *>* heap = (vector<struct query_result *>*) h;
+    struct knn_heap * knn_heap = (struct knn_heap *) h;
+    vector<struct query_result *>* heap = knn_heap->heap;
     int i = 0;
     for(struct query_result * num: *heap)
-        printf("[k-%u]\t(%u, %u), d = %f, t = %f)\n", i++, num->vector_id->table_id, num->vector_id->set_id, num->distance, num->time);
+        printf("[k-%u]\tq:%u\tv:(%u, %u),\td = %f,\tt = %f)\n", i++, num->query_vector_pos, num->vector_id->table_id, num->vector_id->set_id, num->distance, num->time);
 }
 
 // get min element from heap
 struct query_result *mmheap_get_min(void * h)
 {
-    vector<struct query_result *>* heap = (vector<struct query_result *>*) h;
+    struct knn_heap * knn_heap = (struct knn_heap *) h;
+    vector<struct query_result *>* heap = knn_heap->heap;
     return heap->front();
 }
 
 // remove min element from heap
 void mmheap_pop_min(void * h)
 {
-    vector<struct query_result *>* heap = (vector<struct query_result *>*) h;
+    struct knn_heap * knn_heap = (struct knn_heap *) h;
+    vector<struct query_result *>* heap = knn_heap->heap;
     pop_minmax_heap_min(heap->begin(), heap->end());
     heap->pop_back();
+    knn_heap->max_size--;
 }
 
 // get max element from heap
 struct query_result *mmheap_get_max(void * h)
 {
-    vector<struct query_result *>* heap = (vector<struct query_result *>*) h;
-    if (heap->at(1)->distance > heap->at(2)->distance)
+    struct knn_heap * knn_heap = (struct knn_heap *) h;
+    vector<struct query_result *>* heap = knn_heap->heap;
+
+    if (heap->size() >= 3)
+    {
+        if (heap->at(1)->distance > heap->at(2)->distance)
+            return heap->at(1);
+        else 
+            return heap->at(2);
+    }
+    else if (heap->size() == 2)
+    {
         return heap->at(1);
-    else 
-        return heap->at(2);
+    }
+    else if (heap->size() == 1)
+    {
+        return heap->at(0);
+    }
+
+    if(heap->size() == 0)
+    {
+        fprintf(stderr, "Error in nn_struct.c: Cannit find max in empty knn heap!\n", knn_heap->max_size);
+        exit(1);
+    }
 }
 
 // remove max element from heap
 void mm_heap_pop_max(void * h)
 {
-    vector<struct query_result*>* heap = (vector<struct query_result *>*) h;
+    struct knn_heap * knn_heap = (struct knn_heap *) h;
+    vector<struct query_result *>* heap = knn_heap->heap;
+
     pop_minmax_heap_max(heap->begin(), heap->end());
     heap->pop_back();
 }
 
 void mmheap_destroy(void * h)
 {
-    vector<struct query_result *>* heap = (vector<struct query_result *>*) h;
+
+    struct knn_heap * knn_heap = (struct knn_heap *) h;
+    vector<struct query_result *>* heap = knn_heap->heap;
+
     unsigned int heap_size = heap->size();
     struct query_result * qr = NULL;
     for (int i = 0; i < heap_size; i++)
@@ -246,5 +312,6 @@ void mmheap_destroy(void * h)
         free(qr);
     }
     delete(heap);
+    free(knn_heap);
 }
 /* (END) MIN MAX  HEAP CODE  */

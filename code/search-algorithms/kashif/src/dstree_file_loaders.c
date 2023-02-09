@@ -2072,14 +2072,12 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             else if (nn_struct == 1) // use min max heap to store kNNs
             {
               strcpy(data_struct, "minmax-heap\0");
-              fprintf(stderr, "Error in dstree_file_loaders.c: unkown nn_struct value!\n");
-              exit(1);
-              // init_thread_pool(thread_pool, index, epsilon, k,
-              //     exact_de_parallel_multi_thread_incr_knn_search_minmax_mheap, num_threads,  offset,
-              //     r_delta, total_checked_ts, &total_query_time, 
-              //     warping, all_knn_results, store_results_in_disk,
-              //     k_values, num_k_values, ground_truth_results,
-              //     num_gt_results, recall_matrix, nvec, job_array, vector_length, stop_when_nn_dist_changes);            
+              init_thread_pool(thread_pool, index, epsilon, k,
+                  exact_de_parallel_multi_thread_incr_knn_search_mmheap, num_threads,  offset,
+                  r_delta, total_checked_ts, &total_query_time, 
+                  warping, all_knn_results, store_results_in_disk,
+                  k_values, num_k_values, ground_truth_results,
+                  num_gt_results, recall_matrix, nvec, job_array, vector_length, stop_when_nn_dist_changes);            
             }
             else if (nn_struct == 2) // use ostree to store kNNs
             {
