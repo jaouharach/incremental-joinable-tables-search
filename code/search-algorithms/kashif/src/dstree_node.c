@@ -15,7 +15,7 @@
 #include "../include/dstree_index.h"
 #include "../include/dstree_query_engine.h"
 #include "../include/pqueue.h"
-#include "../include/ostree/ostree.h"
+#include "../include/nn-data-structures/nn_struct.h"
 
 #include <float.h>
 #include <limits.h>

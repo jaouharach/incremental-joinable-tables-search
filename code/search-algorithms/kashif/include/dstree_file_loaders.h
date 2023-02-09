@@ -79,7 +79,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
     float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir,
-    unsigned char store_results_in_disk, unsigned int num_threads, unsigned int stop_when_nn_dist_changes);
+    unsigned char store_results_in_disk, unsigned int num_threads, unsigned int stop_when_nn_dist_changes, unsigned int nn_struct);
     
 /* end kashif changes */
 #endif

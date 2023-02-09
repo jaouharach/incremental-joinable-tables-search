@@ -1764,7 +1764,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
     float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir,
-    unsigned char store_results_in_disk, unsigned int num_threads, unsigned int stop_when_nn_dist_changes) 
+    unsigned char store_results_in_disk, unsigned int num_threads, unsigned int stop_when_nn_dist_changes, unsigned int nn_struct) 
 {
   // worker threads and barriers
   // int8_t num_threads = 0;
@@ -2056,13 +2056,46 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             // create worker threads, 1 query vector per thread
             printf("coordinator_thread:\t\tinit thread pool with  %d threads, |Q| = %d.\n", num_threads, nvec);
             struct pool * thread_pool = (struct pool *) malloc(sizeof(struct pool));
-            init_thread_pool(thread_pool, index, epsilon, k,
+            char data_struct [12] = "";
+
+            if(nn_struct == 0)
+            {
+              strcpy(data_struct, "sorted-arr\0");
+              init_thread_pool(thread_pool, index, epsilon, k,
                   exact_de_parallel_multi_thread_incr_knn_search, num_threads,  offset,
                   r_delta, total_checked_ts, &total_query_time, 
                   warping, all_knn_results, store_results_in_disk,
                   k_values, num_k_values, ground_truth_results,
                   num_gt_results, recall_matrix, nvec, job_array, vector_length, stop_when_nn_dist_changes);            
 
+            }
+            else if (nn_struct == 1) // use min max heap to store kNNs
+            {
+              strcpy(data_struct, "minmax-heap\0");
+              fprintf(stderr, "Error in dstree_file_loaders.c: unkown nn_struct value!\n");
+              exit(1);
+              // init_thread_pool(thread_pool, index, epsilon, k,
+              //     exact_de_parallel_multi_thread_incr_knn_search_minmax_mheap, num_threads,  offset,
+              //     r_delta, total_checked_ts, &total_query_time, 
+              //     warping, all_knn_results, store_results_in_disk,
+              //     k_values, num_k_values, ground_truth_results,
+              //     num_gt_results, recall_matrix, nvec, job_array, vector_length, stop_when_nn_dist_changes);            
+            }
+            else if (nn_struct == 2) // use ostree to store kNNs
+            {
+              strcpy(data_struct, "os-tree\0");
+              init_thread_pool(thread_pool, index, epsilon, k,
+                  exact_de_parallel_multi_thread_incr_knn_search_ostree, num_threads,  offset,
+                  r_delta, total_checked_ts, &total_query_time, 
+                  warping, all_knn_results, store_results_in_disk,
+                  k_values, num_k_values, ground_truth_results,
+                  num_gt_results, recall_matrix, nvec, job_array, vector_length, stop_when_nn_dist_changes);
+            }
+            else
+            {
+              fprintf(stderr, "Error in dstree_file_loaders.c: unkown nn_struct value!\n");
+              exit(1);
+            }
 
             // printf("Stats:\t (...)\t");
             double max_cpu_time = 0, min_cpu_time = FLT_MAX; 
@@ -2120,7 +2153,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
               fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for max thread time array.\n");
               exit(1);
             }
-            char data_struct [] = "sorted-array\0";
+            
             for(int b = 0; b < num_k_values; b++)
             {
               unsigned int curr_k = k_values[b];

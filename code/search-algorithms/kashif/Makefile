@@ -149,8 +149,7 @@ am_lib_libdstree_a_OBJECTS = src/lib_libdstree_a-pqueue.$(OBJEXT) \
 	src/lib_libdstree_a-dstree_query_engine.$(OBJEXT) \
 	src/lib_libdstree_a-dstree_file_buffer.$(OBJEXT) \
 	src/lib_libdstree_a-dstree_file_buffer_manager.$(OBJEXT)\
-	include/ostree/ostree.o\
-	include/mmheap/minmax_heap.o
+	include/nn-data-structures/nn_struct.o
 lib_libdstree_a_OBJECTS = $(am_lib_libdstree_a_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
 am_bin_dstree_OBJECTS = src/bin_dstree-dstree.$(OBJEXT)

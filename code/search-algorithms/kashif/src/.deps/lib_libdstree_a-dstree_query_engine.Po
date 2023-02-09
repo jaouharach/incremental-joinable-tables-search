@@ -70,11 +70,10 @@ src/lib_libdstree_a-dstree_query_engine.o: src/dstree_query_engine.c \
  /usr/include/x86_64-linux-gnu/bits/setjmp.h \
  src/../include/dstree_file_buffer_manager.h \
  src/../include/dstree_index.h src/../include/dstree_node.h \
- src/../include/dstree_query_engine.h src/../include/ostree/ostree.h \
- src/../include/ostree/../../globals.h \
- src/../include/ostree/../dstree_node.h \
- src/../include/ostree/../dstree_query_engine.h src/../include/pqueue.h \
- /usr/include/values.h \
+ src/../include/dstree_query_engine.h \
+ src/../include/nn-data-structures/nn_struct.h \
+ src/../include/nn-data-structures/../dstree_query_engine.h \
+ src/../include/pqueue.h /usr/include/values.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed/limits.h \
  /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed/syslimits.h \
  /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
@@ -270,13 +269,9 @@ src/../include/dstree_node.h:
 
 src/../include/dstree_query_engine.h:
 
-src/../include/ostree/ostree.h:
+src/../include/nn-data-structures/nn_struct.h:
 
-src/../include/ostree/../../globals.h:
-
-src/../include/ostree/../dstree_node.h:
-
-src/../include/ostree/../dstree_query_engine.h:
+src/../include/nn-data-structures/../dstree_query_engine.h:
 
 src/../include/pqueue.h:
 

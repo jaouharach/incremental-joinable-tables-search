@@ -85,9 +85,10 @@ int main(int argc, char **argv) {
   unsigned int num_threads = 1;
   unsigned int stop_when_nn_dist_changes = 0; // = 0 return all knn, = 1 stop when nn distance changes, = 2 (similar to 1) but return all results in the last increment.
   
-  char knn_data_structure [2][11] = {"sorted-arr\0", "ostree\0"};
+  char knn_data_structure [3][12] = {"sorted-arr\0", "minmax-heap\0", "ostree\0"};
 
-  unsigned int ostree = 0; //  = 1 use ostree, = 0 use sorted array
+  unsigned int nn_struct = 0; //  = 0 use sorted array, = 1 use min max heap, = 2 use ostree
+
   /* end kashif changes */
 
   // printf("new code\n");
@@ -368,18 +369,28 @@ int main(int argc, char **argv) {
       break;
 
     case '(':
-      if (strcmp(optarg, knn_data_structure[1]) == 0)
+      if (strcmp(optarg, knn_data_structure[0]) == 0)
       {
-        printf("ostree\n");
-        ostree = 1;
-        exit(1);
+        // printf("sorted array\n");
+        nn_struct = 0;
+      }
+      else if ((strcmp(optarg, knn_data_structure[1]) == 0))
+      {
+        // printf("minmax-heap\n");
+        nn_struct = 1;
+      }
+      else if ((strcmp(optarg, knn_data_structure[2]) == 0))
+      {
+        // printf("os-tree\n");
+        nn_struct = 2;
       }
       else
       {
-        printf("ostree\n");
-        ostree = 0;
+        printf("please specify a a valid knn data structure! (sorted-arr, ostree, minmax-heap)\n");
+        nn_struct = 0;
         exit(1);
       }
+
       break;
 
     /* end kashif changes */
@@ -620,7 +631,7 @@ int main(int argc, char **argv) {
       dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
-                                    warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk, num_threads, stop_when_nn_dist_changes);
+                                    warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk, num_threads, stop_when_nn_dist_changes, nn_struct);
     }
       // dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
       //                               minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
