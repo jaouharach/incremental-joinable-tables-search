@@ -3423,34 +3423,12 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
                       index, knn_heap, k, &curr_size, warping, query_id, 
                       total_query_set_time, total_checked_ts, worker_id, &insert_counter);
 
-  // printf("Min Max heap after approx search!\n");
-  // mmheap_print(knn_heap);
-
-  // printf("-- -- -- --- -- --- --- --- -- knn ostree after approx search:\n");
-  // ostree_print(knn_tree);
-
-  
-  // COUNT_THREAD_PARTIAL_TIME_END(worker_id)
-  // update_thread_query_stats(index, worker_id);
-  // print_thread_query_stats(index, worker_id);
-
-  // printf("\n* After approx search: total_cpu_time[%d] = %f, total_partial_time[%d] = %f, total_input_time[%d] = %f\n", 
-    // worker_id, index->stats->thread_query_total_time[worker_id]/1000000, worker_id, index->stats->thread_query_total_cpu_time[worker_id]/1000000
-    // , worker_id, index->stats->thread_query_total_input_time[worker_id]);
-
   reset_thread_query_stats(index, worker_id);
-
-  // printf("\n* After reset: total_cpu_time[%d] = %f, total_partial_time[%d] = %f, total_input_time[%d] = %f\n", 
-    // worker_id, index->stats->thread_query_total_time[worker_id]/1000000, worker_id, index->stats->thread_query_total_cpu_time[worker_id]/1000000
-    // , worker_id, index->stats->thread_query_total_input_time[worker_id]);
 
   RESET_THREAD_QUERY_COUNTERS(worker_id)
   RESET_THREAD_PARTIAL_COUNTERS(worker_id)
   COUNT_THREAD_PARTIAL_TIME_START(worker_id)
 
-  // initialize priority queues and bsf
-  // printf("worked_thread (worker #%d):\t\t (*)\tstart exact search...\n", worker_id);
-  
   bool empty_queue = false;
   struct query_result *n, *n_tmp;
   ts_type  kth_bsf;
@@ -3480,22 +3458,13 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
   unsigned int next_incr_nn = 0;
   while(!empty_queue) 
   {
-    
     if(!(n = pqueue_peek(pq)))
     {
-      // printf("(...) skipping q = %d, query is answered.", q);
       continue;
     }
       
     iter_done = false;
     num_added_nn = 0;
-    
-    // printf("worked_thread (worker #%d):\t\t (*)\t[q = %d]: start a new iteration (mid).", worker_id, query_pos);
-    
-    // printf("\rworked_thread:\t\t (*)\tknn search, iter: %d q: %d/%d...", iteration+1, q+1, num_query_vectors);
-    // fflush(stdout);
-    // double curr_k_time = 0.0;
-    // unsigned int curr_k_total_checked_vector = 0u;
     
     while((n = pqueue_peek(pq)) && !iter_done){
       n = pqueue_pop(pq);
@@ -3517,12 +3486,10 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
           update_thread_query_stats(index, worker_id);
           nn_result->time = index->stats->thread_query_total_cpu_time[worker_id];
           nn_result->num_checked_vectors = thread_checked_ts_count[worker_id];
-          // print_thread_query_stats(index, worker_id);
 
           if (found_knn < k) {   
-            if(store_results_in_disk)
+            if(store_results_in_disk) //copy min result to coordinator knn array
             {
-              //copy min result to coordinator knn array
               global_knn_results[query_pos][next_incr_nn].table_id = nn_result->vector_id->table_id;
               global_knn_results[query_pos][next_incr_nn].set_id = nn_result->vector_id->set_id;
               global_knn_results[query_pos][next_incr_nn].pos = nn_result->vector_id->pos;
@@ -3532,9 +3499,7 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
               global_knn_results[query_pos][next_incr_nn].num_checked_vectors = nn_result->num_checked_vectors;
               next_incr_nn++;
             }
-            mmheap_pop_min(knn_heap); // pop mean from heap
-            nn_result = mmheap_get_min(knn_heap);
-            bsf_distance = nn_result->distance;
+            mmheap_pop_min(knn_heap); // pop min from heap
           }
 
           RESET_THREAD_QUERY_COUNTERS(worker_id)
@@ -3565,7 +3530,6 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
                                     query_order, offset, k, knn_heap,
                                     &curr_size, warping, query_id, total_query_set_time, 
                                     total_checked_ts, worker_id, 0, &insert_counter);
-        
       }
       // If it is an intermediate node calculate mindist for children
       // and push them in the queue
@@ -3573,9 +3537,8 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
       {
         kth_result = mmheap_get_max(knn_heap);
         first_result = mmheap_get_min(knn_heap);
-
         kth_bsf = kth_result->distance;
-
+        
         ts_type child_distance;
         child_distance = calculate_node_min_distance(index, n->node->left_child,
                                                     query_ts, warping);
@@ -3607,14 +3570,14 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
       // Free the node currently popped.
       free(n);
     }
+
     num_added_nn = 0;
+
     // check if all pqueues are empty
     empty_queue = true;
     if((n = pqueue_peek(pq)))
-    {
       empty_queue = false;
-    }
-
+    
     if(empty_queue)
     {
       is_recently_updated = 1;
@@ -3850,15 +3813,8 @@ void exact_de_parallel_multi_thread_incr_knn_search_ostree(void * parameters)
           num_added_nn ++;
           COUNT_THREAD_PARTIAL_TIME_END(worker_id)
           update_thread_query_stats(index, worker_id);
-          nn_result = ostree_get(knn_tree, found_knn - 1);
           nn_result->time = index->stats->thread_query_total_cpu_time[worker_id];
           nn_result->num_checked_vectors = thread_checked_ts_count[worker_id];
-          // print_thread_query_stats(index, worker_id);
-
-          if (found_knn < k) {
-            nn_result = ostree_get(knn_tree, found_knn);
-            bsf_distance = nn_result->distance;
-          }
 
           RESET_THREAD_QUERY_COUNTERS(worker_id)
           RESET_THREAD_PARTIAL_COUNTERS(worker_id)

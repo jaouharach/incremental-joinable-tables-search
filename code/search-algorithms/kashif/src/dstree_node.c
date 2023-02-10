@@ -1053,7 +1053,10 @@ int calculate_node_knn_distance_para_incr_mmheap(
         continue;
 
     struct query_result * kth_result = mmheap_get_max(knn_heap);
-    kth_bsf = kth_result->distance;
+    if(kth_result == NULL)// empty heap
+      kth_bsf = FLT_MAX;
+    else
+      kth_bsf = kth_result->distance;
 
     //(sid) warping distance here
     if (warping > 0) {
