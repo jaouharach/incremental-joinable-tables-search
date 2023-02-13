@@ -1104,41 +1104,9 @@ int calculate_node_knn_distance_para_incr_mmheap(
           
 
       mmheap_insert(knn_heap, object_result);
-      // printf("bsf stored at %d,\n", stored_at);
       update_snapshots = true;
-      
-      // if (index->settings->track_vector)
-      //   free(object_result.vector_id);
-
-      // COUNT_THREAD_PARTIAL_TIME_END(thread_id)
-      // update_thread_query_stats(index, thread_id);
-
-      // if(approx == 0 && knn_results[stored_at].approx == 1)
-      // {
-      //   knn_results[stored_at].approx = 0; // overwrite result that was found in approximate search
-      // }
-      
-      // knn_results[stored_at].time = index->stats->thread_query_total_cpu_time[thread_id];
-      // knn_results[stored_at].num_checked_vectors = thread_checked_ts_count[thread_id];
-     
-      // RESET_THREAD_QUERY_COUNTERS(thread_id)
-      // RESET_THREAD_PARTIAL_COUNTERS(thread_id)
-      // COUNT_THREAD_PARTIAL_TIME_START(thread_id)
-      
     }
   }
-
-  // if (node->file_buffer != NULL) {
-  //   // clearing the data for this node
-  //   for (int i = 0; i < index->settings->max_leaf_size; ++i) {
-  //     free(node->file_buffer->buffered_list[i]);
-  //   }
-  //   free(node->file_buffer->buffered_list);
-  // }
-
-  // node->file_buffer->buffered_list = NULL;
-  // node->file_buffer->buffered_list_size = 0;
-
   return num_nn;
 }
 

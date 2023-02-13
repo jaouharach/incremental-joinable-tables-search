@@ -851,7 +851,7 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
     if(index->settings->parallel)
     {
       // clearing the data for this node (alocated by some thread)
-      for (int i = 0; i < index->settings->max_leaf_size; ++i) {
+      for (int i = 0; i < node->file_buffer->buffered_list_size; ++i) {
         free(node->file_buffer->buffered_list[i]);
       }
     }
@@ -2014,7 +2014,7 @@ struct dstree_index *dstree_index_read(const char *root_directory) {
   index->settings->track_file_pos = track_file_pos;
   index->settings->track_vector = track_vector;
 
-  if (index->settings->classify) {
+  if (index->settings->classify == 1) {
     const char *gt_filename =
         malloc(sizeof(char) * (strlen(index->settings->root_directory) + 7));
     strcpy(gt_filename, index->settings->root_directory);

@@ -545,7 +545,7 @@ int main(int argc, char **argv) {
     index = dstree_index_read(index_path);
     fprintf(stderr, ">>> Index read successfully\n");
     index->settings->dataset = dataset;
-    if (!classify) {
+    if (classify != 1) {
       index->settings->classify = 0;
       // if (index->gt_filename != NULL)
       //   free(index->gt_filename);

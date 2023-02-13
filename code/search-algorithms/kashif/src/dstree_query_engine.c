@@ -3403,7 +3403,7 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
   unsigned int nn_dist_changed_at = k-1; // position of the last nn with the same distance to the query as the first nn.
   
   unsigned long insert_counter = 0; // to ensure a unique key for each nn in the ostree
-  knn_heap = mmheap_create(k, query_pos);
+  knn_heap = mmheap_create((unsigned long) k, query_pos);
   
   // recall_matrix[q] = calloc(k, sizeof(int8_t));
   if(knn_heap  == NULL)
@@ -3412,7 +3412,6 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
     exit(1);
   }
 
-  
 
   int working = __sync_add_and_fetch(&(thread_pool->working[worker_id]), 1);
 
@@ -3422,6 +3421,9 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
   approximate_knn_search_para_incr_mmheap(query_ts, query_ts_reordered, query_order, offset,
                       index, knn_heap, k, &curr_size, warping, query_id, 
                       total_query_set_time, total_checked_ts, worker_id, &insert_counter);
+
+  // printf("KNN heap after approximate search...\n");
+  // mmheap_print(knn_heap);
 
   reset_thread_query_stats(index, worker_id);
 
@@ -3453,17 +3455,11 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
   unsigned int iteration = 0;
   bool iter_done = false;
   unsigned int num_added_nn = 0;
-
-  // struct query_result approximate_result = knn_results[q][0];
   unsigned int next_incr_nn = 0;
+
   while(!empty_queue) 
-  {
-    if(!(n = pqueue_peek(pq)))
-    {
-      continue;
-    }
-      
-    iter_done = false;
+  {      
+    iter_done = false; // no new incremental results
     num_added_nn = 0;
     
     while((n = pqueue_peek(pq)) && !iter_done){
@@ -3472,6 +3468,12 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
       for (unsigned int pos = found_knn; pos < k; ++pos) {
 
         nn_result = mmheap_get_min(knn_heap);
+        if(nn_result == NULL)
+        {
+          fprintf(stderr, "Error in dstree_query_engine.c: "
+                  "cannot get min from empty knn heap! (trying to retrieve the %uth NN)\n", pos);
+          exit(1);
+        }
         bsf_distance = nn_result->distance;
 
         // printf("n->distance = %g, bsf_result.distance = %g\n",
@@ -3479,7 +3481,7 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
         if (n->distance > bsf_distance) // add epsilon+1
         {
           found_knn = pos + 1;
-          iter_done = true;
+          iter_done = true; // found new incremental results
           num_added_nn ++;
 
           COUNT_THREAD_PARTIAL_TIME_END(worker_id)
@@ -3487,39 +3489,39 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
           nn_result->time = index->stats->thread_query_total_cpu_time[worker_id];
           nn_result->num_checked_vectors = thread_checked_ts_count[worker_id];
 
-          if (found_knn < k) {   
-            if(store_results_in_disk) //copy min result to coordinator knn array
-            {
-              global_knn_results[query_pos][next_incr_nn].table_id = nn_result->vector_id->table_id;
-              global_knn_results[query_pos][next_incr_nn].set_id = nn_result->vector_id->set_id;
-              global_knn_results[query_pos][next_incr_nn].pos = nn_result->vector_id->pos;
-              global_knn_results[query_pos][next_incr_nn].distance = nn_result->distance;
-              global_knn_results[query_pos][next_incr_nn].qpos = nn_result->query_vector_pos;
-              global_knn_results[query_pos][next_incr_nn].time = nn_result->time;
-              global_knn_results[query_pos][next_incr_nn].num_checked_vectors = nn_result->num_checked_vectors;
-              next_incr_nn++;
-            }
-            mmheap_pop_min(knn_heap); // pop min from heap
+          if(store_results_in_disk) //copy min result to coordinator knn array
+          {
+            global_knn_results[query_pos][next_incr_nn].table_id = nn_result->vector_id->table_id;
+            global_knn_results[query_pos][next_incr_nn].set_id = nn_result->vector_id->set_id;
+            global_knn_results[query_pos][next_incr_nn].pos = nn_result->vector_id->pos;
+            global_knn_results[query_pos][next_incr_nn].distance = nn_result->distance;
+            global_knn_results[query_pos][next_incr_nn].qpos = nn_result->query_vector_pos;
+            global_knn_results[query_pos][next_incr_nn].time = nn_result->time;
+            global_knn_results[query_pos][next_incr_nn].num_checked_vectors = nn_result->num_checked_vectors;
           }
-
+          next_incr_nn++;
+          mmheap_pop_min(knn_heap); // pop min from heap
+          
           RESET_THREAD_QUERY_COUNTERS(worker_id)
           RESET_THREAD_PARTIAL_COUNTERS(worker_id)
           COUNT_THREAD_PARTIAL_TIME_START(worker_id)
         }
       }
-      if(iter_done && found_knn < k)
+
+      if(iter_done)
       {
         is_recently_updated = 1;
       }
-            
-      else if (found_knn >= k) {
-        // all knns are found
-        // printf("worked_thread (worker #%d):\t\t (*)\t[q = %d]: (---) end of iteration (added %d nns) (early termination).", worker_id, query_pos, num_added_nn);
+
+      if (found_knn >= k) { // all knns are found
         iter_done = true;
-        while ((n_tmp = pqueue_pop(pq))) { //empty the queue for this vector
-          free(n_tmp);
-        }
         is_recently_updated = 1;
+
+        //free memory allocated for queue elements
+        free(n);
+        while ((n = pqueue_pop(pq))) { 
+          free(n);
+        }
         break; // last increment
       }
 
@@ -3537,6 +3539,13 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
       {
         kth_result = mmheap_get_max(knn_heap);
         first_result = mmheap_get_min(knn_heap);
+        if(first_result == NULL)
+        {
+          fprintf(stderr, "Error in dstree_query_engine.c: "
+                  "cannot get min from empty knn heap! (trying to retrieve the first NN)\n");
+          exit(1);
+        }
+
         kth_bsf = kth_result->distance;
         
         ts_type child_distance;
@@ -3595,6 +3604,14 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
         for(int x = next_incr_nn; x < k; x++)
         {
           nn_result = mmheap_get_min(knn_heap);
+          if(nn_result == NULL)
+          {
+            fprintf(stderr, "Error in dstree_query_engine.c: " "Q:(%u, %u, %u) "
+            "returning last results in range [%u - %u]\n"
+            "cannot get min from empty knn heap! (trying to retrieve the %uth NN)\n", query_id->table_id, query_id->set_id, query_id->pos,
+            next_incr_nn, k, x);
+            exit(1);
+          }
           global_knn_results[query_pos][x].table_id = nn_result->vector_id->table_id;
           global_knn_results[query_pos][x].set_id = nn_result->vector_id->set_id;
           global_knn_results[query_pos][x].pos = nn_result->vector_id->pos;
@@ -3607,10 +3624,7 @@ void exact_de_parallel_multi_thread_incr_knn_search_mmheap(void * parameters)
         
       }
       
-      printf("start waiting for coordinator\n");
       pthread_barrier_wait(knn_update_barrier);
-      printf("end waiting for coordinator\n");
-
       if(empty_queue)
       {
         int working = __sync_sub_and_fetch(&(thread_pool->working[worker_id]), 1);
