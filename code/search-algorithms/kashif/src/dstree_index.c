@@ -851,7 +851,7 @@ void dstree_index_destroy(struct dstree_index *index, struct dstree_node *node,
     if(index->settings->parallel)
     {
       // clearing the data for this node (alocated by some thread)
-      for (int i = 0; i < index->settings->max_leaf_size; ++i) {
+      for (int i = 0; i < node->file_buffer->buffered_list_size; ++i) {
         free(node->file_buffer->buffered_list[i]);
       }
     }
