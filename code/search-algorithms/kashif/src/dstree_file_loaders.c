@@ -1980,23 +1980,23 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             }
           }
           
-          recall_matrix = malloc(k * nvec * sizeof(int8_t *));
-          // interval where recall should be updated [start, end[ end not included
-          if(recall_matrix == NULL)
-          {
-            fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for knn results.");
-            exit(1);
-          }
+          // recall_matrix = malloc(k * nvec * sizeof(int8_t *));
+          // // interval where recall should be updated [start, end[ end not included
+          // if(recall_matrix == NULL)
+          // {
+          //   fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for knn results.");
+          //   exit(1);
+          // }
 
-          for (int q = 0, i = 1; q < nvec; ++q) 
-          { 
-            recall_matrix[q] = calloc(k, sizeof(int8_t));
-            if(recall_matrix[q] == NULL)
-            {
-              fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for parallel iqa results.");
-              exit(1);
-            }
-          }
+          // for (int q = 0, i = 1; q < nvec; ++q) 
+          // { 
+          //   recall_matrix[q] = calloc(k, sizeof(int8_t));
+          //   if(recall_matrix[q] == NULL)
+          //   {
+          //     fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for parallel iqa results.");
+          //     exit(1);
+          //   }
+          // }
 
           curr_vector = 0;
           if(num_threads > nvec)
@@ -2249,7 +2249,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             }
 
             // print joinable tables
-            if(keyword_search)
+            if(keyword_search) // print results to be captured by ui
             {
               // don't change these lines to allaow ui to fetch results
                 struct result_table* top = get_top_tables_by_euclidean_distance(all_knn_results, k*nvec, num_top);
@@ -2260,7 +2260,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 free(top);
                 // don't change these lines to allaow ui to fetch results
             } 
-            else if (0)
+            else if (0) // tem change disable aggregating results to get the top x joinable columns (ranked by overlap size with the query column)
             {
                 // don't change these lines to allaow ui to fetch results
                 unsigned int total_matching_columns = 0;
@@ -2281,7 +2281,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 fclose(fpr);
                 COUNT_OUTPUT_TIME_END
 
-                // for(int m = 0; m < num_top; m++)
+                // for(int m = 0; m < num_top; m++) // print results to be captured by ui
                 // {
                 //   printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
                 // }
@@ -2302,12 +2302,12 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             }
             free(thread_time);
             
-            // free recall matrix
-            for (int q = 0, i = 1; q < nvec; ++q) 
-            { 
-              free(recall_matrix[q]);
-            }
-            free(recall_matrix);
+            // // free recall matrix
+            // for (int q = 0, i = 1; q < nvec; ++q) 
+            // { 
+            //   free(recall_matrix[q]);
+            // }
+            // free(recall_matrix);
             
             // free ground truth results
             free(ground_truth_results);
