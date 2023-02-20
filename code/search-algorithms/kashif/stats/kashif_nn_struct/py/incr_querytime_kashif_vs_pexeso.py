@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def format_nb(nb):
+    nb = int(nb)
     if(nb < 1000):
         return str(nb)
     elif (nb < 1000000):
@@ -14,11 +15,12 @@ def format_nb(nb):
 
 outdir = '../img/'
 kcsv_file = '../csv/querytime_mmheap_incr.csv'
-pcsv_file = '../../performance/csv/pexeso/pexeso_querytime_all.csv'
-
+pcsv_file = '../csv/pexeso_querytime_all.csv'
+krecall_file = "../../recall/recall.csv"
 
 plt.rcParams["figure.figsize"] = (8,7)
 kdf = pd.read_csv(kcsv_file)
+krdf = pd.read_csv(krecall_file)
 pdf = pd.read_csv(pcsv_file)
 
 # kashif mean query time
@@ -28,6 +30,24 @@ kqt = kdf.groupby(
     querytime = ('querytime','mean'),
 ).reset_index()
 
+
+# kashif mean query recall
+krecall = krdf.groupby(
+    ['k']
+).agg(
+    recall = ('recall','mean'),
+).reset_index()
+
+
+# kashif mean query precision
+kprecision = krdf.groupby(
+    ['k']
+).agg(
+    precision = ('precision','mean'),
+).reset_index()
+
+
+
 # pexeso mean query time
 pqt = pdf.groupby(
     ['tau', 'join_threashold']
@@ -35,32 +55,63 @@ pqt = pdf.groupby(
     mean_querytime = ('querytime','mean'),
 ).reset_index()
 
+kdf['k'] = kdf['k'].astype(str)
+krecall['k'] = krecall['k'].astype(str)
+
+
+krecall['k'] = krecall['k'].apply(lambda x: format_nb(x))
+kprecision['k'] = kprecision['k'].apply(lambda x: format_nb(x))
+kdf['k'] = kdf['k'].apply(lambda x: format_nb(x))
 kqt['k'] = kqt['k'].apply(lambda x: format_nb(x))
-print(kqt)
-print(pqt)
+
+# only keep results of kashif using min max heap
+# kqt = kqt.drop(kqt[kqt['knn data structure'] == 'kashif (sorted-arr)'].index)
+pqt = pqt.drop(pqt[pqt['tau'] == 0.08].index)
+
+# print(krecall)
+# print(kprecision)
+# print(kqt)
+# print(pqt)
+
+fig, ax1 = plt.subplots()
+ax1.yaxis.grid(True, color="lightgray")
+ax2 = ax1.twinx()
+ax2.yaxis.grid(True, linestyle='dashed', color="lightgray")
 
 
-flatui = ["#3498db", "#2ecc71"]
-g = sns.catplot(data=kqt, x='k', y='querytime', hue='knn data structure',  kind='point', scale = 0.5,
-    palette=sns.color_palette(flatui),  markers=['o', 'v', '*'], legend=False)
 
-colors =  ['violet', 'magenta', 'indigo', 'black']
+print(krecall)
+# plot kashif recall
+sns.barplot(data=krecall, x=krecall['k'], y="recall", ax = ax1, color="lightgreen")
+# plot kashif  querytime
+g = sns.lineplot(data=kqt["querytime"], sort=False, ax=ax2, marker='o', label="Kashif (minmax-heap)", linewidth=2, color="royalblue")
 
+
+# plot all pexeso lines
+# ax2.axhline(pqt['mean_querytime'][2], c=f'b', label=f'pexeso (tau = 6%)', ls='--')
+
+
+# plot all pexeso lines
+colors =  ['pink', 'tomato', 'red', 'black']
 for i, tau in enumerate(pqt['tau'].values):
-    g.map(plt.axhline, y=pqt['mean_querytime'][i], ls='--', c=f'{colors[i]}', label=f'pexeso (tau = {tau*100}%)')
+    ax2.axhline(pqt['mean_querytime'][i], c=f'{colors[i]}', label=f'pexeso (tau = {tau*100}%)', ls='--')
 
-g.set_xticklabels(rotation=30)
-plt.subplots_adjust(bottom=0.16)
-plt.xlabel(r'$\mathrm{k_{i}\ (k_{max}\ =\ 1m)}$', fontsize = 12)
-plt.ylabel(r'$\mathrm{mean\ query\ time\ (sec)}$', fontsize = 12)
-plt.xticks(fontsize = 11)
-plt.yticks(fontsize = 11)
+# set x and y lables
+ax1.set_ylabel("Average recall", fontsize=13)
+ax1.set_ylim([0, 1])
+ax2.set_ylabel("Mean query time", fontsize=13)
+ax1.set_xlabel(r'$\mathrm{k_{i}\ (k_{max}\ =\ 1m)}$', fontsize = 15)
+
 plt.grid()  #just add this
+plt.legend(loc='best')
+plt.tight_layout(pad=2.3)
+
 # plt.yscale("log")
-plt.legend(loc='best', title="-")
+# plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.10),
+#           ncol=2, fancybox=True, shadow=True)
 
 # plt.title("Kashif Average insert NN count \n (10 queries, query size = 100, dataset = 100k tables, 490k cols, ~5M vectors) \n")
-plt.savefig(f"{outdir}querytime_kashif_mmheap_incr_vs_pexeso.png")
+plt.savefig(f"{outdir}querytime_recall_kashif_mmheap_incr_vs_pexeso.png")
 plt.close()
 
 

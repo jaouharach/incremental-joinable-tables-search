@@ -1766,9 +1766,6 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
     float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir,
     unsigned char store_results_in_disk, unsigned int num_threads, unsigned int stop_when_nn_dist_changes, unsigned int nn_struct) 
 {
-  // worker threads and barriers
-  // int8_t num_threads = 0;
-
   struct bsf_snapshot **bsf_snapshots = NULL;
   unsigned int max_bsf_snapshots;
   unsigned int cur_bsf_snapshot;
@@ -1793,16 +1790,9 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
 
   struct query_result *curr_knn = NULL;
   struct job * job_array = NULL;
-  // ts_type ** query_vectors = NULL; // query column
-  // struct vid * query_id_arr = NULL;
-  // ts_type ** query_vectors_reordered = NULL;
-  // int **query_order_arr = NULL;
-
 
   // extract k values from string "1,3,5,10" to [1, 3, 5, 10]
   k_values = get_k_values(k_values_str, &num_k_values);
-  // printf("num k values = %u\n", num_k_values);
-
   if (k_values == NULL)
   {
     fprintf(stderr,
@@ -1829,8 +1819,6 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
   // max k values for which we must save results
   unsigned int max_k = k_values[num_k_values - 1];
 
-  // RESET_PARTIAL_COUNTERS()
-  // COUNT_PARTIAL_TIME_START
 
   // for every file (table)
   while ((dfile = readdir(dir)) != NULL) {
@@ -1864,11 +1852,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
       }
 
       /* read binary file */
-      // COUNT_PARTIAL_RAND_INPUT
-      // COUNT_THREAD_PARTIAL_INPUT_TIME_START(0)
       FILE *bin_file = fopen(bin_file_path, "rb");
-      // COUNT_THREAD_PARTIAL_INPUT_TIME_END(0)
-
       if (bin_file == NULL) {
         fprintf(stderr, "Error in dstree_file_loaders.c: File %s not found!\n",
                 bin_file_path);
@@ -1885,24 +1869,20 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
       while (total_bytes) // counts 4 bytes as one because every vector value is
                           // stored in 4 bytes
       {
-        // beginning of a set of vectors
+        // beginning of a set of vectors (column)
         if (i == 0)
         {
           if (qset_num == 0)
             break;
 
           // read first integer to check how many vactors in current set
-          // COUNT_THREAD_PARTIAL_INPUT_TIME_START(0)
           fread(&nvec, sizeof(nvec), 1, bin_file);
-          // COUNT_THREAD_PARTIAL_INPUT_TIME_END(0)
 
           total_bytes--;
-          // query set does not fit requirments move to next set
+          // if set does not fit query requirments move to next set
           if ((unsigned int)nvec < min_qset_size ||
               (unsigned int)nvec > max_qset_size) {
-            // COUNT_THREAD_PARTIAL_INPUT_TIME_START(0)
             fseek(bin_file, nvec * 4 * vector_length, SEEK_CUR);
-            // COUNT_THREAD_PARTIAL_INPUT_TIME_END(0)
             
             i = 0;
             j = 0;
@@ -1917,25 +1897,13 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
           total_checked_ts = 0;
           qset_num--;
 
-          // allocate memory for all query vectors
+          // found a new query set (query clumn): allocate memory for all query vectors and store them in a job array
           job_array = malloc(sizeof(struct job) * nvec);
-          // query_vectors = malloc(sizeof(ts_type *) * nvec);
-          // query_id_arr = malloc(sizeof(struct vid) * nvec);
-          // query_vectors_reordered = malloc(sizeof(ts_type *) * nvec);
-          // query_order_arr = malloc(sizeof(int *) * nvec);
-          
-          // if(query_vectors == NULL || query_id_arr == NULL|| query_vectors_reordered == NULL || query_order_arr == NULL)
-          // {
-          //   fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for query vectors.");
-          //   exit(1);
-          // }
-
           if(job_array == NULL)
           {
             fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for query vectors.");
             exit(1);
           }
-          // set new set id
           for(int q = 0; q < nvec; q++)
           {
             job_array[q].query_vector = calloc(1, sizeof(ts_type) * vector_length);
@@ -1953,9 +1921,10 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             job_array[q].query_id.pos = q;
           }
 
+          // if the user requires the results to be stored in disk
           if(store_results_in_disk)
           {
-            all_knn_results = malloc(k * nvec * sizeof(struct result_vid *));
+            all_knn_results = malloc(k * nvec * sizeof(struct result_vid *)); // all knns of all query vectors
             if(all_knn_results == NULL)
             {
               fprintf(stderr, "Error in dstree_file_loaders.c: Couldn't allocate memory for knn results.");
@@ -2005,6 +1974,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             fprintf(stderr, "Warning in dstree_file_loader.c: parameter num_thread greater than total query vectors.\n");
           }
 
+          // initialise thread statistics (query time, etc.)
           INIT_THREAD_STATS(num_threads)
           printf("\nQuery (%d, %d), |Q| = %u ...\n", table_id, set_id, nvec);
 
@@ -2017,19 +1987,15 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
           // end of vector but still in current set
           if (j > (vector_length - 1)) {
             j = 0;
-            // add vector
+          
             reorder_query(job_array[curr_vector].query_vector, job_array[curr_vector].query_vector_reordered,
                           job_array[curr_vector].query_order, vector_length);
             
             curr_vector += 1;
             qvectors_loaded += 1;
             
-          }
-
-          // COUNT_PARTIAL_SEQ_INPUT
-          // COUNT_THREAD_PARTIAL_INPUT_TIME_START(0)          
+          }        
           fread((void *)(&val), sizeof(val), 1, bin_file);
-          // COUNT_THREAD_PARTIAL_INPUT_TIME_END(0)
 
           total_bytes--;
           job_array[curr_vector].query_vector[j] = val;
@@ -2043,22 +2009,20 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             qvectors_loaded += 1;
             curr_vector = 0;
 
-            // load ground truth results
-            // temp change below
+            // load ground truth results (to measure recall)
+            int  num_gt_results = 0;
+            struct result_vid * ground_truth_results = NULL;
             // char ground_truth_file[255] = "";
             // int  num_gt_results = get_ground_truth_file(ground_truth_dir, job_array[0].query_id.table_id,job_array[0].query_id.set_id, ground_truth_file);
             // struct result_vid * ground_truth_results = get_ground_truth_results(ground_truth_file, num_gt_results);
-
-            int  num_gt_results = 0;
-            struct result_vid * ground_truth_results = NULL;
-            printf("coordinator_thread:\t\tread ground truth results, num results = %d\n", num_gt_results);
+            // printf("coordinator_thread:\t\tread ground truth results, num results = %d\n", num_gt_results);
             
-            // create worker threads, 1 query vector per thread
+            // create worker threads
             printf("coordinator_thread:\t\tinit thread pool with  %d threads, |Q| = %d.\n", num_threads, nvec);
             struct pool * thread_pool = (struct pool *) malloc(sizeof(struct pool));
             char data_struct [12] = "";
 
-            if(nn_struct == 0)
+            if(nn_struct == 0)// use sorted array to store kNNs
             {
               strcpy(data_struct, "sorted-arr\0");
               init_thread_pool(thread_pool, index, epsilon, k,
@@ -2095,7 +2059,6 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
               exit(1);
             }
 
-            // printf("Stats:\t (...)\t");
             double max_cpu_time = 0, min_cpu_time = FLT_MAX; 
             int max_cpu_thread_id = -1, min_cpu_thread_id = -1;
 
@@ -2116,23 +2079,17 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
               }
             }
             
-            // report query time and query results
+            // report all query time and query results
             char file_res [] = "query_results.csv\0";
             char file_time [] = "query_time.csv\0";
-
             FILE *fpr, *fpt;
-
-            COUNT_OUTPUT_TIME_START
-            fpr = fopen(file_res, "a");
             fpt = fopen(file_time, "a");
-            COUNT_OUTPUT_TIME_END
 
             if (fpr == NULL || fpt == NULL) {
               fprintf(stderr, "Error in dstree_file_loaders.c: Could not open file %s or file %s!\n", file_res, file_time);
               return FAILURE;
             }
 
-            COUNT_OUTPUT_TIME_START
             fprintf(fpr, "tqq,tss,overlap\n");
             fprintf(fpt, "k,querytime,nb_threads,data_structure\n");
             
@@ -2167,22 +2124,14 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                   max_cpu_time = thread_time[th][curr_k-1];
                   max_cpu_thread_id = th;
                 }
-                // if(thread_time[th][curr_k] < min_cpu_time)
-                // {
-                //   min_cpu_time = thread_time[th][curr_k];
-                //   min_cpu_thread_id = th;
-                // }
-                // print_thread_query_stats(index, th);
               }
               max_thread_time[curr_k-1] = max_cpu_time;
               printf("k,\tt,\t#th,\tdata_structure\n");
               printf("%u,\t%f,\t%d,\t%s\n", curr_k, max_cpu_time/1000000, num_threads, data_struct);
 
               fprintf(fpt, "%u,%f,%d,%s\n", curr_k, max_cpu_time/1000000, num_threads, data_struct);
-              // printf("THREAD %d HAS MIN CPU TIME = %f\n", min_cpu_time/1000000, min_cpu_thread_id);
             }
             fclose(fpt);
-            COUNT_OUTPUT_TIME_END
 
             // measure recall at each nn, to visualize recall improvement/ degredattion
             // unsigned int num_gt_neighbors = 0;
@@ -2248,21 +2197,21 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
               }
             }
 
-            // print joinable tables
-            if(keyword_search) // print results to be captured by ui
+            // aggregate results and print joinable tables (disabled)
+            if(0)  
             {
-              // don't change these lines to allaow ui to fetch results
+              if(keyword_search) // print results to be captured by ui
+              {
+                // don't change these lines to allow ui to fetch results
                 struct result_table* top = get_top_tables_by_euclidean_distance(all_knn_results, k*nvec, num_top);
                 for(int m = 0; m < num_top; m++)
                 {
                   printf("table-%u- in file @@%s$ min_distance=%.3f§ num_closest=%u# total_matches=%uµ\n", top[m].table_id, top[m].raw_data_file, top[m].min_distance, top[m].num_min, top[m].total_matches);
                 }
                 free(top);
-                // don't change these lines to allaow ui to fetch results
-            } 
-            else if (0) // tem change disable aggregating results to get the top x joinable columns (ranked by overlap size with the query column)
-            {
-                // don't change these lines to allaow ui to fetch results
+              } 
+              else
+              {
                 unsigned int total_matching_columns = 0;
                 struct result_sid * top = get_top_sets(all_knn_results, nvec, k, -1, &total_matching_columns);
 
@@ -2281,12 +2230,13 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 fclose(fpr);
                 COUNT_OUTPUT_TIME_END
 
-                // for(int m = 0; m < num_top; m++) // print results to be captured by ui
-                // {
-                //   printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
-                // }
-                free(top);
                 // don't change these lines to allaow ui to fetch results
+                for(int m = 0; m < num_top; m++) // print results to be captured by ui
+                {
+                  printf("table-%u-column-%u- in file @@%s$ overlap=%u§\n", top[m].table_id, top[m].set_id, top[m].raw_data_file, top[m].overlap_size);
+                }
+                free(top);
+              }
             }
 
             // free memory
