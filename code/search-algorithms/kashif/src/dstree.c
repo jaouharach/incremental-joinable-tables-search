@@ -633,14 +633,6 @@ int main(int argc, char **argv) {
                                     max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
                                     warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk, num_threads, stop_when_nn_dist_changes, nn_struct);
     }
-      // dstree_multi_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
-      //                               minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
-      //                               max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
-      //                               warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk);
-      // dstree_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
-      //                               minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
-      //                               max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
-      //                               warping, keyword_search, k_values_str, ground_truth_dir);
     else
     {
       printf("Sequential QA ...\n");

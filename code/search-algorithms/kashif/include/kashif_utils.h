@@ -475,7 +475,7 @@ enum response store_knn_results_in_disk(char *csv_file, unsigned int qtable_id,
   char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 50 + 1);
   sprintf(new_csv_filename, "%s_runtime%.4f_ndistcalc_dataaccess%u.csv\0", csv_file,  total_querytime/1000000, total_checked_vec);
   
-  printf("[k = %u] Combined total query time  = %f\n", k, total_querytime/1000000);
+  // printf("[k = %u] Combined total query time  = %f\n", k, total_querytime/1000000);
   int ret = rename(csv_file, new_csv_filename);
   
   free(new_csv_filename);
@@ -522,7 +522,7 @@ enum response store_parallel_knn_results_in_disk(char *csv_file, unsigned int qt
   char * new_csv_filename =  malloc(strlen(csv_file) + strlen("_runtime_ndistcalc_dataaccess.csv") + 20 + 1);
   sprintf(new_csv_filename, "%s_runtime%.4f_ndistcalc_dataaccess%u.csv\0", csv_file,  max_thread_time[k-1]/1000000, total_checked_vec);
   
-  printf("[k = %u] Combined total query time  = %f\n", k, max_thread_time[k-1]/1000000);
+  // printf("[k = %u] Combined total query time  = %f\n", k, max_thread_time[k-1]/1000000);
   int ret = rename(csv_file, new_csv_filename);
   
   free(new_csv_filename);
@@ -1106,23 +1106,11 @@ static void * start_thread(void *arg)
     if(job_idx >= thread_pool->num_jobs) // no more jobs
     {
       num_working_threads = __sync_sub_and_fetch(&(thread_pool->num_working_threads), 1);
-      // printf("worked_thread (worker #%d):\t(XXX) i'm done !\n", thread_id);
-      
-      // if(num_working_threads == 0)
-      // {
-      //   printf("worked_thread (worker #%d):\t(Last) last to finish !\n", thread_id);
-      //   // pthread_barrier_wait(param->knn_update_barrier);
-      //   // printf("worked_thread (worker #%d):\t(Left) i left !\n", thread_id);
-      // }
-      
       break;
     }
 
     struct job * curr_job = &(thread_pool->job_array[job_idx]);
     curr_job->worker_id = thread_id;
-
-    // printf("worked_thread (worker #%d):\t> start knn search with job: (%u, %u, %u)...\n",
-    //         thread_id, curr_job->query_id.table_id, curr_job->query_id.set_id, curr_job->query_id.pos);
 
     // take query vector from job and add it to thread param
     param->query_id = &(curr_job->query_id);
@@ -1130,12 +1118,10 @@ static void * start_thread(void *arg)
     param->query_ts = curr_job->query_vector;
     param->query_ts_reordered = curr_job->query_vector_reordered;
     thread_pool->function(param); // run knn search 
-    // printf("worked_thread (worker #%d):\t< end knn search .\n", thread_id);
 
     thread_pool->executed_jobs_count[thread_id]++;
   }
 
-  // printf("worked_thread (worker #%d):\t(X) end.\n", thread_id);
 	return NULL;
 }
 
@@ -1147,7 +1133,6 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
               unsigned int num_gt_results, int8_t * recall_matrix, unsigned int num_query_vectors,
               struct job * job_array, unsigned int vector_length, unsigned int stop_when_nn_dist_changes)
 {
-  printf("\ncoordinator_thread:\t (!)\tinit pool: #threads = %d\n", num_threads);
   // init query stats
   dstree_init_thread_stats(index, num_threads);
   
@@ -1178,7 +1163,6 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
   // set thread parameters
 	for (int i = 0; i < num_threads; i++) 
   {
-    // printf("\ncoordinator_thread:\t (!)\tstart thread %u --- --- --- --- ---\n", i);
     // init barriers
     pthread_barrier_init(&knn_update_barrier[i], NULL, 2);
     pthread_cond_init(&(pool->cond_thread_state[i]), NULL);
@@ -1215,7 +1199,6 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
 		pthread_create(&pool->threads[i], NULL, &start_thread, &pool->params[i]);
 	}
 
-
   // get result incrementally
   unsigned int pool_done = 0;
   unsigned int thread_done = 0;
@@ -1227,23 +1210,17 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
     all_finished = 0;
     for (int th = 0; th < num_threads; th++) 
     {
-      
       __atomic_load(&(pool->working[th]), &thread_done, 1);
-      // printf("\ncoordinator_thread:\t (Check)\tis thread %d working ? answer =  %d\n", th, thread_done);
       thread_done = 0;
 
       if(!(atomic_compare_exchange_strong(&(pool->working[th]), &thread_done, thread_done)))
       {
-        // wait for thread to update its state
         pthread_mutex_lock( &(pool->cond_mutex[th]));
-        printf("\ncoordinator_thread:\t (Zzz)\twaiting... thread %d working = %d\n", th, pool->working[th]);
-        pthread_barrier_wait(&knn_update_barrier[th]);
-        printf("\ncoordinator_thread:\t (!)\tNew NNs from thread %d.\n", th);
-        // printf("\ncoordinator_thread:\t (!)\tWait for thread %d to update its state.\n", th);
+        pthread_barrier_wait(&knn_update_barrier[th]); // wait for new results from thread
         
         pthread_cond_wait(&(pool->cond_thread_state[th]), &(pool->cond_mutex[th]));
-        // printf("\ncoordinator_thread:\t (!)\tThread %d has updated its state.\n", th);
         pthread_mutex_unlock( &(pool->cond_mutex[th]));
+
         // compute current recall
         // float recall_from_matrix = compute_recall_from_matrix(recall_matrix, num_query_vectors, k, num_gt_results);
         // printf("\ncoordinator_thread:\t (!)\tcurrent recall =%f\n", recall_from_matrix); 
@@ -1251,48 +1228,36 @@ void init_thread_pool(struct pool* pool, struct dstree_index * index, ts_type ep
     }
     if((atomic_compare_exchange_strong(&(pool->num_working_threads), &all_finished, all_finished)))
     {
-      // printf("\ncoordinator_thread:\t (!)\tpool done, nb working threads = %u\n", pool->num_working_threads);
-      pool_done = 1;
+      pool_done = 1; // all theread are done no more jobs to do.
       break;
     }
   }  
   
-
-  printf("\ncoordinator_thread:\t\t(X) end, all workers have finished, freeing thread pool.\n");
+  // free memory
+  printf("\ncoordinator_thread:\t\tend, all workers have finished, freeing thread pool.\n");
   pool_end(pool);
   free(knn_update_barrier);
-  // printf("\ncoordinator_thread:\t ($)\thurray! finished knn search for Q:(%u, %u)\n", 
-          // job_array[0].query_id.table_id, job_array[0].query_id.set_id);
-
-  // free memory
   free(finished);
 }
 
 // end thread pool, wait for all threads to finish
 void pool_end(struct pool *pool) 
 {
-  printf("coordinator_thread:\t (!)\tstart freeing pool resources.\n");
 	struct pool *thread_pool = (struct pool *) pool;
 	struct pool_queue *q;
 	int i;
 
 	thread_pool->cancelled = 1;
-
-
 	for (i = 0; i < thread_pool->num_threads; i++) {
 		pthread_join(thread_pool->threads[i], NULL);
 	}
-
   free(thread_pool->threads);
   free(thread_pool->cond_thread_state);
   free(thread_pool->cond_mutex);
   free(thread_pool->executed_jobs_count);
   free(thread_pool->params);
   free(thread_pool->working);
-  
   free(thread_pool);
-
-  printf("coordinator_thread:\t (!)\tend freeing pool resources.\n");
 }
 
 
