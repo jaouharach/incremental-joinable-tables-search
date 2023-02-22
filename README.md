@@ -33,15 +33,39 @@ Copyright 2012 University of Trento. All rights reserved.
 5. Run\
 `bin/dstree --help`
 
-#### EXAMPLES
-1- Build the index:\
+#### DATA PREPARATION
+1. Download and extract tables from :
+>> https://data.dws.informatik.uni-mannheim.de/webtables/2015-07/englishCorpus/compressed/
+
+2. Clean data: \
+To remove numerical data go to data-preparation/clean and run:\
+`python3 clean.py [directory_of_raw_tables] [directory_for_clean_tables]`
+
+3. Generate embeddings: \
+    i. download fasttext binary file from:\
+        https://fasttext.cc/docs/en/crawl-vectors.html \
+    ii. then go to data-preparation/embed/fasttext.py and update the following line with the correct path to fasttext file, if you want to normalize vectors set normalize_vectors to True:\
+        `FASTTEXT_PATH = '/home/jchanchaf/local/src/fasttext-en/cc.en.300.bin`\
+        `normalize_vectors = False` \
+    iii. Finally, run:\
+        `fasttext_embed.py [directory_of_clean_tables] [directory_to_store_embbedings] [path_to_fasttext_binary] [embeddings_length]`\
+
+4. Generate Binary files:\
+Go to data-preparation/bin and run: \
+`tobin.py [directory_of_table_embeddings] [directory_to_store_binary_files] [embeddings_length]`
+
+#### EXPERIMENTS
+1. Build the index:\
 `bin/dstree --dataset /data/real/jchanchaf/wdc-2015-en-full/subsets/100-nonorm/ --total-data-files 100 --buffer-size 600 --index-path /home/jaouhara.chanchaf/work-dir/indexes/100-nonorm-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100`
 
-2- Query the index:\
+2. Query the index:\
 `bin/dstree --queries /data/real/jchanchaf/wdc-2015-en-full/10m/query/10q-size100/ --total-data-files 100000 --buffer-size 600 --index-path /home/jaouhara.chanchaf/work-dir/indexes/100k-nonorm-idx/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100000  --top 10 --dataset /data/real/jchanchaf/wdc-2015-en-full/subsets/100-nonorm/ --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/kashif-search 100tk/stop-mode-0/ --ground-truth-dir ./na/  --nq 1 --min-qset-size 100 --max-qset-size 100  --parallel --incremental --store-results-in-disk 1 --stop-when-nn-dist-changes 0 --k  10 --k-values "5,10" --knn-data-structure minmax-heap`
 
-3- Parameters:\
-
+3. Parameters:\
+* `--dataset [string]` : directory where data files are stored.
+* `--queries [string]` : directory where query files are stored.
+* `--mode [0/1]` : 0 for index building , 1 for querying.
+* `--track-vector [0/1]` : keep track of nearest neigbor ids.
 * `--top [x]` : nb of matching columns to be retrieved.
 * `--timeseries-size [x]` : length of the query vectors.
 * `--nq [x]` : number of query column to execute.
