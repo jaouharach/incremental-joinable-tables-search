@@ -1,0 +1,2 @@
+ust compile code after eny change to code in this directory, to compile code run:
+g++ -c -g nn_struct.cpp -o nn_struct.o

@@ -110,11 +110,11 @@ ts_type ** get_all_time_series_in_node(struct dstree_index * index, struct dstre
  
      for (int i = 0 ; i < idx; ++i)
      {
-         ret[i+(node->file_buffer->disk_count)] = calloc(ts_length, sizeof(ts_type));
-	 for(int j=0; j<ts_length; ++j)
-         {
-	   ret[i+(node->file_buffer->disk_count)][j] = node->file_buffer->buffered_list[i][j];
-         }
+        ret[i+(node->file_buffer->disk_count)] = calloc(ts_length, sizeof(ts_type));
+        for(int j=0; j<ts_length; ++j)
+        {
+            ret[i+(node->file_buffer->disk_count)][j] = node->file_buffer->buffered_list[i][j];
+        }
      }
 
      //this should be equal to old size + disk_count
@@ -138,11 +138,112 @@ ts_type ** get_all_time_series_in_node(struct dstree_index * index, struct dstre
 
      for (int i = 0 ; i < idx; ++i)
      {
-         ret[i] = calloc(ts_length, sizeof(ts_type));
-	 for(int j=0; j<ts_length; ++j)
-         {
-	   ret[i][j] = node->file_buffer->buffered_list[i][j];
-         }
+        ret[i] = calloc(ts_length, sizeof(ts_type));
+	      for(int j=0; j<ts_length; ++j)
+        {
+          ret[i][j] = node->file_buffer->buffered_list[i][j];
+        }
+     }    
+  }
+  return ret;
+}
+
+ts_type ** get_all_time_series_in_node_para_incr(struct dstree_index * index, struct dstree_node * node, unsigned int thread_id) 
+{
+
+  int ts_length = index->settings->timeseries_size;
+  int max_leaf_size = index->settings->max_leaf_size;
+  ts_type ** ret = NULL;
+   ret = calloc(max_leaf_size, sizeof(ts_type *));
+     
+  if (node->file_buffer->disk_count > 0)
+  {
+      
+      if(node->filename == NULL)
+      {   
+        fprintf(stderr, "Error in dstree_file_buffer.c: This node has data on disk but"
+                        "could not get its filename.\n");
+        //return FAILURE;
+      }
+       
+     int full_size = strlen(index->settings->root_directory) + strlen(node->filename)+1;
+     
+     const char *full_filename = malloc(sizeof(char) * full_size);
+     full_filename = strcpy(full_filename, index->settings->root_directory);
+     full_filename = strcat(full_filename, node->filename);
+     full_filename = strcat(full_filename, "\0");
+
+    //  COUNT_PARTIAL_RAND_INPUT
+     COUNT_THREAD_PARTIAL_INPUT_TIME_START(thread_id)
+     FILE *ts_file = fopen(full_filename, "r");
+     COUNT_THREAD_PARTIAL_INPUT_TIME_END(thread_id)
+       
+     if(ts_file == NULL)
+     {   
+        fprintf(stderr, "Error in dstree_file_buffer.c: Could not open"
+		"the filename %s. Reason = %s\n", full_filename, strerror(errno));
+        //return FAILURE;
+     }
+
+     //in order to keep the same order that the data was inserted, we move the
+     //time series that are in memory to allw the disk based time series to be
+     //first in the buffer.
+     
+
+     
+     for (int i=0; i<node->file_buffer->disk_count;++i ) 
+     {       
+       //node->file_buffer->buffered_list[idx] = malloc(sizeof(ts_type) * ts_length);
+       ret[i] = calloc(ts_length, sizeof(ts_type));
+       
+       //ret[i] = (ts_type *) index->buffer_manager->current_record;
+       //index->buffer_manager->current_record += sizeof(ts_type) * ts_length;
+       //index->buffer_manager->current_record_index++;
+
+      //  COUNT_PARTIAL_SEQ_INPUT
+       COUNT_THREAD_PARTIAL_INPUT_TIME_START(thread_id)      
+       fread(ret[i],
+	     sizeof(ts_type),ts_length, ts_file);
+       COUNT_THREAD_PARTIAL_INPUT_TIME_END(thread_id)  
+     }
+     
+     int idx = node->file_buffer->buffered_list_size;
+ 
+     for (int i = 0 ; i < idx; ++i)
+     {
+        ret[i+(node->file_buffer->disk_count)] = calloc(ts_length, sizeof(ts_type));
+        for(int j=0; j<ts_length; ++j)
+        {
+            ret[i+(node->file_buffer->disk_count)][j] = node->file_buffer->buffered_list[i][j];
+        }
+     }
+
+     //this should be equal to old size + disk_count
+     //node->file_buffer->buffered_list_size = idx+node->file_buffer->disk_count;
+
+      
+     COUNT_THREAD_PARTIAL_INPUT_TIME_START(thread_id)   
+     if(fclose(ts_file))
+     {   
+        fprintf(stderr, "Error in dstree_file_buffer.c: Could not close"
+		            "the filename %s. Reason= %s.\n", full_filename, strerror(errno));
+        //return FAILURE;
+     } 
+     COUNT_THREAD_PARTIAL_INPUT_TIME_END(thread_id)     
+     free(full_filename);
+
+  }
+  else
+  {
+     int idx = node->file_buffer->buffered_list_size;
+
+     for (int i = 0 ; i < idx; ++i)
+     {
+        ret[i] = calloc(ts_length, sizeof(ts_type));
+	      for(int j=0; j<ts_length; ++j)
+        {
+          ret[i][j] = node->file_buffer->buffered_list[i][j];
+        }
      }    
   }
   return ret;

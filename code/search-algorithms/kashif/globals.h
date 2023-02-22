@@ -69,6 +69,7 @@ int FLUSHES;
         struct timeval output_time_start;
         struct timeval load_node_start;
         struct timeval current_time;
+        
         struct timeval fetch_start;
         struct timeval fetch_check_start;
         double total_input_time;
@@ -82,6 +83,18 @@ int FLUSHES;
         struct timeval partial_input_time_start;
         struct timeval partial_output_time_start;
         struct timeval partial_load_node_time_start;         
+
+        /* start kashif changes */
+        struct timeval * now;
+        struct timeval *thread_partial_time_start;
+        struct timeval *thread_partial_input_time_start;
+        struct timeval *thread_partial_output_time_start;
+
+        double *thread_partial_time;
+        double *thread_partial_input_time;
+        double *thread_partial_output_time;
+
+        /* end kashif changes */
 
         double partial_time;
         double partial_input_time;
@@ -102,6 +115,14 @@ int FLUSHES;
         unsigned long checked_ts_count;
         unsigned long total_ts_count;
         unsigned long total_queries_count;
+
+        /* start kashif changes */
+        unsigned long *thread_loaded_nodes_count;
+        unsigned long *thread_checked_nodes_count;
+        unsigned long *thread_loaded_ts_count;
+        unsigned long *thread_checked_ts_count;
+        /* start kashif changes */
+
         ts_type total_tlb;
 
         #define INIT_STATS() total_input_time = 0;\
@@ -125,6 +146,18 @@ int FLUSHES;
 			     checked_ts_count = 0;\
                              checked_nodes_count = 0;\			    
 			     total_ts_count = 0;
+
+        #define INIT_THREAD_STATS(num_threads) thread_partial_time = calloc(num_threads, sizeof(double));\			     
+			     thread_partial_input_time = calloc(num_threads, sizeof(double));\
+			     thread_partial_output_time = calloc(num_threads, sizeof(double));\
+			     thread_loaded_nodes_count = calloc(num_threads, sizeof(unsigned long));\
+			     thread_loaded_ts_count = calloc(num_threads, sizeof(unsigned long));\			     
+			     thread_checked_ts_count = calloc(num_threads, sizeof(unsigned long));\
+                             thread_checked_nodes_count = calloc(num_threads, sizeof(unsigned long));\
+                             thread_partial_time_start = calloc(num_threads, sizeof(struct timeval));\
+                             thread_partial_input_time_start = calloc(num_threads, sizeof(struct timeval));\
+                             thread_partial_output_time_start = calloc(num_threads, sizeof(struct timeval));\
+                             now = calloc(num_threads, sizeof(struct timeval));
 
 
 //                             filtered_ts_disk_count = 0;	\
@@ -174,6 +207,14 @@ int FLUSHES;
         #define COUNT_LOADED_TS(num_ts) loaded_ts_count +=num_ts; //ts loaded to answer query
         #define COUNT_CHECKED_TS(num_ts) checked_ts_count +=num_ts; //ts loaded to answer query
 
+
+        /* start kashif changes */
+        #define COUNT_THREAD_CHECKED_NODE(thread_id) ++thread_checked_nodes_count[thread_id];
+        #define COUNT_THREAD_LOADED_NODE(thread_id) ++thread_loaded_nodes_count[thread_id];
+        #define COUNT_THREAD_LOADED_TS(num_ts,thread_id) thread_loaded_ts_count[thread_id] +=num_ts; //ts loaded to answer query
+        #define COUNT_THREAD_CHECKED_TS(num_ts,thread_id) thread_checked_ts_count[thread_id] +=num_ts; //ts loaded to answer query
+        /* end kashif changes */
+
 /*
         #define COUNT_FILTERED_TS_DISK(num_ts) filtered_ts_disk_count +=num_ts;
         #define COUNT_FILTERED_TS_MEM(num_ts) filtered_ts_mem_count +=num_ts;
@@ -207,6 +248,41 @@ int FLUSHES;
 				       partial_load_node_time = 0;\
 				       partial_time = 0;
 
+        /* start kashif changes */
+        #define RESET_THREAD_QUERY_COUNTERS(thread_id) thread_loaded_nodes_count[thread_id] = 0;\
+                                        thread_loaded_ts_count[thread_id] = 0;\
+                                        thread_checked_nodes_count[thread_id] = 0;\
+                                        thread_checked_ts_count[thread_id] = 0;
+
+        #define FREE_THREAD_QUERY_COUNTERS free(thread_loaded_nodes_count);\
+                                        free(thread_loaded_ts_count);\
+                                        free(thread_checked_nodes_count);\
+                                        free(thread_checked_ts_count);\
+                                        thread_loaded_nodes_count = NULL;\
+                                        thread_loaded_ts_count = NULL;\
+                                        thread_checked_nodes_count = NULL;\
+                                        thread_checked_ts_count = NULL;
+
+
+        #define RESET_THREAD_PARTIAL_COUNTERS(thread_id) thread_partial_input_time[thread_id] = 0;\
+                                        thread_partial_output_time[thread_id] = 0;\
+                                        thread_partial_time[thread_id] = 0;\
+
+        #define FREE_THREAD_PARTIAL_COUNTERS free(thread_partial_input_time_start);\
+                                        free(thread_partial_output_time_start);\
+                                        free(thread_partial_time_start);\
+                                        free(thread_partial_input_time);\
+                                        free(thread_partial_output_time);\
+                                        free(thread_partial_time);\
+                                        free(now);\
+                                        thread_partial_input_time_start = NULL;\
+                                        thread_partial_output_time_start = NULL;\
+                                        thread_partial_time_start = NULL;\
+                                        thread_partial_input_time = NULL;\
+                                        thread_partial_output_time = NULL;\
+                                        thread_partial_time = NULL;\
+                                        now = NULL;     
+        /* end kashif changes */
        #define PRINT_QUERY_COUNTERS() printf("loaded_nodes and checked_ts = %lu and %lu\n", loaded_nodes_count, checked_ts_count);
        #define PRINT_PARTIAL_COUNTERS() printf("seq_output and partial_time = %llu and %f\n",partial_seq_output_count,  partial_time);
 
@@ -225,6 +301,13 @@ int FLUSHES;
         #define COUNT_PARTIAL_OUTPUT_TIME_START gettimeofday(&partial_output_time_start, NULL);
         #define COUNT_PARTIAL_LOAD_NODE_TIME_START gettimeofday(&partial_load_node_time_start, NULL);
 
+        /* start kashif changes */
+
+        #define COUNT_THREAD_PARTIAL_TIME_START(thread_id) gettimeofday(&thread_partial_time_start[thread_id], NULL);
+        #define COUNT_THREAD_PARTIAL_INPUT_TIME_START(thread_id) gettimeofday(&thread_partial_input_time_start[thread_id], NULL);   
+        #define COUNT_THREAD_PARTIAL_OUTPUT_TIME_START(thread_id) gettimeofday(&thread_partial_output_time_start[thread_id], NULL);
+
+        /* end kashif changes */
         #define COUNT_PARSE_TIME_START gettimeofday(&parse_time_start, NULL);   
         #define COUNT_LOAD_NODE_START gettimeofday(&load_node_start, NULL);
         #define COUNT_INPUT_TIME_END  gettimeofday(&current_time, NULL);\
@@ -255,6 +338,26 @@ int FLUSHES;
                                       tS = partial_time_start.tv_sec*1000000 + (partial_time_start.tv_usec); \
                                       tE = current_time.tv_sec*1000000  + (current_time.tv_usec); \
                                       partial_time += (tE - tS); 
+
+        /* start kashif changes */
+        #define COUNT_THREAD_PARTIAL_INPUT_TIME_END(thread_id)  gettimeofday(&now[thread_id], NULL); \
+                                      tS = thread_partial_input_time_start[thread_id].tv_sec*1000000 + (thread_partial_input_time_start[thread_id].tv_usec); \
+                                      tE = now[thread_id].tv_sec*1000000 + (now[thread_id].tv_usec); \
+                                      thread_partial_input_time[thread_id] += (tE - tS);
+        #define COUNT_THREAD_PARTIAL_LOAD_NODE_TIME_END(thread_id)  gettimeofday(&now[thread_id], NULL); \
+                                      tS = thread_partial_load_node_time_start[thread_id].tv_sec*1000000 + (thread_partial_load_node_time_start[thread_id].tv_usec); \
+                                      tE = now[thread_id].tv_sec*1000000 + (now[thread_id].tv_usec); \
+                                      thread_partial_load_node_time[thread_id] += (tE - tS); 
+        #define COUNT_THREAD_PARTIAL_OUTPUT_TIME_END(thread_id) gettimeofday(&now[thread_id], NULL); \
+                                      tS = thread_partial_output_time_start[thread_id].tv_sec*1000000 + (thread_partial_output_time_start[thread_id].tv_usec); \
+				      tE = now[thread_id].tv_sec*1000000  + (now[thread_id].tv_usec); \
+                                      thread_partial_output_time[thread_id] += (tE - tS); 
+        #define COUNT_THREAD_PARTIAL_TIME_END(thread_id) gettimeofday(&now[thread_id], NULL); \
+                                      tS = thread_partial_time_start[thread_id].tv_sec*1000000 + (thread_partial_time_start[thread_id].tv_usec); \
+                                      tE = now[thread_id].tv_sec*1000000  + (now[thread_id].tv_usec); \
+                                      thread_partial_time[thread_id] += (tE - tS); \
+        /* end kashif changes */
+
         #define COUNT_PARSE_TIME_END  gettimeofday(&current_time, NULL);  \
                                       tS = parse_time_start.tv_sec*1000000 + (parse_time_start.tv_usec); \
                                       tE = current_time.tv_sec*1000000  + (current_time.tv_usec); \

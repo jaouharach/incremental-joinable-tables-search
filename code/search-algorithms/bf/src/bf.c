@@ -13,6 +13,7 @@
 #include <linux/limits.h>
 #include "../include/utils.h"
 #include "../include/stats.h"
+#include <errno.h>
 
 int main(int argc, char const *argv[])
 {   
@@ -30,7 +31,7 @@ int main(int argc, char const *argv[])
     unsigned int k = 1;
     unsigned int qset_num = 0 ,min_qset_size = 0, max_qset_size = 0;
     unsigned int top = 0; //top x sets to be returned 
-    unsigned char exact_search = 0;
+    unsigned char identical_knn_search = 0;
     while (1)
     {
         /*
@@ -47,7 +48,7 @@ int main(int argc, char const *argv[])
             {"total-data-files", required_argument, 0, '|'}, // number of datasets to be indexed (tables)
             {"k", required_argument, 0, 'k'},
             {"vector-length", required_argument, 0, 't'},
-            {"exact-search", no_argument, 0, 'e'},
+            {"identical-knn-search", no_argument, 0, 'i'},
         };
         /* getopt_long stores the option index here. */
         int option_index = 0;
@@ -103,8 +104,8 @@ int main(int argc, char const *argv[])
             vector_length = atoi(optarg);
             break;
 
-        case 'e':
-            exact_search = 1;
+        case 'i':
+            identical_knn_search = 1;
             break;
 
         default:
@@ -116,7 +117,7 @@ int main(int argc, char const *argv[])
     printf("Total data size in gb = %u\n", data_gb_size);    
 
     bf_sequential_search(queries_dir, dataset, vector_length, qset_num, min_qset_size, max_qset_size,
-                            top, result_dir, total_data_files, data_gb_size, k, exact_search);
+                            top, result_dir, total_data_files, data_gb_size, k, identical_knn_search);
 
     printf("\n>>>> Congrat! End of experiment."); 
     printf("\n>>>> Results are stored in %s", result_dir); 
@@ -131,8 +132,9 @@ int main(int argc, char const *argv[])
 
 void bf_sequential_search(char * queries, char * dataset, unsigned int vector_length, unsigned int qset_num,
     unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top, char * result_dir,
-    unsigned int total_data_file, unsigned int data_gb_size, unsigned int k, unsigned char exact_search)
+    unsigned int total_data_file, unsigned int data_gb_size, unsigned int k, unsigned char identical_knn_search)
 {
+    printf("bf_sequential_search();\n");
     RESET_PARTIAL_COUNTERS()
     COUNT_PARTIAL_TIME_START
     int opened_files = 0; 
@@ -195,7 +197,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
             COUNT_PARTIAL_INPUT_TIME_END
             if (bin_file == NULL)
             {
-                printf("Error in bf.c: File %s not found!\n", bin_file_path);
+                printf("Error in bf.c: File %s not found! because of error: %s\n", bin_file_path, strerror(errno));
                 exit(1);
             }
 
@@ -227,6 +229,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                         i = 0;
                         j = 0;
                         total_bytes -= nvec * vector_length;
+                        //printf("size = %u, skip();\n", nvec);
                         continue;
                     }
                     found_query = true;
@@ -241,8 +244,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                             exit(1);
                         }
                     }
-                    printf("Query %u/%u. id:(%u, %u) \n\n", (total_queries-qset_num)+1, total_queries, table_id, set_id);
-                    
+                    printf("\nQuery %u/%u. id:(%u, %u), size = %u\n\n", (total_queries-qset_num)+1, total_queries, table_id, set_id, nvec);
                     
                     total_checked_vec = 0;
                     next_vec = 0;
@@ -295,11 +297,12 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                         next_vec = 0;
                         
                         // only return vectors with distance 0
-                        if(exact_search)
+                        if(identical_knn_search == 1)
                         {
+                            printf("\n>>> performing identical knn search ...\n");
                            /*run query set */
                             // Perform brute force knn search for all query vectors
-                            all_knn_results =  brute_force_exact_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, &total_checked_vec, &total_knns);
+                            all_knn_results =  brute_force_identical_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, &total_checked_vec, &total_knns);
 
                             // printf("\nDone. total knns = %d\n.", total_knns);
                             COUNT_PARTIAL_TIME_END
@@ -329,7 +332,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                         }
                         else
                         {
-                            /*run query set */
+                            printf("\n>>> performing knn search ...\n");
                             // Perform brute force knn search for all query vectors
                             all_knn_results =  brute_force_knn_search_optimized(dataset, total_data_file, vector_length, query_set, nvec, k, &total_checked_vec);
 
@@ -374,6 +377,7 @@ void bf_sequential_search(char * queries, char * dataset, unsigned int vector_le
                     j++;
                 }
             }
+            fclose(bin_file);
         }
     }
     COUNT_PARTIAL_INPUT_TIME_START
@@ -588,7 +592,8 @@ struct query_result * brute_force_knn_search_optimized(char * dataset, unsigned 
     return all_knn_results;
 }
 
-struct query_result * brute_force_exact_knn_search_optimized(char * dataset, unsigned int total_data_files, unsigned int vector_length, 
+// no k is specified, get all vectors with distance 0 to the the query vectors in the the query column.
+struct query_result * brute_force_identical_knn_search_optimized(char * dataset, unsigned int total_data_files, unsigned int vector_length, 
     struct vector * qset, unsigned int qnvec, unsigned int *total_checked_vec, unsigned int * total_knns)
 {
     
@@ -716,7 +721,9 @@ struct query_result * brute_force_exact_knn_search_optimized(char * dataset, uns
                             d = euclidean_distance(qset[h].values, v.values, vector_length);
                             if (d == 0.0)
                             {
-                                // printf("++ new exact match.");
+                                printf("+ Exact match: (%u, %u, %u)\tmatches\t(%u, %u, %u)\n", 
+                                        v.table_id, v.set_id, v.pos, qset[h].table_id, qset[h].set_id, qset[h].pos);
+                                        
                                 *total_knns += 1;
                                 all_knn_results = (struct query_result *) realloc(all_knn_results, sizeof(struct query_result) * (*total_knns));
                             

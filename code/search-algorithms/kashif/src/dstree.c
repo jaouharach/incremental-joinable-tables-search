@@ -72,14 +72,23 @@ int main(int argc, char **argv) {
   static unsigned int total_columns = 0; // number of columns to be indexed
   unsigned char track_vector = 0;
   unsigned char keyword_search = 0;
+  unsigned char parallel = 0; // parallel incremental query answering
+  unsigned char store_results_in_disk = 0;
   unsigned int qset_num = 3;
   unsigned int min_qset_size = 5;
   unsigned int max_qset_size = 10;
   unsigned int num_top = 3;           // number top sets to be returned
   static unsigned int data_gb_size = 0; // datalake size in GB
   unsigned int num_k_values = 0;
-  char * k_values_str = "";
+  char * k_values_str = "1,3,5,10,30,50,100,300,500,1000,3000,5000";
   char * ground_truth_dir = "";
+  unsigned int num_threads = 1;
+  unsigned int stop_when_nn_dist_changes = 0; // = 0 return all knn, = 1 stop when nn distance changes, = 2 (similar to 1) but return all results in the last increment.
+  
+  char knn_data_structure [3][12] = {"sorted-arr\0", "minmax-heap\0", "ostree\0"};
+
+  unsigned int nn_struct = 0; //  = 0 use sorted array, = 1 use min max heap, = 2 use ostree
+
   /* end kashif changes */
 
   // printf("new code\n");
@@ -125,7 +134,14 @@ int main(int argc, char **argv) {
         {"track-vector", no_argument, 0, '*'},
         {"keyword-search", no_argument, 0, ':'},
         {"k-values", required_argument, 0, ';'},
-        {"ground-truth-dir", required_argument, 0, '&'}
+        {"ground-truth-dir", required_argument, 0, '&'},
+        {"parallel", no_argument, 0, '-'},
+        {"store-results-in-disk", required_argument, 0, '!'},
+        {"num-threads", required_argument, 0, ')'},
+        {"stop-when-nn-dist-changes", required_argument, 0, '$'}, // stop knn search when nn distance changes
+        {"knn-data-structure", required_argument, 0, '('}, // in which data structure should we store knns 
+
+        
         /* end kashif changes */
     };
 
@@ -335,6 +351,48 @@ int main(int argc, char **argv) {
     case '&':
       ground_truth_dir = optarg;
       break;
+
+    case '-':
+      parallel = 1;
+      break;
+
+    case '!':
+      store_results_in_disk = 1;
+      break;
+
+    case ')':
+      num_threads = atoi(optarg);
+      break;
+
+    case '$':
+      stop_when_nn_dist_changes = atoi(optarg);
+      break;
+
+    case '(':
+      if (strcmp(optarg, knn_data_structure[0]) == 0)
+      {
+        // printf("sorted array\n");
+        nn_struct = 0;
+      }
+      else if ((strcmp(optarg, knn_data_structure[1]) == 0))
+      {
+        // printf("minmax-heap\n");
+        nn_struct = 1;
+      }
+      else if ((strcmp(optarg, knn_data_structure[2]) == 0))
+      {
+        // printf("os-tree\n");
+        nn_struct = 2;
+      }
+      else
+      {
+        printf("please specify a a valid knn data structure! (sorted-arr, ostree, minmax-heap)\n");
+        nn_struct = 0;
+        exit(1);
+      }
+
+      break;
+
     /* end kashif changes */
     default:
       exit(-1);
@@ -487,7 +545,7 @@ int main(int argc, char **argv) {
     index = dstree_index_read(index_path);
     fprintf(stderr, ">>> Index read successfully\n");
     index->settings->dataset = dataset;
-    if (!classify) {
+    if (classify != 1) {
       index->settings->classify = 0;
       // if (index->gt_filename != NULL)
       //   free(index->gt_filename);
@@ -564,11 +622,26 @@ int main(int argc, char **argv) {
     }
 
     index->settings->track_vector = track_vector;
+    index->settings->parallel = parallel;
     /* start kashif changes */
-    dstree_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
+
+    if(incremental && parallel)
+    {
+      printf("Parallel QA  (%d threads) ...\n", num_threads);
+      dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
+                                    minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
+                                    max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
+                                    warping, keyword_search, k_values_str, ground_truth_dir, store_results_in_disk, num_threads, stop_when_nn_dist_changes, nn_struct);
+    }
+    else
+    {
+      printf("Sequential QA ...\n");
+      dstree_knn_query_multiple_binary_files(queries, qset_num, min_qset_size, max_qset_size, num_top, index,
                                     minimum_distance, epsilon, r_delta,k, track_bsf, track_pruning, all_mindists,
                                     max_policy, nprobes, incremental, result_dir, total_data_files, data_gb_size, 
                                     warping, keyword_search, k_values_str, ground_truth_dir);
+    }
+    
     /* end kashif changes */
   } 
   else if (mode == 2) // build the index, execute queries and store the index

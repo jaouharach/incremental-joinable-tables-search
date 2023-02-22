@@ -4,6 +4,9 @@
         "kashif_utils.h": "c",
         "float.h": "c",
         "stdio.h": "c",
-        "globals.h": "c"
+        "globals.h": "c",
+        "unistd.h": "c",
+        "pthread.h": "c",
+        "dstree_index.h": "c"
     }
 }

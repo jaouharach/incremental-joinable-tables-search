@@ -59,5 +59,5 @@ void bf_sequential_search_with_threshold(char * bin_files_directory, unsigned in
 struct query_result * brute_force_knn_search_optimized_with_sim_threshold(char * bin_files_dir, unsigned int total_data_files, unsigned int vector_length, struct vector * qset,unsigned int qnvec, unsigned int k, double * query_time, unsigned int *total_checked_vec, float theta);
 bool query_result_cpy_vector(struct query_result * dest, struct vid * src, unsigned int query_vector_pos, ts_type distance, char * raw_file_name);
 // retreive all matches with distance zero
-struct query_result * brute_force_exact_knn_search_optimized(char * dataset, unsigned int total_data_files, unsigned int vector_length, 
+struct query_result * brute_force_identical_knn_search_optimized(char * dataset, unsigned int total_data_files, unsigned int vector_length, 
     struct vector * qset, unsigned int qnvec, unsigned int *total_checked_vec, unsigned int * total_knns);

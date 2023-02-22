@@ -1,0 +1,55 @@
+B-Tree:
+
+Is the generalization of self balancing BST where a node can have more than two children.
+
+
+ORDER STATISTICS TREE: -----------------------------------------------------------------------------
+
+A variation of a self balancing BST that supports SELECT(k) and RANK(K) operations in log time.
+
+
+FENWICK TREE (BIT: Binary Indexed Trees) : ---------------------------------------------------------
+
+
+
+- implement min max heap (compare performance)
+- implement min max heap with redcing the size of heap.
+
+
+- work on recall (get lsh).
+- read literature on column / word embeddings.
+- 
+
+
+AVL TREE STRUCTURE: --------------------------------------------------------------------------------
+
+
+
+
+
+RED BLACK TREE STRUCTURE: --------------------------------------------------------------------------
+
+
+Motivation: Binary search tree worst performance = O(n) (skewed Binary tree)
+Proposed solution: red black tree: a self balancing tree structure, the blancing mechanism is based on coloring nodes red or black.
+
+RBTree properties:
+
+(1) Every node is black or red.
+(2) The root is always black.
+(3) A red node cannot have a red parent or a red child.
+(4) Every leaf must be colored black.
+(5) Every path from a node n to a descendent leaf has the same number of black nodes (not counting node n). We call this number the black height of n, which is 	denoted by bh(n).
+
+
+
+
+Right Rotation:
+- Assume node x is the parent and node y is a non-leaf right child.
+- Let y be the parent and x be its left child.
+- Let y’s left child be x’s right child.
+
+
+Insertion:
+- BST insertion.
+- Fix any violation of the RBTree properties.

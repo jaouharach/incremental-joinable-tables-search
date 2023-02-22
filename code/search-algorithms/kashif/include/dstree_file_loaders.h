@@ -47,6 +47,18 @@ enum response dstree_knn_query_multiple_binary_files(
     unsigned char incremental, char *result_dir, unsigned int total_data_files,
     unsigned int dlsize, // total disk size of data files indexed in dstree
     float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir);
+
+enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_multiple_binary_files(
+    const char *bin_files_directory, unsigned int qset_num,
+    unsigned int min_qset_size, unsigned int max_qset_size, unsigned int num_top,
+    struct dstree_index *index, float minimum_distance, ts_type epsilon,
+    ts_type r_delta, unsigned int k, boolean track_bsf, boolean track_pruning,
+    boolean all_mindists, boolean max_policy, unsigned int nprobes,
+    unsigned char incremental, char *result_dir, unsigned int total_data_files,
+    unsigned int dlsize, // total disk size of data files indexed in dstree
+    float warping, unsigned char keyword_search, char * k_values_str, char * ground_truth_dir,
+    unsigned char store_results_in_disk, unsigned int num_threads, unsigned int stop_when_nn_dist_changes, unsigned int nn_struct);
+    
 /* end kashif changes */
 #endif
 

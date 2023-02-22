@@ -1,7 +1,7 @@
 ** brute force search (for 100k tables) ** 
 
 
-bin/bf --dataset /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --queries /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/[50-100]queries/ --nq 10 --min-qset-size 50 --max-qset-size 100 --top 10 --total-data-files 100000 --vector-length 50 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/bf-search/100k-results/1nn/  --k 1
+bin/bf --dataset /data/real/jchanchaf/wdc-2015-en-full/10m/bins/ --queries /data/real/jchanchaf/wdc-2015-en-full/10m/bins/ --nq 5 --min-qset-size 10 --max-qset-size 50 --top 10 --total-data-files 1000000 --vector-length 50 --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/bf-search/1m-nok-results/  --k 10 --identical-knn-search 1
 
 
 --------------------------------------------------------------------------------------------------------
@@ -14,6 +14,15 @@ valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset  /home/
 (for 200 tables, contains ~ 10243 vectors)
 
 valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset  /home/jaouhara.chanchaf/work-dir/data/wdc-2015/clean-tables-beta2/bins/ --total-data-files 200 --buffer-size 60 --index-path /home/jaouhara.chanchaf/work-dir/indexes/200-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 1000
+
+(for 50k tables, contains 2,479,540 vectors)
+
+valgrind  --leak-check=full --undef-value-errors=no bin/dstree --dataset /data/real/jchanchaf/wdc-2015-en-full/10m/bins/ --total-data-files 50000 --buffer-size 6000 --index-path ../50k-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100000
+
+
+(for 100 tables, contains 552 columns, 5699 vectors)
+
+bin/dstree --dataset /data/real/jchanchaf/wdc-2015-en-full/subsets/100-nonorm/ --total-data-files 100 --buffer-size 600 --index-path /home/jaouhara.chanchaf/work-dir/indexes/100-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100
 
 2- run queries on index (for 100k tables):
 

@@ -30,6 +30,7 @@ struct dstree_index_settings {
 
   /* start kashif changes */
   unsigned char track_vector;
+  unsigned char parallel;
   /* end kashif changes */
 };
 
@@ -149,6 +150,15 @@ struct stats_info {
   double query_total_cpu_time;
   double query_total_time;
 
+  /* start kashif changes */
+
+  double *thread_query_total_input_time;
+  double *thread_query_total_output_time;
+  double *thread_query_total_load_node_time;
+  double *thread_query_total_cpu_time;
+  double *thread_query_total_time;
+
+  /* end kashif changes */
   double queries_total_input_time;
   double queries_total_output_time;
   double queries_total_load_node_time;
@@ -252,6 +262,12 @@ struct stats_info {
   unsigned long long query_total_loaded_ts_count;
   unsigned long long query_total_checked_ts_count;
 
+  /* start kashif chnages */
+  unsigned int *thread_query_total_loaded_nodes_count;
+  unsigned int* thread_query_total_checked_nodes_count;
+  unsigned long long *thread_query_total_loaded_ts_count;
+  unsigned long long *thread_query_total_checked_ts_count;
+  /* end kashif changes */
   double query_approx_distance;
   char *query_approx_node_filename;
   unsigned int query_approx_node_size;
@@ -367,6 +383,9 @@ void dstree_print_stats(struct dstree_index *index);
 enum response dstree_update_index_stats(struct dstree_index *index,
                                         struct dstree_node *node);
 enum response dstree_init_stats(struct dstree_index *index);
+/* start kashif changes */
+enum response dstree_init_thread_stats(struct dstree_index *index, int num_threads);
+/* ebd kashif changes */
 void print_tlb_stats(struct dstree_index *index, unsigned int query_num,
                      char *queries);
 

@@ -148,7 +148,8 @@ am_lib_libdstree_a_OBJECTS = src/lib_libdstree_a-pqueue.$(OBJEXT) \
 	src/lib_libdstree_a-calc_utils.$(OBJEXT) \
 	src/lib_libdstree_a-dstree_query_engine.$(OBJEXT) \
 	src/lib_libdstree_a-dstree_file_buffer.$(OBJEXT) \
-	src/lib_libdstree_a-dstree_file_buffer_manager.$(OBJEXT)
+	src/lib_libdstree_a-dstree_file_buffer_manager.$(OBJEXT)\
+	include/nn-data-structures/nn_struct.o
 lib_libdstree_a_OBJECTS = $(am_lib_libdstree_a_OBJECTS)
 PROGRAMS = $(bin_PROGRAMS)
 am_bin_dstree_OBJECTS = src/bin_dstree-dstree.$(OBJEXT)
@@ -182,7 +183,7 @@ AM_V_CC = $(am__v_CC_$(V))
 am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
-CCLD = $(CC)
+CCLD = g++
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_CCLD = $(am__v_CCLD_$(V))
 am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
@@ -246,7 +247,7 @@ AUTOMAKE = automake-1.15
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2
+CFLAGS = -g -O0
 CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo
@@ -334,7 +335,7 @@ lib_libdstree_a_SOURCES = src/pqueue.c src/dstree_file_loaders.c  src/dstree_ind
 lib_libdstree_a_CFLAGS = -I/opt/local/include -Iinclude 
 bin_dstree_SOURCES = src/dstree.c
 bin_dstree_CFLAGS = -I/opt/local/include -Iinclude -I/usr/local/include/ 
-bin_dstree_LDADD = -lreadline -L$/lib  -ldstree -lm
+bin_dstree_LDADD = -lreadline -L$/lib  -ldstree -lm -lpthread
 bin_dstree_LDFLAGS = -L/opt/local/lib -Llib/ -Wl,-rpath,-r/lib
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am

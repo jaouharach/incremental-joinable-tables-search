@@ -19,16 +19,58 @@
 #include "dstree_file_buffer.h"
 #include "pqueue.h"
 #include "dstree_query_engine.h"
-
+#include <stdint.h>
+#include <pthread.h>
 
 /* start kashif changes */
+
 // vector id
-struct vid { 
+typedef struct vid { 
   unsigned int table_id;
   unsigned int set_id;
   unsigned int pos;
   char raw_data_file[300]; // name of the raw (bin) file where vector is store
-};
+} vid;
+
+
+struct job {
+  struct vid query_id;
+  ts_type * query_vector;
+  int * query_order;
+  ts_type * query_vector_reordered;
+  unsigned int worker_id; // worker who executed this job
+} job;
+
+struct pool {
+	char cancelled;
+	unsigned int remaining; // 0 is thread is not working 1 if thread has finished current job 2 if thread finishied last job (no more jobs to take)
+	unsigned int num_threads;
+
+	struct  job * job_array;
+  unsigned int num_jobs;
+	unsigned int job_counter;
+
+	pthread_t *threads;
+  pthread_cond_t *cond_thread_state;
+  pthread_mutex_t *cond_mutex;
+  
+  unsigned int *executed_jobs_count;// nb of executed jobs for each thread
+  void *(*function)(void *);
+
+  struct worker_param *params;
+  unsigned int num_working_threads;
+  unsigned int *working;
+} pool;
+
+struct result_vid { 
+  unsigned int table_id; // max = 4,294,967,295, must change type if dataset contains more that 4,294,967,295 tables
+  uint16_t set_id; // max = 65535, must change type if dataset tables contain more than 65535 columns
+  uint16_t pos; // max = 65535, must change type if dataset columns contain more than 65535 cells (vectors)
+  uint8_t qpos; // max = 255, must change type if query column contain more than 255 cells (vectors)
+  float time; 
+  float distance;
+  unsigned int num_checked_vectors;
+} result_vid;
 
 // result set id
 struct result_sid { 
@@ -89,6 +131,7 @@ struct dstree_node {
   /* start kashif changes */
   unsigned int vid_pos;
   struct vid * vid;
+  pthread_mutex_t lock;
   /* end kashif changes */
 };
 struct dstree_node * dstree_root_node_init(struct dstree_index_settings * settings) ;
@@ -124,12 +167,42 @@ void calculate_node_knn_distance (struct dstree_index *index, struct dstree_node
 				  unsigned int * cur_size,
 				  float warping);
 /* start kashif changes */
-void calculate_node_knn_distance_2(
+int thread_queue_bounded_sorted_insert(struct dstree_index * index, struct query_result *q, struct query_result d,
+                                unsigned int *cur_size, unsigned int k, unsigned int thread_id);
+int calculate_node_knn_distance_2(
     struct dstree_index *index, struct dstree_node *node,
     ts_type *query_ts_reordered, int *query_order, unsigned int offset,
-    ts_type bsf, unsigned int k, struct query_result *knn_results,
-    struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
-    unsigned int *cur_size, float warping, struct vid * query_id, double * total_query_time, unsigned int * total_checked_vectors);
+    unsigned int k, struct query_result *knn_results,
+    // struct bsf_snapshot **bsf_snapshots, unsigned int *cur_bsf_snapshot,
+    unsigned int *cur_size, float warping, struct vid * query_id, 
+    double * total_query_time, unsigned int * total_checked_vectors,
+    unsigned int approx);
+
+int calculate_node_knn_distance_para_incr(
+    struct dstree_index *index, struct dstree_node *node,
+    ts_type *query_ts_reordered, int *query_order, unsigned int offset,
+    unsigned int k, struct query_result *knn_results,
+    unsigned int *cur_size, float warping, struct vid * query_id,
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int thread_id, unsigned int approx);
+
+int calculate_node_knn_distance_para_incr_ostree(
+    struct dstree_index *index, struct dstree_node *node,
+    ts_type *query_ts_reordered, int *query_order, unsigned int offset,
+    unsigned int k, void *knn_tree,
+    unsigned int *cur_size, float warping, struct vid * query_id,
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int thread_id, unsigned int approx, unsigned long *insert_counter);
+
+
+int calculate_node_knn_distance_para_incr_mmheap(
+    struct dstree_index *index, struct dstree_node *node,
+    ts_type *query_ts_reordered, int *query_order, unsigned int offset,
+    unsigned int k, void * knn_heap,
+    unsigned int *cur_size, float warping, struct vid * query_id,
+    double * total_query_set_time, unsigned int * total_checked_ts,
+    unsigned int thread_id, unsigned int approx, unsigned long *insert_counter);
+    
 /* end kashif changes */
 enum response append_ts_gt_to_child_node(struct dstree_index * index,
 					 struct dstree_node * node,
