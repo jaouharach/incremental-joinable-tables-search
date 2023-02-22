@@ -406,15 +406,15 @@ int main(int argc, char **argv) {
   //   exit(-1);
   // }
 
-  if (dataset_size == 0)
+  if (dataset_size == 0) // get nb of vectors in data lake (if not provided by the user)
     dataset_size = (unsigned int) get_total_data_vectors(dataset, total_data_files, &total_columns); // get total number of vectors in data repository
   
-  if (data_gb_size == 0)
+  if (data_gb_size == 0) // get data lake size in gb (if not provided by the user)
   {
     data_gb_size = get_data_gb_size(dataset, total_data_files);
   }
-  printf("Start Experiment...\n\nTotal files: %d\nTotal columns %d\nTotal  vectors:\t%d\nSize in GB:\t%u\n\n\n", total_data_files, total_columns, dataset_size, data_gb_size);
-  printf("buffered memory = %f MB\n", buffered_memory_size);
+  printf("Start Experiment...\n\nTotal files: %d\nTotal columns %d\nTotal  vectors:\t%d\nData lake size in GB:\t%u\n\n\n", total_data_files, total_columns, dataset_size, data_gb_size);
+  // printf("buffered memory = %f MB\n", buffered_memory_size);
 
   /* end kashif changes */
 
