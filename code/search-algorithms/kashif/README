@@ -3,7 +3,8 @@ This is the README file for Kashif a joinable tables discovery framework based o
 
 The dstree is a Data-adaptive and Dynamic Segmentation  Index for Whole Matching on Time Series.
 
-URL link for the DSTREE paper (The original implementation was in Java): https://www.cs.sfu.ca/~jpei/publications/time%20series%20index%20VLDB13.pdf 
+URL link for the DSTREE paper (The original implementation was in Java):\
+> https://www.cs.sfu.ca/~jpei/publications/time%20series%20index%20VLDB13.pdf 
 
 
 This C version was developed by: Karima Echihabi on 18/12/2016 and Jaouhara Chanchaf on 02/22/2023
@@ -35,7 +36,7 @@ Copyright 2012 University of Trento. All rights reserved.
 
 #### DATA PREPARATION
 1. Download and extract tables from :
->> https://data.dws.informatik.uni-mannheim.de/webtables/2015-07/englishCorpus/compressed/
+> https://data.dws.informatik.uni-mannheim.de/webtables/2015-07/englishCorpus/compressed/
 
 2. Clean data: \
 To remove numerical data go to data-preparation/clean and run:\
@@ -43,7 +44,7 @@ To remove numerical data go to data-preparation/clean and run:\
 
 3. Generate embeddings: \
     i. download fasttext binary file from:\
-        https://fasttext.cc/docs/en/crawl-vectors.html \
+        > https://fasttext.cc/docs/en/crawl-vectors.html \
     ii. then go to data-preparation/embed/fasttext.py and update the following line with the correct path to fasttext file, if you want to normalize vectors set normalize_vectors to True:\
         `FASTTEXT_PATH = '/home/jchanchaf/local/src/fasttext-en/cc.en.300.bin`\
         `normalize_vectors = False` \
