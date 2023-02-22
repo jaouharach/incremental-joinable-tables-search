@@ -641,9 +641,10 @@ enum response dstree_knn_query_multiple_binary_files(
               }
               free(query_result_file);
             }
+            printf("end.\n");
             
-            printf("\nquery_time=%fsec\n", query_time);
-            printf("computing recall...\n");
+            // printf("\nquery_time=%fsec\n", query_time);
+            // printf("computing recall...\n");
 
             // compute recall
             // int k_idx;
@@ -735,7 +736,6 @@ enum response dstree_knn_query_multiple_binary_files(
             // }
 
             // free memory
-            printf("Freeing knn array ...\n");
             for(int q = 0; q < nvec; q++)
             {
               free(all_knn_results[q]);
@@ -790,8 +790,7 @@ enum response dstree_knn_query_multiple_binary_files(
   free(query_vector_reordered);
   free(query_order);
   free(results_dir);
-
-
+  
   return SUCCESS;
 }
 
@@ -1215,7 +1214,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
             // store query results
             if(store_results_in_disk)
             {
-              printf("Storing results to csv file...\n");
+              printf("start storing results to csv file...\n");
 
               for(int z = 0; z < num_k_values; z++)
               {
@@ -1232,6 +1231,7 @@ enum response dstree_multi_thread_variable_num_thread_parallel_incr_knn_query_mu
                 }
                 free(query_result_file);              
               }
+              printf("end.\n");
             }
 
             // aggregate results and print joinable tables (disabled)
