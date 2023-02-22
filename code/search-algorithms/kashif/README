@@ -17,30 +17,30 @@ Copyright 2012 University of Trento. All rights reserved.
 > To compile and run, go to code directory: 
 
 #### DO ONCE TO SET UP ENVIRONMENT
-1. Run 'aclocal' to generate an m4 environment for autotools to use:
-aclocal
+1. Run 'aclocal' to generate an m4 environment for autotools to use:\
+`aclocal`
 
-2. Then run autoconf to turn our configure.ac into a configure script:
-autoconf
+2. Then run autoconf to turn our configure.ac into a configure script:\
+`autoconf`
 
-3. Then run automake to turn our Makefile.am into a Makefile.in:
-automake --add-missing
+3. Then run automake to turn our Makefile.am into a Makefile.in:\
+`automake --add-missing`
 
-4. Compile
+4. Compile\
 `./configure`\
 `make`
 
-5. Run
+5. Run\
 `bin/dstree --help`
 
 #### EXAMPLES
-1- Build the index: 
+1- Build the index:\
 `bin/dstree --dataset /data/real/jchanchaf/wdc-2015-en-full/subsets/100-nonorm/ --total-data-files 100 --buffer-size 600 --index-path /home/jaouhara.chanchaf/work-dir/indexes/100-nonorm-idx/ --ascii-input 0 --mode 0 --track-bsf   --incremental --delta 1 --epsilon 0 --k 100 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100`
 
-2- Query the index:
+2- Query the index:\
 `bin/dstree --queries /data/real/jchanchaf/wdc-2015-en-full/10m/query/10q-size100/ --total-data-files 100000 --buffer-size 600 --index-path /home/jaouhara.chanchaf/work-dir/indexes/100k-nonorm-idx/ --ascii-input 0 --mode 1 --track-bsf   --incremental --delta 1 --epsilon 0 --timeseries-size 50 --track-vector 1 --warping 0.00 --leaf-size 100000  --top 10 --dataset /data/real/jchanchaf/wdc-2015-en-full/subsets/100-nonorm/ --result-dir /home/jaouhara.chanchaf/work-dir/exp-results/kashif-search 100tk/stop-mode-0/ --ground-truth-dir ./na/  --nq 1 --min-qset-size 100 --max-qset-size 100  --parallel --incremental --store-results-in-disk 1 --stop-when-nn-dist-changes 0 --k  10 --k-values "5,10" --knn-data-structure minmax-heap`
 
-3- Parameters:
+3- Parameters:\
 
 * `--top [x]` : nb of matching columns to be retrieved.
 * `--timeseries-size [x]` : length of the query vectors.
